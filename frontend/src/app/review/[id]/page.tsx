@@ -916,6 +916,56 @@ function ClauseDetail({
               </div>
             )}
 
+      {/* TrustFoundry legal grounding */}
+      {clause.metadata_?.legal_grounding?.verified && (clause.metadata_.legal_grounding.citations?.length ?? 0) > 0 && (
+        <div
+          className="rounded-xl border p-4 space-y-2.5"
+          style={{
+            background: "rgba(59,130,246,0.04)",
+            borderColor: "rgba(59,130,246,0.18)",
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+              style={{
+                color: "var(--risk-low)",
+                background: "rgba(34,197,94,0.08)",
+                borderColor: "rgba(34,197,94,0.25)",
+              }}
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              Verified by TrustFoundry
+            </span>
+            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              {clause.metadata_.legal_grounding.source === "trustfoundry" ? "Live API" : "14M+ laws & cases"}
+            </span>
+          </div>
+          {clause.metadata_.legal_grounding.citations.slice(0, 2).map((cit, i) => (
+            <div key={i} className="space-y-0.5">
+              <p className="text-xs font-semibold font-mono" style={{ color: "var(--accent-primary)" }}>
+                📜 {cit.citation}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                {cit.summary.slice(0, 200)}{cit.summary.length > 200 ? "…" : ""}
+              </p>
+              {cit.source_url && (
+                <a
+                  href={cit.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs underline"
+                  style={{ color: "var(--accent-primary)", opacity: 0.7 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View source →
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Suggestion */}
       {clause.suggestion && (
         <div

@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.clause import Clause
 from app.models.contract import Contract
 from app.services.ai_service import get_json_completion
+from app.services.trustfoundry_service import get_legal_context, SUBSTANTIVE_CLAUSE_TYPES
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +151,59 @@ async def analyze_all_clauses(
         analyzed += 1
 
     await db.flush()
+
+    # ── TrustFoundry legal grounding — enriches substantive clauses ────────────
+    # Query TrustFoundry for verified legal citations for medium/high/critical clauses.
+    # Done after the GPT-4o pass so it doesn't slow down analysis per-clause.
+    try:
+        contract_result = await db.execute(
+            select(Contract).where(Contract.id == contract_id)
+        )
+        contract_obj = contract_result.scalar_one_or_none()
+        governing_law = contract_obj.governing_law if contract_obj else None
+
+        tf_candidates = [
+            c for c in clauses
+            if c.risk_level in ("medium", "high", "critical")
+            and c.clause_type in SUBSTANTIVE_CLAUSE_TYPES
+        ]
+
+        if tf_candidates:
+            tf_tasks = [
+                get_legal_context(
+                    clause_type=c.clause_type or "general",
+                    governing_law=governing_law,
+                    clause_text=c.clause_text,
+                )
+                for c in tf_candidates
+            ]
+            tf_results = await asyncio.gather(*tf_tasks, return_exceptions=True)
+
+            for clause, tf_result in zip(tf_candidates, tf_results):
+                if isinstance(tf_result, Exception) or not tf_result:
+                    continue
+                if tf_result.get("citations"):
+                    existing_meta = clause.metadata_ or {}
+                    existing_meta["legal_grounding"] = {
+                        "source": tf_result["source"],
+                        "verified": tf_result["verified"],
+                        "citations": tf_result["citations"],
+                        "provider": "TrustFoundry",
+                    }
+                    clause.metadata_ = existing_meta
+
+            await db.flush()
+            grounded = sum(
+                1 for c in tf_candidates
+                if c.metadata_ and c.metadata_.get("legal_grounding")
+            )
+            logger.info(
+                f"TrustFoundry legal grounding: {grounded}/{len(tf_candidates)} clauses enriched "
+                f"(governing law: {governing_law or 'unspecified'})"
+            )
+    except Exception as tf_err:
+        logger.warning(f"TrustFoundry enrichment failed (non-fatal): {tf_err}")
+
     elapsed = time.perf_counter() - t0
     logger.info(f"Clause analysis complete: {analyzed}/{len(clauses)} in {elapsed:.1f}s")
 

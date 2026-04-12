@@ -125,6 +125,8 @@ async def chat_with_contract(
 
     context_parts = []
     clause_ids = []
+    legal_citations: list[str] = []
+
     for clause in clauses:
         heading = f"[{clause.section_heading}]" if clause.section_heading else f"[Clause {clause.clause_index + 1}]"
         risk_tag = f"[{clause.risk_level.upper()}]" if clause.risk_level else ""
@@ -133,11 +135,30 @@ async def chat_with_contract(
         context_parts.append(f"{header}\n{clause.clause_text}")
         clause_ids.append(clause.id)
 
+        # Collect TrustFoundry legal grounding from clause metadata
+        meta = clause.metadata_ or {}
+        grounding = meta.get("legal_grounding")
+        if grounding and grounding.get("verified") and grounding.get("citations"):
+            for cit in grounding["citations"][:2]:
+                legal_citations.append(
+                    f"• {cit['citation']}: {cit['summary'][:180]}"
+                )
+
     context = "\n\n".join(context_parts) if context_parts else "No relevant clauses found in this contract."
+
+    # Append verified legal citations to context when available
+    legal_section = ""
+    if legal_citations:
+        seen = list(dict.fromkeys(legal_citations))  # deduplicate preserving order
+        legal_section = (
+            "\n\nVERIFIED LEGAL CONTEXT (sourced via TrustFoundry — 14M+ US laws & cases):\n"
+            + "\n".join(seen[:4])
+            + "\nCite these statutes and cases when directly relevant to the question."
+        )
 
     system_prompt = CHAT_SYSTEM_PROMPT.format(
         contract_meta=contract_meta,
-        context=context,
+        context=context + legal_section,
     )
 
     # Stream assistant response

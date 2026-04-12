@@ -45,6 +45,13 @@ export interface ContractListResponse {
   has_more: boolean;
 }
 
+export interface LegalCitation {
+  citation: string;
+  summary: string;
+  source_url: string | null;
+  verified: boolean;
+}
+
 export interface Clause {
   id: string;
   contract_id: string;
@@ -64,6 +71,12 @@ export interface Clause {
     market_comparison?: string | null;
     impact_if_triggered?: string | null;
     clause_type_detail?: string | null;
+    legal_grounding?: {
+      source: string;
+      verified: boolean;
+      citations: LegalCitation[];
+      provider: string;
+    };
   } | null;
   created_at: string;
 }

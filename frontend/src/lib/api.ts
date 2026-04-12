@@ -58,6 +58,8 @@ export const analysisApi = {
   status: (contractId: string) => api.get(`/analysis/${contractId}/status`),
   report: (contractId: string) =>
     api.post(`/analysis/${contractId}/report`),
+  portfolioReport: (contractIds?: string[]) =>
+    api.post("/analysis/portfolio-report", contractIds ? { contract_ids: contractIds } : {}),
 };
 
 // Chat (SSE streaming — uses fetch for the stream, axios for history)

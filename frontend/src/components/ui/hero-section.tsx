@@ -1,0 +1,263 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { Shield, Menu, X } from "lucide-react";
+
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Pricing", href: "#pricing" },
+];
+
+export default function HeroSection() {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    function onClickOutside(e: MouseEvent) {
+      if (!menuRef.current) return;
+      if (menuRef.current.contains(e.target as Node)) return;
+      setMenuOpen(false);
+    }
+    if (menuOpen) {
+      document.addEventListener("keydown", onKey);
+      document.addEventListener("click", onClickOutside);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("click", onClickOutside);
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  return (
+    <section
+      className="relative w-full overflow-hidden"
+      style={{ background: "var(--bg-primary)" }}
+    >
+      {/* Ambient glow blobs */}
+      <div
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full opacity-20 blur-3xl"
+        style={{ background: "radial-gradient(ellipse, #3B82F6 0%, transparent 70%)" }}
+      />
+      <div
+        className="pointer-events-none absolute top-80 -right-32 h-[350px] w-[350px] rounded-full opacity-10 blur-3xl"
+        style={{ background: "radial-gradient(ellipse, #8B5CF6 0%, transparent 70%)" }}
+      />
+
+      {/* ── Navbar ── */}
+      <nav
+        className="relative z-20 flex items-center justify-between px-6 py-5 md:px-12 lg:px-20"
+        style={{ borderBottom: "1px solid var(--border-primary)" }}
+      >
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ background: "var(--accent-primary)" }}
+          >
+            <Shield className="h-4 w-4 text-white" />
+          </div>
+          <span
+            className="text-lg font-bold"
+            style={{
+              background: "linear-gradient(90deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            ClauseGuard
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-8">
+          {NAV_LINKS.map(({ label, href }) => (
+            <a
+              key={label}
+              href={href}
+              className="text-sm transition-colors"
+              style={{ color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary)")}
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+
+        {/* Desktop CTA */}
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/login"
+            className="text-sm transition-colors px-4 py-2 rounded-lg"
+            style={{ color: "var(--text-secondary)" }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+            }}
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "var(--accent-primary)" }}
+          >
+            Try for Free
+          </Link>
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          className="md:hidden rounded-lg p-2 transition-colors"
+          style={{ color: "var(--text-secondary)" }}
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </nav>
+
+      {/* Mobile menu overlay */}
+      {menuOpen && (
+        <div
+          ref={menuRef}
+          className="fixed inset-0 z-50 flex flex-col p-6"
+          style={{ background: "var(--bg-primary)", backdropFilter: "blur(12px)" }}
+        >
+          <div className="flex items-center justify-between mb-10">
+            <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "var(--accent-primary)" }}>
+                <Shield className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>ClauseGuard</span>
+            </Link>
+            <button onClick={() => setMenuOpen(false)} className="rounded-lg p-2" style={{ color: "var(--text-secondary)" }} aria-label="Close menu">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex flex-col gap-6">
+            {NAV_LINKS.map(({ label, href }) => (
+              <a key={label} href={href} className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>
+                {label}
+              </a>
+            ))}
+          </div>
+          <div className="mt-auto flex flex-col gap-3">
+            <Link href="/login" className="w-full text-center rounded-xl border py-3 text-sm font-medium" style={{ borderColor: "var(--border-secondary)", color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>
+              Sign In
+            </Link>
+            <Link href="/login" className="w-full text-center rounded-xl py-3 text-sm font-semibold text-white" style={{ background: "var(--accent-primary)" }} onClick={() => setMenuOpen(false)}>
+              Try for Free
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Hero body ── */}
+      <div className="relative z-10 flex flex-col items-center px-6 pt-24 pb-32 text-center">
+        {/* Announcement pill */}
+        <a
+          href="#features"
+          className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors"
+          style={{
+            borderColor: "var(--border-secondary)",
+            background: "var(--bg-secondary)",
+            color: "var(--text-secondary)",
+          }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)")}
+        >
+          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "var(--accent-primary)" }} />
+          New: Verified legal citations via TrustFoundry
+          <span style={{ color: "var(--accent-primary)" }}>→</span>
+        </a>
+
+        {/* Headline */}
+        <h1 className="max-w-4xl text-5xl font-bold leading-tight tracking-tight md:text-7xl">
+          <span style={{ color: "var(--text-primary)" }}>See risk before</span>
+          <br />
+          <span
+            style={{
+              background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            it sees you.
+          </span>
+        </h1>
+
+        {/* Sub-headline */}
+        <p
+          className="mt-6 max-w-2xl text-lg leading-relaxed md:text-xl"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          ClauseGuard uses AI to analyze every clause in your contracts — scoring risk, surfacing legal citations, and letting you chat with your documents in seconds.
+        </p>
+
+        {/* CTAs */}
+        <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+            style={{
+              background: "linear-gradient(135deg, var(--accent-primary) 0%, #6366F1 100%)",
+              boxShadow: "0 0 30px rgba(59,130,246,0.35)",
+            }}
+          >
+            <Shield className="h-4 w-4" />
+            Analyze a Contract Free
+          </Link>
+          <a
+            href="#how-it-works"
+            className="inline-flex items-center gap-2 rounded-full border px-8 py-3.5 text-base font-medium transition-colors"
+            style={{
+              borderColor: "var(--border-secondary)",
+              color: "var(--text-secondary)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
+              (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+            }}
+          >
+            See how it works
+            <span>↓</span>
+          </a>
+        </div>
+
+        {/* Trust bar */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
+          {[
+            "No credit card required",
+            "PDF, DOCX, TXT supported",
+            "Results in under 30 seconds",
+          ].map((t) => (
+            <div key={t} className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--risk-low)" }} />
+              <span className="text-sm" style={{ color: "var(--text-tertiary)" }}>{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

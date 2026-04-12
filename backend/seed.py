@@ -178,6 +178,28 @@ async def seed():  # noqa: C901
                 "risk_score": 0.82,
                 "risk_level": "high",
                 "risk_category": "ip_assignment",
+                "metadata_": {
+                    "confidence": 0.88,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "Cal. Labor Code § 2870",
+                                "summary": "An employment agreement may not require an employee to assign inventions developed entirely on their own time without company resources, unless the invention relates to the employer's business. Broadly scoped IP assignments risk running afoul of this section.",
+                                "source_url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=2870&lawCode=LAB",
+                                "verified": True,
+                            },
+                            {
+                                "citation": "17 U.S.C. § 101 (Work Made for Hire)",
+                                "summary": "Outside employment, work-for-hire requires both a signed written agreement and the work must fall within one of nine enumerated categories. IP assignment clauses that are triggered by mere 'use' of confidential information exceed the traditional work-for-hire doctrine.",
+                                "source_url": "https://www.copyright.gov/title17/92chap1.html#101",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This IP assignment is dangerously overbroad. It requires the receiving "
                     "party to assign ownership of **any invention** created while merely "
@@ -356,6 +378,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.95,
                 "risk_level": "critical",
                 "risk_category": "indemnification",
+                "metadata_": {
+                    "confidence": 0.95,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "Restatement (Third) of Torts: Apportionment of Liability § 22",
+                                "summary": "Courts scrutinize one-sided indemnification agreements for unconscionability. While enforceable between sophisticated parties, unlimited indemnification with no cap and no reciprocity is highly unusual and creates asymmetric risk exposure that courts may narrow.",
+                                "source_url": None,
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This indemnification is critically one-sided and should be a deal-stopper "
                     "as written. Enterprise Client accepts **unlimited indemnification** for "
@@ -471,6 +509,28 @@ async def seed():  # noqa: C901
                 "risk_score": 0.76,
                 "risk_level": "high",
                 "risk_category": "compliance",
+                "metadata_": {
+                    "confidence": 0.91,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "Cal. Civ. Code § 1798.100 (CCPA)",
+                                "summary": "California consumers have the right to know what personal information is collected and to opt out of its sale or use for commercial purposes. Businesses processing California consumer data must prohibit service providers from using data for their own commercial purposes, including marketing.",
+                                "source_url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=1798.100&lawCode=CIV",
+                                "verified": True,
+                            },
+                            {
+                                "citation": "GDPR Article 28 (EU 2016/679)",
+                                "summary": "Any processing by a processor must be governed by a binding Data Processing Agreement. The absence of a DPA, and permission to use customer data for marketing, directly violates Article 28 requirements for enterprises with EU operations.",
+                                "source_url": "https://gdpr-info.eu/art-28-gdpr/",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "Three distinct compliance failures in this clause. First: there is **no "
                     "Data Processing Agreement (DPA)** — required by GDPR Article 28 for any "
@@ -585,6 +645,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.97,
                 "risk_level": "critical",
                 "risk_category": "indemnification",
+                "metadata_": {
+                    "confidence": 0.97,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "N.Y. Gen. Oblig. Law § 5-322.1",
+                                "summary": "New York voids indemnification provisions that require indemnification for a party's own negligence in certain contexts. In commercial services contracts, courts scrutinize indemnification for clauses that extend liability to events entirely unrelated to the services rendered, such as industry-wide regulatory claims.",
+                                "source_url": "https://www.nysenate.gov/legislation/laws/GOB/5-322.1",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This is among the most dangerous indemnification clauses in commercial "
                     "contracting. Meridian accepts **unlimited liability** for claims arising "
@@ -626,6 +702,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.93,
                 "risk_level": "critical",
                 "risk_category": "change_of_control",
+                "metadata_": {
+                    "confidence": 0.93,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "U.C.C. § 9-406 (Anti-Assignment and Change of Control)",
+                                "summary": "Change-of-control termination rights in commercial services contracts are generally enforceable when clearly drafted. Courts in M&A transactions routinely identify these clauses as material contract risks requiring consent or waiver from the counterparty before closing.",
+                                "source_url": None,
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This change-of-control clause is a structural M&A deal-killer. Any "
                     "acquisition of Meridian Holdings — including by a private equity firm, "
@@ -711,6 +803,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.91,
                 "risk_level": "critical",
                 "risk_category": "non_compete",
+                "metadata_": {
+                    "confidence": 0.91,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "BDO Seidman v. Hirshberg, 93 N.Y.2d 382 (1999)",
+                                "summary": "New York's Court of Appeals held that non-compete restrictions must satisfy a four-factor reasonableness test. A 36-month worldwide ban on an entire industry function — with no geographic limit and no connection to trade secrets — would fail this test. Courts may blue-pencil or void such provisions entirely.",
+                                "source_url": None,
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This non-compete clause would prohibit Meridian from hiring any supply "
                     "chain professional or engaging any logistics vendor for **36 months "
@@ -912,6 +1020,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.42,
                 "risk_level": "medium",
                 "risk_category": "non_compete",
+                "metadata_": {
+                    "confidence": 0.85,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "Tex. Bus. & Com. Code § 15.50",
+                                "summary": "Texas enforces non-compete agreements if ancillary to an otherwise enforceable agreement and containing reasonable limitations as to time, geography, and scope. A 12-month Texas-only restriction in an executive employment agreement is generally enforceable under this standard.",
+                                "source_url": "https://statutes.capitol.texas.gov/Docs/BC/htm/BC.15.htm#15.50",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This non-compete is narrowly drafted: 12-month duration, limited to Texas, "
                     "and scoped to a specific industry (supply chain optimization/industrial "

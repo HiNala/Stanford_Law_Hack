@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     # Completion
     COMPLETION_MODEL: str = "gpt-4o"
 
+    # TrustFoundry — verified legal search & reasoning (hackathon sponsor)
+    # Get your API key from: https://dashboard.trustfoundry.ai
+    TRUSTFOUNDRY_API_KEY: str = ""
+    TRUSTFOUNDRY_API_URL: str = "https://api.trustfoundry.ai"
+    TRUSTFOUNDRY_ENABLED: bool = True
+
     class Config:
         env_file = ".env"
         extra = "allow"
