@@ -96,7 +96,12 @@ export default function LoginPage() {
           </div>
           <h1
             className="mt-5 text-3xl font-bold tracking-tight"
-            style={{ color: "var(--text-primary)" }}
+            style={{
+              background: "linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
           >
             ClauseGuard
           </h1>

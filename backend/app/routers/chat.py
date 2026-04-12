@@ -79,9 +79,11 @@ async def chat(
             ):
                 yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
 
+            await db.commit()
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as e:
             logger.error(f"Chat stream error: {e}")
+            await db.rollback()
             yield f"data: {json.dumps({'type': 'error', 'detail': 'Analysis service temporarily unavailable'})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

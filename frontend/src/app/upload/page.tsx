@@ -89,6 +89,7 @@ export default function UploadPage() {
   const pendingCount = files.filter((f) => f.status === "pending").length;
   const errorCount = files.filter((f) => f.status === "error").length;
   const successFiles = files.filter((f) => f.status === "success" && f.contractId);
+  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(null);
 
   // Auto-redirect to review page when exactly one file finishes uploading successfully
   useEffect(() => {
@@ -98,10 +99,17 @@ export default function UploadPage() {
       errorCount === 0 &&
       !uploading
     ) {
+      setRedirectCountdown(3);
+      const interval = setInterval(() => {
+        setRedirectCountdown((n) => {
+          if (n === null || n <= 1) { clearInterval(interval); return null; }
+          return n - 1;
+        });
+      }, 1000);
       const timer = setTimeout(() => {
         router.push(`/review/${successFiles[0].contractId}`);
-      }, 1200);
-      return () => clearTimeout(timer);
+      }, 3000);
+      return () => { clearTimeout(timer); clearInterval(interval); };
     }
   }, [successFiles, pendingCount, errorCount, uploading, router]);
 
@@ -179,6 +187,26 @@ export default function UploadPage() {
             </button>
           )}
         </div>
+
+        {/* Auto-redirect countdown banner */}
+        {redirectCountdown !== null && (
+          <div
+            className="mt-5 flex items-center gap-3 rounded-xl border px-4 py-3"
+            style={{ background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.25)" }}
+          >
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: "var(--risk-low)", flexShrink: 0 }} />
+            <p className="text-sm font-medium" style={{ color: "var(--risk-low)" }}>
+              Opening analysis in {redirectCountdown}s…
+            </p>
+            <button
+              onClick={() => router.push(`/review/${successFiles[0].contractId}`)}
+              className="ml-auto text-xs font-semibold underline"
+              style={{ color: "var(--risk-low)" }}
+            >
+              Go now
+            </button>
+          </div>
+        )}
 
         {/* File list */}
         {files.length > 0 && (

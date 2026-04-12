@@ -25,7 +25,17 @@ export default function Header() {
     <header className="h-14 border-b border-(--border-primary) bg-(--bg-primary) flex items-center px-6 shrink-0">
       <Link href="/dashboard" className="flex items-center gap-2 mr-8">
         <Shield className="h-5 w-5 text-(--accent-primary)" />
-        <span className="font-semibold text-(--text-primary)">ClauseGuard</span>
+        <span
+          className="font-semibold"
+          style={{
+            background: "linear-gradient(90deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}
+        >
+          ClauseGuard
+        </span>
       </Link>
 
       <nav className="flex items-center gap-1">

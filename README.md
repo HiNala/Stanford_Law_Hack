@@ -301,13 +301,18 @@ The Vendor MSA is designed to be the "wow" moment — judges see four critical-r
 
 ## Future Roadmap
 
-- **Custom Playbooks** — firm-specific review standards that adapt to institutional preferences
-- **Clause Benchmarking** — percentile rankings against market data ("this liability cap is in the 15th percentile")
-- **Portfolio Pattern Detection** — cross-contract analysis ("14 of 52 contracts have change-of-control triggers")
-- **Regulatory Monitoring** — proactive alerts when new regulations affect existing contracts
-- **Microsoft Word Plugin** — inline analysis without leaving the document
-- **Multi-user Teams** — role-based access (Partner, Associate, Paralegal) with review workflows
-- **Batch Processing** — upload and analyze 100+ contracts with progress dashboard
+See the full **[Product Roadmap](docs/ROADMAP.md)** for detailed phase-by-phase planning.
+
+| Phase | Timeline | Highlights |
+|-------|----------|------------|
+| **Core Hardening** | Weeks 1–4 | OAuth/SSO, OCR, S3 storage, Celery task queue, CI/CD |
+| **Intelligence Layer** | Weeks 5–8 | Custom playbooks, smart redlining, regulatory monitoring |
+| **Multi-Agent AI Team** | Weeks 9–16 | 5 specialized AI agents collaborating on review |
+| **Enterprise & Scale** | Weeks 17–24 | Integrations, SOC 2, Kubernetes, SaaS pricing |
+
+The **Multi-Agent AI Review Team** is the long-term differentiator: an Intake Coordinator, Risk Analyst, Compliance Officer, Negotiation Strategist, and Quality Reviewer that collaborate on every contract — just like a real law firm, but in two minutes instead of four weeks.
+
+See the **[Demo Script](docs/DEMO-SCRIPT.md)** for presentation walkthrough and judge Q&A preparation.
 
 ---
 

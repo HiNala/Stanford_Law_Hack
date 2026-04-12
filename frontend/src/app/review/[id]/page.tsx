@@ -50,6 +50,7 @@ export default function ReviewPage({
   const [chatContextIds, setChatContextIds] = useState<Set<string>>(new Set());
   const analysisScrollRef = useRef<HTMLDivElement>(null);
   const clauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const documentClauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Robust polling via the pre-built hook (stale-closure-safe)
   usePolling(
@@ -118,10 +119,10 @@ export default function ReviewPage({
   const handleClauseClick = (clause: Clause) => {
     setSelectedClause(clause);
     setActiveTab("analysis");
-    // Scroll analysis panel to the selected clause card
+    // Scroll both panels: left document heatmap + right analysis detail
     setTimeout(() => {
-      const el = clauseRefs.current[clause.id];
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      documentClauseRefs.current[clause.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      clauseRefs.current[clause.id]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
   };
 
@@ -174,6 +175,7 @@ export default function ReviewPage({
               heatmapReady={heatmapReady}
               chatContextIds={chatContextIds}
               onClauseClick={handleClauseClick}
+              documentClauseRefs={documentClauseRefs}
             />
           </div>
 
@@ -190,6 +192,7 @@ export default function ReviewPage({
                 clauses={clauses}
                 scrollRef={analysisScrollRef}
                 clauseRefs={clauseRefs}
+                onClauseClick={handleClauseClick}
               />
             ) : (
               <ChatPanel
@@ -592,6 +595,7 @@ function AnalysisPanel({
   clauses,
   scrollRef,
   clauseRefs,
+  onClauseClick,
 }: {
   contract: Contract | null;
   clause: Clause | null;
@@ -599,6 +603,7 @@ function AnalysisPanel({
   clauses: Clause[];
   scrollRef: React.RefObject<HTMLDivElement | null>;
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  onClauseClick?: (c: Clause) => void;
 }) {
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -626,7 +631,7 @@ function AnalysisPanel({
               </p>
             </div>
           )}
-          <ClauseList clauses={clauses} clauseRefs={clauseRefs} />
+          <ClauseList clauses={clauses} clauseRefs={clauseRefs} onClauseClick={onClauseClick} />
         </>
       )}
     </div>
@@ -686,6 +691,12 @@ function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
           }}
         />
       </div>
+      <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+        {level === "critical" && "This contract has critical provisions requiring immediate attention before signing."}
+        {level === "high" && "Significant risks identified. Key provisions should be negotiated before execution."}
+        {level === "medium" && "Moderate risk profile. Several provisions warrant review and possible negotiation."}
+        {level === "low" && "Low risk profile. Standard provisions — proceed with normal due diligence."}
+      </p>
       <div className="grid grid-cols-4 gap-2 pt-1">
         {(["critical", "high", "medium", "low"] as const).map((lvl) => (
           <div key={lvl} className="text-center">
@@ -879,9 +890,11 @@ function ClauseDetail({
 function ClauseList({
   clauses,
   clauseRefs,
+  onClauseClick,
 }: {
   clauses: Clause[];
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  onClauseClick?: (c: Clause) => void;
 }) {
   const topRisks = clauses
     .filter((c) => c.risk_level === "critical" || c.risk_level === "high")
@@ -906,13 +919,25 @@ function ClauseList({
       </p>
       <div className="space-y-2">
         {topRisks.map((c) => (
-          <div
+          <button
             key={c.id}
-            ref={(el) => { clauseRefs.current[c.id] = el; }}
-            className="rounded-xl border p-3"
+            ref={(el) => { clauseRefs.current[c.id] = el as HTMLDivElement | null; }}
+            onClick={() => onClauseClick?.(c)}
+            className="w-full text-left rounded-xl border p-3 transition-all"
             style={{
               background: "var(--bg-secondary)",
               borderColor: `${riskHexColor(c.risk_level)}30`,
+              cursor: onClauseClick ? "pointer" : "default",
+            }}
+            onMouseEnter={(e) => {
+              if (onClauseClick) {
+                (e.currentTarget as HTMLElement).style.borderColor = riskHexColor(c.risk_level);
+                (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 1px ${riskHexColor(c.risk_level)}40`;
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = `${riskHexColor(c.risk_level)}30`;
+              (e.currentTarget as HTMLElement).style.boxShadow = "none";
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
@@ -929,6 +954,9 @@ function ClauseList({
               <span className="text-xs ml-auto" style={{ color: "var(--text-tertiary)" }}>
                 {c.clause_type}
               </span>
+              {onClauseClick && (
+                <ChevronRight className="h-3 w-3 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+              )}
             </div>
             <p
               className="text-xs leading-relaxed line-clamp-3"
@@ -936,7 +964,7 @@ function ClauseList({
             >
               {c.explanation ? stripMd(c.explanation) : c.clause_text?.slice(0, 160)}
             </p>
-          </div>
+          </button>
         ))}
       </div>
       <p
@@ -1229,7 +1257,7 @@ function ChatBubble({ message }: { message: ChatMsg }) {
           ) : (
             <div
               className={cn(
-                "cg-prose",
+                "cg-prose text-sm",
                 message.streaming && "typewriter-cursor",
                 !message.streaming && "typewriter-cursor-done"
               )}
