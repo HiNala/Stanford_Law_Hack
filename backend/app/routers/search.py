@@ -19,15 +19,21 @@ async def search_clauses(
     current_user: User = Depends(get_current_user),
 ):
     """Search for relevant clauses across contracts using semantic similarity."""
+    # Support both contract_id (single) and contract_ids (list)
+    cid = payload.contract_id
+    cids = payload.contract_ids if payload.contract_ids else None
+    limit = max(payload.limit, payload.top_k)
+
     results = await semantic_search(
         db=db,
         query=payload.query,
         user_id=current_user.id,
-        contract_id=payload.contract_id,
-        top_k=payload.top_k,
+        contract_id=cid,
+        contract_ids=cids,
+        top_k=limit,
     )
     return SearchResponse(
         results=[SearchResult(**r) for r in results],
         query=payload.query,
-        total=len(results),
+        total_results=len(results),
     )

@@ -4,6 +4,8 @@ Enhanced with CUAD/Kira-inspired 25-category taxonomy, market benchmarking,
 impact assessment, and confidence scoring.
 """
 
+import asyncio
+import time
 import uuid
 import logging
 
@@ -79,44 +81,69 @@ async def analyze_clause(clause_text: str) -> dict:
     return result
 
 
-async def analyze_all_clauses(db: AsyncSession, contract_id: uuid.UUID) -> int:
-    """Run risk analysis on every clause in a contract. Returns count analyzed."""
+async def analyze_all_clauses(
+    db: AsyncSession, contract_id: uuid.UUID, max_concurrent: int = 5
+) -> int:
+    """Run risk analysis on every clause in a contract with bounded concurrency.
+
+    Uses an asyncio.Semaphore to limit parallel AI calls (default 5) so we
+    stay within API rate limits while still being much faster than serial.
+    Returns count of successfully analyzed clauses.
+    """
+    t0 = time.perf_counter()
     result = await db.execute(
         select(Clause)
         .where(Clause.contract_id == contract_id)
         .order_by(Clause.clause_index)
     )
     clauses = list(result.scalars().all())
+    logger.info(f"Analyzing {len(clauses)} clauses for contract {contract_id}")
+
+    semaphore = asyncio.Semaphore(max_concurrent)
+
+    async def _analyze_one(clause: Clause) -> dict | None:
+        async with semaphore:
+            try:
+                return await analyze_clause(clause.clause_text)
+            except Exception as e:
+                logger.error(f"Failed to analyze clause {clause.id}: {e}")
+                return None
+
+    # Fire all analyses concurrently (semaphore bounds parallelism)
+    results = await asyncio.gather(*[_analyze_one(c) for c in clauses])
 
     analyzed = 0
-    for clause in clauses:
-        try:
-            analysis = await analyze_clause(clause.clause_text)
-            clause.risk_score = analysis.get("risk_score", 0.0)
-            clause.risk_level = analysis.get("risk_level", "low")
-            clause.risk_category = analysis.get("risk_category", "general")
-            clause.clause_type = analysis.get("clause_type", "general")
-
-            # Build rich explanation that includes market context and impact
-            base_explanation = analysis.get("explanation", "")
-            market = analysis.get("market_comparison", "")
-            impact = analysis.get("impact_if_triggered", "")
-
-            rich_parts = [base_explanation]
-            if market:
-                rich_parts.append(f"**Market context:** {market}")
-            if impact and analysis.get("risk_level") in ("medium", "high", "critical"):
-                rich_parts.append(f"**If triggered:** {impact}")
-
-            clause.explanation = "\n\n".join(p for p in rich_parts if p)
-            clause.suggestion = analysis.get("suggestion")
-            analyzed += 1
-        except Exception as e:
-            logger.error(f"Failed to analyze clause {clause.id}: {e}")
+    for clause, analysis in zip(clauses, results):
+        if analysis is None:
             clause.risk_level = "medium"
+            clause.risk_score = 0.5
             clause.explanation = "Analysis could not be completed — flagged for manual review."
+            clause.suggestion = "Manual review recommended."
+            continue
+
+        clause.risk_score = analysis.get("risk_score", 0.0)
+        clause.risk_level = analysis.get("risk_level", "low")
+        clause.risk_category = analysis.get("risk_category", "general")
+        clause.clause_type = analysis.get("clause_type", "general")
+
+        # Build rich explanation that includes market context and impact
+        base_explanation = analysis.get("explanation", "")
+        market = analysis.get("market_comparison", "")
+        impact = analysis.get("impact_if_triggered", "")
+
+        rich_parts = [base_explanation]
+        if market:
+            rich_parts.append(f"**Market context:** {market}")
+        if impact and analysis.get("risk_level") in ("medium", "high", "critical"):
+            rich_parts.append(f"**If triggered:** {impact}")
+
+        clause.explanation = "\n\n".join(p for p in rich_parts if p)
+        clause.suggestion = analysis.get("suggestion")
+        analyzed += 1
 
     await db.flush()
+    elapsed = time.perf_counter() - t0
+    logger.info(f"Clause analysis complete: {analyzed}/{len(clauses)} in {elapsed:.1f}s")
 
     # Compute overall contract risk score using max-influenced weighted average
     scored_clauses = [c for c in clauses if c.risk_score is not None]

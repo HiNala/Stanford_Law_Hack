@@ -897,14 +897,14 @@ function ClauseList({
   }
 
   return (
-        <div>
+    <div>
       <p
         className="text-xs font-semibold uppercase tracking-wider mb-3"
         style={{ color: "var(--text-tertiary)" }}
       >
         Top Risk Findings
       </p>
-          <div className="space-y-2">
+      <div className="space-y-2">
         {topRisks.map((c) => (
           <div
             key={c.id}
@@ -928,17 +928,23 @@ function ClauseList({
               </span>
               <span className="text-xs ml-auto" style={{ color: "var(--text-tertiary)" }}>
                 {c.clause_type}
-                  </span>
-                </div>
+              </span>
+            </div>
             <p
               className="text-xs leading-relaxed line-clamp-3"
               style={{ color: "var(--text-secondary)" }}
             >
               {c.explanation ? stripMd(c.explanation) : c.clause_text?.slice(0, 160)}
             </p>
-              </div>
-            ))}
           </div>
+        ))}
+      </div>
+      <p
+        className="mt-4 text-center text-xs"
+        style={{ color: "var(--text-tertiary)" }}
+      >
+        Click any clause on the left to see full AI analysis
+      </p>
     </div>
   );
 }
@@ -990,9 +996,9 @@ function ChatPanel({
   useEffect(() => {
     chatApi.history(contractId)
       .then((res) => {
-        // Backend returns { messages: [...], contract_id } — unwrap the array
+        // Backend returns { items: [...], contract_id, ... } — unwrap the array
         const raw: { role: "user" | "assistant"; content: string }[] =
-          Array.isArray(res.data) ? res.data : (res.data?.messages ?? []);
+          Array.isArray(res.data) ? res.data : (res.data?.items ?? res.data?.messages ?? []);
         const history: ChatMsg[] = raw.map((m) => ({
           role: m.role,
           content: m.content,

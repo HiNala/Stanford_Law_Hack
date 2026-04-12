@@ -55,10 +55,14 @@ export default function SummaryPage({
     }
   };
 
-  const copyMarkdown = () => {
-    navigator.clipboard.writeText(report);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyMarkdown = async () => {
+    try {
+      await navigator.clipboard.writeText(report);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard permission denied or unavailable (non-HTTPS, Firefox, etc.)
+    }
   };
 
   if (loading) {

@@ -22,10 +22,10 @@ export default function Header() {
   };
 
   return (
-    <header className="h-14 border-b border-[var(--border-primary)] bg-[var(--bg-primary)] flex items-center px-6 shrink-0">
+    <header className="h-14 border-b border-(--border-primary) bg-(--bg-primary) flex items-center px-6 shrink-0">
       <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-        <Shield className="h-5 w-5 text-[var(--accent-primary)]" />
-        <span className="font-semibold text-[var(--text-primary)]">ClauseGuard</span>
+        <Shield className="h-5 w-5 text-(--accent-primary)" />
+        <span className="font-semibold text-(--text-primary)">ClauseGuard</span>
       </Link>
 
       <nav className="flex items-center gap-1">
@@ -36,8 +36,8 @@ export default function Header() {
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors",
               pathname === href
-                ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                ? "bg-(--bg-tertiary) text-(--text-primary)"
+                : "text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-tertiary)"
             )}
           >
             <Icon className="h-4 w-4" />
@@ -48,12 +48,12 @@ export default function Header() {
 
       <div className="ml-auto flex items-center gap-3">
         {user && (
-          <span className="text-xs text-[var(--text-tertiary)]">{user.email}</span>
+          <span className="text-xs text-(--text-tertiary)">{user.email}</span>
         )}
         <button
           onClick={handleLogout}
           aria-label="Log out"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-tertiary) transition-colors"
         >
           <LogOut className="h-4 w-4" />
           <span>Log out</span>

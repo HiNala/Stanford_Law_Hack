@@ -14,7 +14,13 @@ from app.exceptions import AppException
 from app.middleware.auth import get_current_user
 from app.models.contract import Contract
 from app.models.user import User
-from app.schemas.contract import ContractResponse, ContractListItem, ContractListResponse, ContractUploadResponse
+from app.schemas.contract import (
+    ContractResponse,
+    ContractListItem,
+    ContractListResponse,
+    ContractUploadResponse,
+    RiskDistributionInline,
+)
 from app.services.contract_service import (
     create_contract,
     process_contract,
@@ -163,7 +169,18 @@ async def get_contract_detail(
         raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
     if contract.user_id != current_user.id:
         raise AppException(status_code=403, detail="You do not have access to this contract", error_code="FORBIDDEN")
-    return ContractResponse.model_validate(contract)
+
+    # Compute risk_distribution from clauses
+    clauses = await get_contract_clauses(db, contract_id)
+    dist = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+    for c in clauses:
+        level = c.risk_level or "low"
+        if level in dist:
+            dist[level] += 1
+
+    resp = ContractResponse.model_validate(contract)
+    resp.risk_distribution = RiskDistributionInline(**dist)
+    return resp
 
 
 @router.delete("/{contract_id}")

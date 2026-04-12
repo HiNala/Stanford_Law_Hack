@@ -29,8 +29,10 @@ export interface Contract {
   contract_type: string | null;
   overall_risk_score: number | null;
   risk_level: string | null;
-  status: string;
+  status: "uploaded" | "processing" | "analyzed" | "error";
   summary: string | null;
+  raw_text: string | null;
+  risk_distribution: RiskDistribution | null;
   created_at: string;
   updated_at: string;
 }

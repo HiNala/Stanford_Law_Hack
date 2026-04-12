@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.exceptions import AppException
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.schemas.clause import ClauseResponse, ClauseListResponse, ContractAnalysisSummary, RiskDistribution
@@ -25,7 +26,7 @@ async def list_clauses(
     """Get all clauses for a contract, ordered by position."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     clauses = await get_contract_clauses(db, contract_id)
 
@@ -51,12 +52,12 @@ async def get_single_clause(
     """Get a single clause with full details."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     clauses = await get_contract_clauses(db, contract_id)
     clause = next((c for c in clauses if c.id == clause_id), None)
     if not clause:
-        raise HTTPException(status_code=404, detail="Clause not found")
+        raise AppException(status_code=404, detail="Clause not found", error_code="CLAUSE_NOT_FOUND")
 
     return ClauseResponse.model_validate(clause)
 
@@ -70,7 +71,7 @@ async def get_analysis_summary(
     """Get a high-level risk summary for a contract."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     clauses = await get_contract_clauses(db, contract_id)
 

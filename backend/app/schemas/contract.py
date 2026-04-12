@@ -7,12 +7,21 @@ from typing import Any
 from pydantic import BaseModel
 
 
+class RiskDistributionInline(BaseModel):
+    """Inline risk distribution counts."""
+    critical: int = 0
+    high: int = 0
+    medium: int = 0
+    low: int = 0
+
+
 class ContractListItem(BaseModel):
     """Schema for contract list items (lightweight)."""
     id: uuid.UUID
     original_filename: str
     title: str | None = None
     file_type: str
+    file_size_bytes: int | None = None
     contract_type: str | None = None
     overall_risk_score: float | None = None
     risk_level: str | None = None
@@ -46,6 +55,7 @@ class ContractResponse(BaseModel):
     summary: str | None = None
     raw_text: str | None = None
     metadata_: dict | None = None
+    risk_distribution: RiskDistributionInline | None = None
     created_at: datetime
     updated_at: datetime
 

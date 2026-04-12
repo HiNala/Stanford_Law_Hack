@@ -1,6 +1,6 @@
 """Authentication routes — register, login, and profile."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db

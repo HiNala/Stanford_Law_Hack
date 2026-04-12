@@ -25,9 +25,13 @@ class ChatMessageResponse(BaseModel):
 
 
 class ChatHistoryResponse(BaseModel):
-    """Schema for returning chat history."""
-    messages: list[ChatMessageResponse]
+    """Schema for returning chat history with pagination."""
+    items: list[ChatMessageResponse]
     contract_id: uuid.UUID
+    total: int = 0
+    page: int = 1
+    page_size: int = 50
+    has_more: bool = False
 
 
 class SearchRequest(BaseModel):
@@ -43,6 +47,7 @@ class SearchResult(BaseModel):
     """A single search result."""
     clause_id: uuid.UUID
     contract_id: uuid.UUID
+    contract_title: str | None = None
     clause_text: str
     clause_type: str | None
     risk_level: str | None
@@ -54,4 +59,4 @@ class SearchResponse(BaseModel):
     """Schema for search results."""
     results: list[SearchResult]
     query: str
-    total: int
+    total_results: int

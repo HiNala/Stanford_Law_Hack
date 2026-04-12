@@ -15,19 +15,21 @@ async def semantic_search(
     query: str,
     user_id: uuid.UUID,
     contract_id: uuid.UUID | None = None,
+    contract_ids: list[uuid.UUID] | None = None,
     top_k: int = 10,
 ) -> list[dict]:
     """
     Search across clause embeddings for the most relevant matches.
     Always scoped to the authenticated user's contracts for security.
-    Optionally further scoped to a single contract.
+    Optionally further scoped to specific contract(s).
     """
     query_embedding = await get_embedding(query)
 
-    # Join with contracts to enforce user_id ownership
+    # Join with contracts to enforce user_id ownership and get title
     stmt = (
         select(
             Clause,
+            Contract.title,
             Clause.embedding.cosine_distance(query_embedding).label("distance"),
         )
         .join(Contract, Clause.contract_id == Contract.id)
@@ -37,6 +39,8 @@ async def semantic_search(
 
     if contract_id:
         stmt = stmt.where(Clause.contract_id == contract_id)
+    elif contract_ids:
+        stmt = stmt.where(Clause.contract_id.in_(contract_ids))
 
     stmt = stmt.order_by("distance").limit(top_k)
 
@@ -44,10 +48,11 @@ async def semantic_search(
     rows = result.all()
 
     search_results = []
-    for clause, distance in rows:
+    for clause, contract_title, distance in rows:
         search_results.append({
             "clause_id": clause.id,
             "contract_id": clause.contract_id,
+            "contract_title": contract_title,
             "clause_text": clause.clause_text,
             "clause_type": clause.clause_type,
             "risk_level": clause.risk_level,

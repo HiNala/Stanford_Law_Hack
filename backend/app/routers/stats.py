@@ -1,7 +1,5 @@
 """Dashboard statistics routes."""
 
-import uuid
-
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession

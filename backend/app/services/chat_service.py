@@ -76,9 +76,11 @@ async def chat_with_contract(
     contract_id: uuid.UUID,
     user_id: uuid.UUID,
     message: str,
+    prefetched_clauses: list["Clause"] | None = None,
 ) -> AsyncGenerator[str, None]:
     """
-    RAG chat: embed the question, retrieve relevant clauses, stream the response.
+    RAG chat: build context from clauses (pre-fetched or freshly retrieved), stream the response.
+    Accepts pre-fetched clauses from the router so the vector search only runs once per request.
     Stores both the user message and assistant response in the DB.
     """
     # Save user message
@@ -98,12 +100,12 @@ async def chat_with_contract(
     contract = contract_result.scalar_one_or_none()
     contract_meta = _build_contract_meta(contract) if contract else "Contract metadata unavailable."
 
-    # Retrieve relevant clauses via vector search
-    clauses = await retrieve_relevant_clauses(db, contract_id, message)
+    # Use pre-fetched clauses if provided; otherwise run the vector search
+    clauses = prefetched_clauses if prefetched_clauses is not None else await retrieve_relevant_clauses(db, contract_id, message)
 
     context_parts = []
     clause_ids = []
-    for i, clause in enumerate(clauses, 1):
+    for clause in clauses:
         heading = f"[{clause.section_heading}]" if clause.section_heading else f"[Clause {clause.clause_index + 1}]"
         risk_tag = f"[{clause.risk_level.upper()}]" if clause.risk_level else ""
         type_tag = f"[{clause.clause_type}]" if clause.clause_type else ""
@@ -139,11 +141,22 @@ async def chat_with_contract(
 async def get_chat_history(
     db: AsyncSession,
     contract_id: uuid.UUID,
-) -> list[ChatMessage]:
-    """Fetch all chat messages for a contract, ordered chronologically."""
+    skip: int = 0,
+    limit: int = 50,
+) -> tuple[list[ChatMessage], int]:
+    """Fetch chat messages for a contract with pagination, ordered chronologically."""
+    from sqlalchemy import func
+
+    count_result = await db.execute(
+        select(func.count(ChatMessage.id)).where(ChatMessage.contract_id == contract_id)
+    )
+    total = count_result.scalar() or 0
+
     result = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.contract_id == contract_id)
         .order_by(ChatMessage.created_at)
+        .offset(skip)
+        .limit(limit)
     )
-    return list(result.scalars().all())
+    return list(result.scalars().all()), total

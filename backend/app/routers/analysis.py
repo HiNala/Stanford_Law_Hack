@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, async_session_factory
+from app.exceptions import AppException
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.services.contract_service import get_contract, get_contract_clauses, process_contract
@@ -33,15 +34,16 @@ async def trigger_analysis(
     """Manually trigger (or re-trigger) analysis for a contract."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     if contract.status == "processing":
-        raise HTTPException(status_code=409, detail="Analysis is already in progress")
+        raise AppException(status_code=409, detail="Analysis is already in progress", error_code="ANALYSIS_IN_PROGRESS")
 
     if not contract.raw_text and contract.status != "uploaded":
-        raise HTTPException(
+        raise AppException(
             status_code=400,
             detail="No text could be extracted from this contract. Please verify the file is not corrupt or empty.",
+            error_code="NO_EXTRACTED_TEXT",
         )
 
     async def _reanalyze(cid: uuid.UUID):
@@ -84,10 +86,10 @@ async def generate_report(
     """Generate a comprehensive due diligence summary report."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     if contract.status != "analyzed":
-        raise HTTPException(status_code=400, detail="Contract has not been analyzed yet")
+        raise AppException(status_code=400, detail="Contract has not been analyzed yet", error_code="CONTRACT_NOT_ANALYZED")
 
     report = await generate_summary_report(db, contract_id)
     return {"contract_id": contract_id, "report": report}
@@ -102,7 +104,7 @@ async def get_contract_summary(
     """Return AI-generated summary and key findings per MISSION-04 spec."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     clauses = await get_contract_clauses(db, contract_id)
 
@@ -146,7 +148,7 @@ async def get_analysis_status(
     """Check the processing status of a contract."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     return {
         "contract_id": contract_id,

@@ -59,12 +59,26 @@ async def seed():  # noqa: C901
         else:
             print(f"• Demo user already exists: {DEMO_EMAIL}")
 
-        # Skip if contracts already seeded
+        # Check which demo contracts are missing
         result = await db.execute(select(Contract).where(Contract.user_id == user.id))
-        if list(result.scalars().all()):
-            print("• Demo contracts already seeded. Skipping.")
+        existing = list(result.scalars().all())
+        existing_titles = {c.title for c in existing}
+
+        NDA_TITLE = "Mutual Non-Disclosure Agreement — Acme Technologies"
+        SAAS_TITLE = "Master SaaS Agreement — TechCo LLC"
+        MSA_TITLE = "Vendor Master Services Agreement — GlobalSupply Partners"
+
+        need_nda = NDA_TITLE not in existing_titles
+        need_saas = SAAS_TITLE not in existing_titles
+        need_msa = MSA_TITLE not in existing_titles
+
+        if not need_nda and not need_saas and not need_msa:
+            print("• All 3 demo contracts already seeded. Skipping.")
             await db.commit()
             return
+
+        missing = [t for t, v in [(NDA_TITLE, need_nda), (SAAS_TITLE, need_saas), (MSA_TITLE, need_msa)] if v]
+        print(f"• Adding {len(missing)} missing contract(s): {', '.join(missing)}")
 
         # ── Contract 1: Mutual NDA ─────────────────────────────────────────────
         nda = Contract(
@@ -95,8 +109,9 @@ async def seed():  # noqa: C901
                 "exposure. Recommend negotiating both before signing."
             ),
         )
-        db.add(nda)
-        await db.flush()
+        if need_nda:
+            db.add(nda)
+            await db.flush()
 
         nda_clauses = [
             {
@@ -252,15 +267,15 @@ async def seed():  # noqa: C901
             },
         ]
 
-        for c in nda_clauses:
-            db.add(Clause(contract_id=nda.id, **c))
+        if need_nda:
+            for c in nda_clauses:
+                db.add(Clause(contract_id=nda.id, **c))
+
+        if need_saas:
+            for c in saas_clauses:
+                db.add(Clause(contract_id=saas.id, **c))
 
         # ── Contract 2: Master SaaS Agreement with high risk ──────────────────
-        saas = Contract(
-            user_id=user.id,
-            filename="demo_saas_techco.txt",
-            original_filename="Master SaaS Agreement — TechCo LLC.txt",
-            file_path="/app/uploads/demo_saas_techco.txt",
             file_type="txt",
             file_size_bytes=11200,
             title="Master SaaS Agreement — TechCo LLC",
@@ -285,8 +300,9 @@ async def seed():  # noqa: C901
                 "and 14 are renegotiated."
             ),
         )
-        db.add(saas)
-        await db.flush()
+        if need_saas:
+            db.add(saas)
+            await db.flush()
 
         saas_clauses = [
             {
@@ -509,8 +525,9 @@ async def seed():  # noqa: C901
                 "Do not execute. Recommend full redline and re-negotiation."
             ),
         )
-        db.add(msa)
-        await db.flush()
+        if need_msa:
+            db.add(msa)
+            await db.flush()
 
         msa_clauses = [
             {
