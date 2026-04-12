@@ -219,7 +219,7 @@ async def get_contract_status(
     """Lightweight endpoint for polling processing status."""
     contract = await get_contract(db, contract_id)
     if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
 
     clauses = await get_contract_clauses(db, contract_id) if contract.status in ("processing", "analyzed") else []
     analyzed = sum(1 for c in clauses if c.risk_level is not None)

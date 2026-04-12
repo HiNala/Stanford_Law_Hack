@@ -271,11 +271,11 @@ async def seed():  # noqa: C901
             for c in nda_clauses:
                 db.add(Clause(contract_id=nda.id, **c))
 
-        if need_saas:
-            for c in saas_clauses:
-                db.add(Clause(contract_id=saas.id, **c))
-
         # ── Contract 2: Master SaaS Agreement with high risk ──────────────────
+        saas = Contract(
+            user_id=user.id,
+            filename="demo_saas_techco.txt",
+            original_filename="Master SaaS Agreement — TechCo LLC.txt",
             file_type="txt",
             file_size_bytes=11200,
             title="Master SaaS Agreement — TechCo LLC",
@@ -490,8 +490,9 @@ async def seed():  # noqa: C901
             },
         ]
 
-        for c in saas_clauses:
-            db.add(Clause(contract_id=saas.id, **c))
+        if need_saas:
+            for c in saas_clauses:
+                db.add(Clause(contract_id=saas.id, **c))
 
         # ── Contract 3: Vendor MSA — CRITICAL risk (the demo star) ────────────
         msa = Contract(
@@ -752,8 +753,9 @@ async def seed():  # noqa: C901
             },
         ]
 
-        for c in msa_clauses:
-            db.add(Clause(contract_id=msa.id, **c))
+        if need_msa:
+            for c in msa_clauses:
+                db.add(Clause(contract_id=msa.id, **c))
 
         await db.commit()
         total_clauses = len(nda_clauses) + len(saas_clauses) + len(msa_clauses)
