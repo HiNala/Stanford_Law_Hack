@@ -193,6 +193,7 @@ export default function ReviewPage({
                 scrollRef={analysisScrollRef}
                 clauseRefs={clauseRefs}
                 onClauseClick={handleClauseClick}
+                onClearClause={() => setSelectedClause(null)}
               />
             ) : (
               <ChatPanel
@@ -595,6 +596,7 @@ function AnalysisPanel({
   scrollRef,
   clauseRefs,
   onClauseClick,
+  onClearClause,
 }: {
   contract: Contract | null;
   clause: Clause | null;
@@ -603,6 +605,7 @@ function AnalysisPanel({
   scrollRef: React.RefObject<HTMLDivElement | null>;
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   onClauseClick?: (c: Clause) => void;
+  onClearClause?: () => void;
 }) {
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
@@ -614,7 +617,21 @@ function AnalysisPanel({
 
       {/* Selected clause detail or top risks + executive summary */}
       {clause ? (
-        <ClauseDetail clause={clause} clauseRefs={clauseRefs} />
+        <>
+          {onClearClause && (
+            <button
+              onClick={onClearClause}
+              className="flex items-center gap-1.5 text-xs transition-colors"
+              style={{ color: "var(--text-tertiary)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--accent-primary)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Overview
+            </button>
+          )}
+          <ClauseDetail clause={clause} clauseRefs={clauseRefs} />
+        </>
       ) : (
         <>
           {contract?.summary && (
@@ -636,6 +653,7 @@ function AnalysisPanel({
     </div>
   );
 }
+
 
 function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
   const targetPct = Math.round((summary.overall_risk_score ?? 0) * 100);
@@ -775,6 +793,27 @@ function ContractMetaCard({ contract }: { contract: Contract }) {
   );
 }
 
+function MiniRiskBar({ score, level }: { score: number | null; level: string | null }) {
+  const [width, setWidth] = useState(0);
+  const target = Math.round((score ?? 0) * 100);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(target), 60);
+    return () => clearTimeout(t);
+  }, [target]);
+  return (
+    <div className="h-1 rounded-full overflow-hidden mt-1" style={{ background: "var(--bg-tertiary)" }}>
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${width}%`,
+          background: `linear-gradient(90deg, ${riskHexColor(level)}99, ${riskHexColor(level)})`,
+          transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      />
+    </div>
+  );
+}
+
 function ClauseDetail({
   clause,
   clauseRefs,
@@ -837,15 +876,7 @@ function ClauseDetail({
               )}
             </div>
         {/* Mini risk bar — visual context for the score number */}
-        <div className="h-1 rounded-full overflow-hidden mt-1" style={{ background: "var(--bg-tertiary)" }}>
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.round((clause.risk_score ?? 0) * 100)}%`,
-              background: `linear-gradient(90deg, ${riskHexColor(clause.risk_level)}99, ${riskHexColor(clause.risk_level)})`,
-            }}
-          />
-        </div>
+        <MiniRiskBar score={clause.risk_score} level={clause.risk_level} />
         {clause.section_heading && (
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>
             {clause.section_heading}
@@ -918,10 +949,17 @@ function ClauseList({
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   onClauseClick?: (c: Clause) => void;
 }) {
-  const topRisks = clauses
+  const criticalHigh = clauses
     .filter((c) => c.risk_level === "critical" || c.risk_level === "high")
     .sort((a, b) => (b.risk_score ?? 0) - (a.risk_score ?? 0))
     .slice(0, 8);
+
+  const topRisks = criticalHigh.length > 0
+    ? criticalHigh
+    : clauses
+        .filter((c) => c.risk_level === "medium")
+        .sort((a, b) => (b.risk_score ?? 0) - (a.risk_score ?? 0))
+        .slice(0, 5);
 
   if (topRisks.length === 0) {
     return (
@@ -937,7 +975,7 @@ function ClauseList({
         className="text-xs font-semibold uppercase tracking-wider mb-3"
         style={{ color: "var(--text-tertiary)" }}
       >
-        Top Risk Findings
+        {criticalHigh.length > 0 ? "Top Risk Findings" : "Notable Clauses"}
       </p>
       <div className="space-y-2">
         {topRisks.map((c) => (
@@ -1209,7 +1247,7 @@ function ChatPanel({
           </button>
         </div>
         <p className="mt-1.5 text-center text-[10px]" style={{ color: "var(--text-tertiary)", opacity: 0.6 }}>
-          Press Enter to send · Shift+Enter for new line
+          Press Enter to send
         </p>
       </div>
     </div>

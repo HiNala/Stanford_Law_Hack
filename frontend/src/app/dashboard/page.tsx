@@ -635,8 +635,11 @@ function StatusBadge({ status }: { status: string }) {
         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border"
         style={{ color: "var(--accent-primary)", background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)" }}
       >
-        <Clock className="h-3 w-3 animate-spin" />
-        Processing
+        <svg className="h-3 w-3 animate-spin" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+          <path d="M14 8a6 6 0 00-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        Analyzing
       </span>
     );
   }
