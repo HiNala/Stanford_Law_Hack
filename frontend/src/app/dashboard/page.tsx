@@ -42,7 +42,11 @@ export default function DashboardPage() {
       return;
     }
     loadAll();
-    const interval = setInterval(loadAll, 5000);
+    // Only poll while at least one contract is processing
+    const interval = setInterval(() => {
+      const hasProcessing = contracts.some((c) => c.status === "processing");
+      if (hasProcessing) loadAll();
+    }, 5000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
