@@ -90,15 +90,27 @@ html, body {
   display: none;
 }
 
-/* ─── Risk pulse animation ─── */
-@keyframes risk-pulse {
-  0% { box-shadow: 0 0 0 0 var(--risk-critical-border); }
-  50% { box-shadow: 0 0 0 4px var(--risk-critical-border); }
-  100% { box-shadow: 0 0 0 0 var(--risk-critical-border); }
+/* ─── Risk pulse animations — one per severity ─── */
+@keyframes risk-pulse-critical {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
+  50% { box-shadow: 0 0 0 5px rgba(239,68,68,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+@keyframes risk-pulse-high {
+  0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(249,115,22,0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+}
+@keyframes risk-pulse-medium {
+  0% { box-shadow: 0 0 0 0 rgba(234,179,8,0.3); }
+  50% { box-shadow: 0 0 0 4px rgba(234,179,8,0.1); }
+  100% { box-shadow: 0 0 0 0 rgba(234,179,8,0); }
 }
 
-.risk-pulse-critical {
-  animation: risk-pulse 600ms ease-out;
+/* ─── Card stagger entrance ─── */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Utility classes ─── */
@@ -106,6 +118,24 @@ html, body {
   background: rgba(20, 20, 23, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* ─── Legal document typography ─── */
+.legal-doc {
+  font-family: Georgia, Charter, 'Bitstream Charter', 'Times New Roman', serif;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+.legal-doc .section-heading {
+  font-family: var(--font-inter), -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
 }
 
 /* ─── Report / Markdown prose styles (no typography plugin needed) ─── */
@@ -137,3 +167,12 @@ html, body {
 /* Analysis panel specific — slightly larger font for readability */
 .cg-prose.text-sm p { font-size: 0.875rem; }
 .cg-prose.text-sm li { font-size: 0.875rem; }
+
+/* ─── Focus ring utility ─── */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* ─── Smooth scroll for panels ─── */
+.scroll-smooth { scroll-behavior: smooth; }

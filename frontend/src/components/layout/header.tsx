@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Shield, LayoutDashboard, Upload, LogOut } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
-import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,9 +21,12 @@ export default function Header() {
   };
 
   return (
-    <header className="h-14 border-b border-(--border-primary) bg-(--bg-primary) flex items-center px-6 shrink-0">
+    <header
+      className="h-14 border-b flex items-center px-6 shrink-0"
+      style={{ borderColor: "var(--border-primary)", background: "var(--bg-primary)" }}
+    >
       <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-        <Shield className="h-5 w-5 text-(--accent-primary)" />
+        <Shield className="h-5 w-5" style={{ color: "var(--accent-primary)" }} />
         <span
           className="font-semibold"
           style={{
@@ -43,12 +45,11 @@ export default function Header() {
           <Link
             key={href}
             href={href}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors",
-              pathname === href
-                ? "bg-(--bg-tertiary) text-(--text-primary)"
-                : "text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-tertiary)"
-            )}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+            style={{
+              background: pathname === href ? "var(--bg-tertiary)" : "transparent",
+              color: pathname === href ? "var(--text-primary)" : "var(--text-secondary)",
+            }}
           >
             <Icon className="h-4 w-4" />
             {label}
@@ -58,14 +59,23 @@ export default function Header() {
 
       <div className="ml-auto flex items-center gap-3">
         {user && (
-          <span className="text-xs text-(--text-tertiary)">
+          <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
             {user.full_name || user.email}
           </span>
         )}
         <button
           onClick={handleLogout}
           aria-label="Log out"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-tertiary) transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+          style={{ color: "var(--text-secondary)" }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
+            (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+          }}
         >
           <LogOut className="h-4 w-4" />
           <span>Log out</span>

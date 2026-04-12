@@ -242,10 +242,10 @@ export default function SummaryPage({
           </div>
         ) : (
           <div
-            className="rounded-2xl border p-8"
+            className="rounded-2xl border p-8 sm:p-10"
             style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
           >
-            <div className="cg-prose">
+            <div className="cg-prose max-w-none">
               <ReactMarkdown>{report}</ReactMarkdown>
             </div>
           </div>

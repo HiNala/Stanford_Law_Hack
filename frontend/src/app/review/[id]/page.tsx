@@ -163,7 +163,7 @@ export default function ReviewPage({
         <div className="flex flex-1 overflow-hidden">
           {/* Left — Document heatmap */}
           <div
-            className="w-[55%] overflow-y-auto border-r"
+            className="w-[55%] overflow-y-auto border-r scroll-smooth"
             style={{
               borderColor: "var(--border-primary)",
               background: "var(--bg-secondary)",
@@ -464,7 +464,7 @@ function DocumentPanel({
   }
 
   return (
-    <div className="p-5 space-y-1 font-serif">
+    <div className="p-6 space-y-1 legal-doc">
       {clauses.map((clause, index) => (
         <ClauseBlock
           key={clause.id}
@@ -547,9 +547,10 @@ function ClauseBlock({
             ? `${borderColor}14`
             : `${borderColor}0a`
           : "transparent",
-        boxShadow: pulse
-          ? `0 0 0 2px ${borderColor}60, 0 0 16px ${borderColor}40`
-          : isSelected
+        animation: pulse
+          ? `risk-pulse-${riskLevel === "critical" ? "critical" : riskLevel === "high" ? "high" : "medium"} 700ms ease-out`
+          : "none",
+        boxShadow: isSelected
           ? `0 0 0 1px ${borderColor}50`
           : isChatContext
           ? `0 0 0 1px #3B82F660, inset 0 0 0 1px #3B82F620`
@@ -574,21 +575,11 @@ function ClauseBlock({
       )}
 
       {clause.section_heading && (
-        <p
-          className="mb-1 text-xs font-semibold uppercase tracking-widest"
-          style={{ color: "var(--text-tertiary)" }}
-        >
+        <p className="section-heading">
           {clause.section_heading}
         </p>
       )}
-      <p
-        className="leading-7"
-        style={{
-          color: "var(--text-primary)",
-          fontFamily: "Georgia, Charter, 'Times New Roman', serif",
-          fontSize: "14.5px",
-        }}
-      >
+      <p style={{ fontSize: "15px", lineHeight: 1.75 }}>
         {clause.clause_text}
       </p>
     </div>
@@ -614,7 +605,7 @@ function AnalysisPanel({
   onClauseClick?: (c: Clause) => void;
 }) {
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
       {/* Overall risk gauge — always visible at the top */}
       {summary && <RiskGauge summary={summary} />}
 
@@ -838,13 +829,23 @@ function ClauseDetail({
               )}
               {clause.clause_type && (
             <span
-              className="ml-auto rounded-lg px-2 py-0.5 text-xs"
+              className="ml-auto rounded-lg px-2 py-0.5 text-xs capitalize"
               style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
             >
                   {clause.clause_type.replace(/_/g, " ")}
                 </span>
               )}
             </div>
+        {/* Mini risk bar — visual context for the score number */}
+        <div className="h-1 rounded-full overflow-hidden mt-1" style={{ background: "var(--bg-tertiary)" }}>
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.round((clause.risk_score ?? 0) * 100)}%`,
+              background: `linear-gradient(90deg, ${riskHexColor(clause.risk_level)}99, ${riskHexColor(clause.risk_level)})`,
+            }}
+          />
+        </div>
         {clause.section_heading && (
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>
             {clause.section_heading}
@@ -852,8 +853,12 @@ function ClauseDetail({
         )}
         {/* Clause text excerpt */}
         <blockquote
-          className="mt-2 border-l-2 pl-3 font-serif text-xs leading-relaxed line-clamp-4"
-          style={{ borderColor: `${riskHexColor(clause.risk_level)}50`, color: "var(--text-tertiary)" }}
+          className="mt-3 border-l-2 pl-3 text-xs leading-relaxed line-clamp-5"
+          style={{
+            borderColor: `${riskHexColor(clause.risk_level)}50`,
+            color: "var(--text-tertiary)",
+            fontFamily: "Georgia, Charter, 'Times New Roman', serif",
+          }}
         >
           {clause.clause_text}
         </blockquote>
@@ -1203,6 +1208,9 @@ function ChatPanel({
             <Send className="h-3.5 w-3.5 text-white" />
           </button>
         </div>
+        <p className="mt-1.5 text-center text-[10px]" style={{ color: "var(--text-tertiary)", opacity: 0.6 }}>
+          Press Enter to send · Shift+Enter for new line
+        </p>
       </div>
     </div>
   );
@@ -1218,10 +1226,10 @@ function EmptyChat({ onQuestion }: { onQuestion: (q: string) => void }) {
         <Shield className="h-6 w-6" style={{ color: "var(--accent-primary)" }} />
       </div>
       <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-        Ask me anything about this contract.
+        Ask me anything about this contract
       </p>
-      <p className="text-xs mb-6 text-center" style={{ color: "var(--text-tertiary)" }}>
-        I&apos;ve read every clause and can answer questions grounded in the actual text.
+      <p className="text-xs mb-5 text-center max-w-[240px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+        I&apos;ve read every clause. Ask about risk, obligations, or specific provisions.
       </p>
       <div className="w-full space-y-2">
         {EXAMPLE_QUESTIONS.map((q) => (
