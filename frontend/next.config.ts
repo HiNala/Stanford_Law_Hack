@@ -1,20 +1,21 @@
 import type { NextConfig } from "next";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// In Docker the frontend container must reach the backend via the service name.
+// Locally (or when not containerised), fall back to localhost.
+// Set BACKEND_URL=http://backend:8000 in docker-compose; leave unset for local dev.
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 const nextConfig: NextConfig = {
-  // Proxy /api/* → backend so browser never hits a cross-origin endpoint.
-  // This also means the chatApi SSE stream can just call /api/chat/… without
-  // needing the full absolute URL.
+  // Proxy /api/* → backend so the browser never makes cross-origin requests.
+  // SSE (chat streaming) also goes through this proxy transparently.
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: `${API_URL}/api/:path*`,
+        destination: `${BACKEND_URL}/api/:path*`,
       },
     ];
   },
-  // Silence "img" warnings for SVG/external URLs if needed later
   images: {
     remotePatterns: [],
   },

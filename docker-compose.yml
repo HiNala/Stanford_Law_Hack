@@ -47,6 +47,9 @@ services:
     env_file:
       - .env
     environment:
+      # Server-side proxy target — uses Docker service name, not localhost
+      BACKEND_URL: http://backend:8000
+      # Kept for reference / any future client-side absolute needs
       NEXT_PUBLIC_API_URL: http://localhost:8000
     volumes:
       - ./frontend:/app
