@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.clause import Clause
+from app.models.contract import Contract
 from app.services.ai_service import get_embedding
 
 
@@ -18,15 +19,19 @@ async def semantic_search(
 ) -> list[dict]:
     """
     Search across clause embeddings for the most relevant matches.
-    Optionally scoped to a single contract.
+    Always scoped to the authenticated user's contracts for security.
+    Optionally further scoped to a single contract.
     """
     query_embedding = await get_embedding(query)
 
+    # Join with contracts to enforce user_id ownership
     stmt = (
         select(
             Clause,
             Clause.embedding.cosine_distance(query_embedding).label("distance"),
         )
+        .join(Contract, Clause.contract_id == Contract.id)
+        .where(Contract.user_id == user_id)
         .where(Clause.embedding.isnot(None))
     )
 

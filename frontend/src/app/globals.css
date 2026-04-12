@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
+/* ─── ClauseGuard Design Tokens ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #141417;
+  --bg-tertiary: #1C1C21;
+  --bg-input: #1C1C21;
+
+  /* Text */
+  --text-primary: #F5F5F7;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+
+  /* Brand Accent */
+  --accent-primary: #3B82F6;
+  --accent-hover: #2563EB;
+  --accent-muted: #1E3A5F;
+
+  /* Risk Heatmap Colors */
+  --risk-critical: #EF4444;
+  --risk-critical-bg: rgba(239, 68, 68, 0.12);
+  --risk-critical-border: rgba(239, 68, 68, 0.3);
+
+  --risk-high: #F97316;
+  --risk-high-bg: rgba(249, 115, 22, 0.12);
+  --risk-high-border: rgba(249, 115, 22, 0.3);
+
+  --risk-medium: #EAB308;
+  --risk-medium-bg: rgba(234, 179, 8, 0.10);
+  --risk-medium-border: rgba(234, 179, 8, 0.25);
+
+  --risk-low: #22C55E;
+  --risk-low-bg: rgba(34, 197, 94, 0.08);
+  --risk-low-border: rgba(34, 197, 94, 0.2);
+
+  /* Borders */
+  --border-primary: #27272A;
+  --border-secondary: #3F3F46;
+  --border-hover: #52525B;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Base styles ─── */
+html, body {
+  height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Scrollbars ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ─── Typewriter cursor ─── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typewriter-cursor::after {
+  content: '|';
+  display: inline-block;
+  animation: blink 1s step-end infinite;
+  color: var(--accent-primary);
+  margin-left: 1px;
+}
+
+.typewriter-cursor-done::after {
+  display: none;
+}
+
+/* ─── Risk pulse animation ─── */
+@keyframes risk-pulse {
+  0% { box-shadow: 0 0 0 0 var(--risk-critical-border); }
+  50% { box-shadow: 0 0 0 4px var(--risk-critical-border); }
+  100% { box-shadow: 0 0 0 0 var(--risk-critical-border); }
+}
+
+.risk-pulse-critical {
+  animation: risk-pulse 600ms ease-out;
+}
+
+/* ─── Utility classes ─── */
+.glass {
+  background: rgba(20, 20, 23, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

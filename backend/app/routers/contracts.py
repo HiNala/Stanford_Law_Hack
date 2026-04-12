@@ -1,14 +1,17 @@
 """Contract upload, listing, and retrieval routes."""
 
+import logging
 import os
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db, async_session_factory
 from app.middleware.auth import get_current_user
+from app.models.contract import Contract
 from app.models.user import User
 from app.schemas.contract import ContractResponse, ContractListResponse, ContractUploadResponse
 from app.services.contract_service import (
@@ -19,17 +22,37 @@ from app.services.contract_service import (
     get_contract_clauses,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/contracts", tags=["contracts"])
 
 
 async def _run_pipeline(contract_id: uuid.UUID) -> None:
     """Background task to run the full analysis pipeline."""
+    pipeline_error: Exception | None = None
+
+    # Phase 1: run the analysis pipeline
     async with async_session_factory() as db:
         try:
             await process_contract(db, contract_id)
             await db.commit()
-        except Exception:
+        except Exception as e:
+            pipeline_error = e
             await db.rollback()
+
+    # Phase 2: if pipeline failed, persist the error status in a clean transaction
+    if pipeline_error is not None:
+        logger.error(f"Pipeline failed for {contract_id}: {pipeline_error}")
+        async with async_session_factory() as db:
+            try:
+                result = await db.execute(select(Contract).where(Contract.id == contract_id))
+                contract = result.scalar_one_or_none()
+                if contract:
+                    contract.status = "error"
+                    contract.metadata_ = {"error": str(pipeline_error)[:500]}
+                await db.commit()
+            except Exception as e2:
+                logger.error(f"Failed to save error state for {contract_id}: {e2}")
+                await db.rollback()
 
 
 @router.post("/upload", response_model=ContractUploadResponse, status_code=status.HTTP_201_CREATED)

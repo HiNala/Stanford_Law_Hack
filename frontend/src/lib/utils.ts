@@ -16,35 +16,57 @@ export function formatRiskPercent(score: number | null | undefined): string {
   return `${Math.round(score * 100)}%`;
 }
 
-/** Map a risk level string to a Tailwind color class. */
+/** Map a risk level string to dark-theme badge color classes. */
 export function riskColor(level: string | null | undefined): string {
-  switch (level) {
+  switch (level?.toLowerCase()) {
     case "critical":
-      return "text-red-600 bg-red-50 border-red-200";
+      return "text-red-400 bg-red-500/10 border-red-500/30";
     case "high":
-      return "text-orange-600 bg-orange-50 border-orange-200";
+      return "text-orange-400 bg-orange-500/10 border-orange-500/30";
     case "medium":
-      return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      return "text-yellow-400 bg-yellow-500/10 border-yellow-500/25";
     case "low":
-      return "text-green-600 bg-green-50 border-green-200";
+      return "text-green-400 bg-green-500/8 border-green-500/20";
     default:
-      return "text-gray-500 bg-gray-50 border-gray-200";
+      return "text-zinc-400 bg-zinc-500/10 border-zinc-500/20";
   }
 }
 
-/** Map risk level to heatmap highlight color for the document viewer. */
+/** Map risk level to a dot color class. */
+export function riskDotColor(level: string | null | undefined): string {
+  switch (level?.toLowerCase()) {
+    case "critical": return "bg-red-500";
+    case "high": return "bg-orange-500";
+    case "medium": return "bg-yellow-500";
+    case "low": return "bg-green-500";
+    default: return "bg-zinc-500";
+  }
+}
+
+/** Map risk level to heatmap highlight color classes for the document viewer. */
 export function riskHighlightColor(level: string | null | undefined): string {
-  switch (level) {
+  switch (level?.toLowerCase()) {
     case "critical":
-      return "bg-red-200/60";
+      return "bg-red-500/10 border-l-red-500";
     case "high":
-      return "bg-orange-200/60";
+      return "bg-orange-500/10 border-l-orange-500";
     case "medium":
-      return "bg-yellow-200/60";
+      return "bg-yellow-500/8 border-l-yellow-500";
     case "low":
-      return "bg-green-100/40";
+      return "bg-green-500/5 border-l-green-500";
     default:
-      return "";
+      return "border-l-zinc-700";
+  }
+}
+
+/** Return a raw CSS hex color for a risk level. */
+export function riskHexColor(level: string | null | undefined): string {
+  switch (level?.toLowerCase()) {
+    case "critical": return "#EF4444";
+    case "high": return "#F97316";
+    case "medium": return "#EAB308";
+    case "low": return "#22C55E";
+    default: return "#71717A";
   }
 }
 
@@ -70,3 +92,6 @@ export function formatDate(dateStr: string | null | undefined): string {
     day: "numeric",
   });
 }
+
+/** Sleep helper for delays */
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
