@@ -702,7 +702,7 @@ function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
           className="h-full rounded-full"
           style={{
             width: `${barWidth}%`,
-            background: `linear-gradient(90deg, ${riskHexColor(level)}aa, ${riskHexColor(level)})`,
+            background: riskHexColor(level),
             transition: "none",
           }}
         />
@@ -805,7 +805,7 @@ function MiniRiskBar({ score, level }: { score: number | null; level: string | n
         className="h-full rounded-full"
         style={{
           width: `${width}%`,
-          background: `linear-gradient(90deg, ${riskHexColor(level)}99, ${riskHexColor(level)})`,
+          background: riskHexColor(level),
           transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
         }}
       />
@@ -942,7 +942,7 @@ function ClauseDetail({
           </div>
           {clause.metadata_.legal_grounding.citations.slice(0, 2).map((cit, i) => (
             <div key={i} className="space-y-0.5">
-              <p className="text-xs font-semibold font-mono" style={{ color: "var(--accent-primary)" }}>
+              <p className="text-xs font-semibold" style={{ color: "var(--accent-primary)" }}>
                 📜 {cit.citation}
               </p>
               <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
@@ -1040,13 +1040,13 @@ function ClauseList({
             }}
             onMouseEnter={(e) => {
               if (onClauseClick) {
-                (e.currentTarget as HTMLElement).style.borderColor = riskHexColor(c.risk_level);
-                (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 1px ${riskHexColor(c.risk_level)}40`;
+                (e.currentTarget as HTMLElement).style.borderColor = `${riskHexColor(c.risk_level)}60`;
+                (e.currentTarget as HTMLElement).style.background = `${riskHexColor(c.risk_level)}0c`;
               }
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = `${riskHexColor(c.risk_level)}30`;
-              (e.currentTarget as HTMLElement).style.boxShadow = "none";
+              (e.currentTarget as HTMLElement).style.background = "var(--bg-secondary)";
             }}
           >
             <div className="flex items-center gap-2 mb-1.5">
@@ -1306,15 +1306,12 @@ function ChatPanel({
 function EmptyChat({ onQuestion }: { onQuestion: (q: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-8">
-      <div
-        className="flex h-12 w-12 items-center justify-center rounded-2xl mb-4"
-        style={{ background: "var(--accent-muted)" }}
-      >
-        <Shield className="h-6 w-6" style={{ color: "var(--accent-primary)" }} />
+      <div className="flex items-center gap-2 mb-1">
+        <Shield className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+          Ask me anything about this contract
+        </p>
       </div>
-      <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-        Ask me anything about this contract
-      </p>
       <p className="text-xs mb-5 text-center max-w-[240px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
         I&apos;ve read every clause. Ask about risk, obligations, or specific provisions.
       </p>

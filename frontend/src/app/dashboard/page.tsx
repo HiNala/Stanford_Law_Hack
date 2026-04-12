@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/");
+      router.push("/login");
       return;
     }
     loadAll();
@@ -132,7 +132,7 @@ export default function DashboardPage() {
         {/* Title + Upload CTA */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            <h1 className="text-2xl font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
               Contract Portfolio
             </h1>
             <p className="mt-1 text-sm" style={{ color: "var(--text-tertiary)" }}>
@@ -213,12 +213,11 @@ export default function DashboardPage() {
                 onClick={() => setRiskFilter(riskFilter === level ? "all" : level)}
                 className={cn(
                   "rounded-xl border p-3 text-left transition-all",
-                  riskFilter === level ? "ring-1" : "hover:border-zinc-600"
+                  riskFilter === level ? "" : "hover:border-zinc-600"
                 )}
                 style={{
-                  background: riskFilter === level ? `${riskHexColor(level)}15` : "var(--bg-secondary)",
-                  borderColor: riskFilter === level ? riskHexColor(level) : "var(--border-primary)",
-                  boxShadow: riskFilter === level ? `0 0 0 1px ${riskHexColor(level)}` : "none",
+                  background: riskFilter === level ? `${riskHexColor(level)}12` : "var(--bg-secondary)",
+                  borderColor: riskFilter === level ? `${riskHexColor(level)}70` : "var(--border-primary)",
                 }}
               >
                 <p className="text-2xl font-bold" style={{ color: riskHexColor(level) }}>
@@ -239,7 +238,7 @@ export default function DashboardPage() {
             style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
           >
             <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+              <Lightbulb className="h-3.5 w-3.5" style={{ color: "var(--accent-primary)" }} />
               <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Portfolio Intelligence</h3>
             </div>
             <div className="space-y-1.5">
@@ -340,19 +339,11 @@ export default function DashboardPage() {
         {contracts.some((c) => c.status === "analyzed") && (
           <div className="mt-12">
             <div className="flex items-center gap-2 mb-4">
-              <div
-                className="flex h-7 w-7 items-center justify-center rounded-lg"
-                style={{ background: "rgba(59,130,246,0.12)", color: "var(--accent-primary)" }}
-              >
-                <Zap className="h-4 w-4" />
-              </div>
+              <Zap className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
               <div>
                 <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
                   Search Clause Library
                 </h2>
-                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                  Semantic search across all your contracts using natural language
-                </p>
               </div>
             </div>
 
@@ -497,35 +488,16 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.6)" : "var(--border-secondary)";
-        el.style.boxShadow = contract.status === "error" ? "0 4px 12px rgba(239,68,68,0.15)" : "var(--shadow-md)";
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
-        el.style.boxShadow = "none";
       }}
     >
-      {/* Top row: icon + status + delete */}
+      {/* Top row: status + delete */}
       <div className="flex items-start justify-between">
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-lg"
-          style={{
-            background: contract.status === "analyzed" && contract.risk_level
-              ? `${riskHexColor(contract.risk_level)}18`
-              : "var(--bg-tertiary)",
-          }}
-        >
-          <FileText
-            className="h-4 w-4"
-            style={{
-              color: contract.status === "analyzed" && contract.risk_level
-                ? riskHexColor(contract.risk_level)
-                : "var(--text-secondary)",
-            }}
-          />
-        </div>
+        <StatusBadge status={contract.status} />
         <div className="flex items-center gap-1.5">
-          <StatusBadge status={contract.status} />
           {contract.status !== "processing" && (
             confirmDelete ? (
               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
@@ -695,15 +667,12 @@ function EmptyState({
       className="flex flex-col items-center justify-center rounded-2xl border py-20"
       style={{ borderColor: "var(--border-primary)", borderStyle: "dashed" }}
     >
-      <div
-        className="flex h-16 w-16 items-center justify-center rounded-2xl"
-        style={{ background: "var(--bg-tertiary)" }}
-      >
-        <FileText className="h-8 w-8" style={{ color: "var(--text-tertiary)" }} />
+      <div className="flex items-center gap-2 mb-2">
+        <FileText className="h-5 w-5" style={{ color: "var(--text-tertiary)" }} />
+        <h3 className="text-lg font-semibold font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+          No contracts yet
+        </h3>
       </div>
-      <h3 className="mt-4 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
-        No contracts yet
-      </h3>
       <p className="mt-1 text-sm" style={{ color: "var(--text-tertiary)" }}>
         Upload your first contract to see AI-powered risk analysis.
       </p>
@@ -802,7 +771,7 @@ function StatCard({
 
   return (
     <div
-      className="rounded-xl border p-4 flex items-center gap-3"
+      className="rounded-xl border p-4"
       style={{
         background: "var(--bg-secondary)",
         borderColor: "var(--border-primary)",
@@ -811,16 +780,11 @@ function StatCard({
         transition: "opacity 0.35s ease, transform 0.35s ease",
       }}
     >
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-        style={{ background: `${accent}18`, color: accent }}
-      >
-        {icon}
+      <div className="flex items-center gap-1.5 mb-1">
+        <span style={{ color: accent }}>{icon}</span>
+        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</p>
       </div>
-      <div className="min-w-0">
-        <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{label}</p>
-        <p className="text-lg font-bold leading-tight" style={{ color: accent }}>{value}</p>
-      </div>
+      <p className="text-xl font-bold leading-tight" style={{ color: accent }}>{value}</p>
     </div>
   );
 }

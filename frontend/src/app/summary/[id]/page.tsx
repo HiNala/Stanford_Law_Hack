@@ -121,7 +121,7 @@ export default function SummaryPage({
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div>
-              <h1 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              <h1 className="text-sm font-semibold font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
                 Due Diligence Report
               </h1>
               <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
@@ -177,11 +177,11 @@ export default function SummaryPage({
         {/* Risk distribution — visual bar chart + counts */}
         {summary && <RiskDistributionChart summary={summary} />}
 
-        {/* Contract metadata card */}
+        {/* Contract metadata — flat ruled row, no card wrapper */}
         {contract && (
           <div
-            className="rounded-xl border p-5 grid grid-cols-2 gap-4 sm:grid-cols-4"
-            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+            className="grid grid-cols-2 sm:grid-cols-4"
+            style={{ borderTop: "1px solid var(--border-primary)", borderBottom: "1px solid var(--border-primary)" }}
           >
             {[
               { label: "Contract Type", value: contract.contract_type || "Unknown" },
@@ -192,15 +192,14 @@ export default function SummaryPage({
                 value: contract.risk_level?.toUpperCase() || "N/A",
                 color: contract.risk_level ? riskHexColor(contract.risk_level) : undefined,
               },
-            ].map(({ label, value, color }) => (
-              <div key={label}>
-                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</p>
-                <p
-                  className="text-sm font-semibold mt-0.5"
-                  style={{ color: color ?? "var(--text-primary)" }}
-                >
-                  {value}
-                </p>
+            ].map(({ label, value, color }, i) => (
+              <div
+                key={label}
+                className="py-4 px-5"
+                style={{ borderRight: i < 3 ? "1px solid var(--border-primary)" : undefined }}
+              >
+                <p className="text-xs mb-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+                <p className="text-sm font-semibold" style={{ color: color ?? "var(--text-primary)" }}>{value}</p>
               </div>
             ))}
           </div>
@@ -209,18 +208,15 @@ export default function SummaryPage({
         {/* Report content or CTA */}
         {!report ? (
           <div
-            className="flex flex-col items-center justify-center rounded-2xl border py-20"
-            style={{ borderColor: "var(--border-primary)", borderStyle: "dashed" }}
+            className="flex flex-col items-center justify-center py-20"
+            style={{ borderTop: "1px solid var(--border-primary)", borderBottom: "1px solid var(--border-primary)" }}
           >
-            <div
-              className="flex h-14 w-14 items-center justify-center rounded-2xl mb-4"
-              style={{ background: "var(--bg-tertiary)" }}
-            >
-              <TrendingUp className="h-7 w-7" style={{ color: "var(--text-tertiary)" }} />
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-5 w-5" style={{ color: "var(--text-tertiary)" }} />
+              <h3 className="text-lg font-semibold font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+                Generate due diligence report
+              </h3>
             </div>
-            <h3 className="text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-              Generate due diligence report
-            </h3>
             <p className="text-sm mb-6 text-center max-w-xs" style={{ color: "var(--text-tertiary)" }}>
               AI will synthesize all findings into a professional memo with critical findings and recommended actions.
             </p>

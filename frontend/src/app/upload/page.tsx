@@ -31,7 +31,7 @@ export default function UploadPage() {
 
   useEffect(() => { hydrate(); }, [hydrate]);
   useEffect(() => {
-    if (!isAuthenticated) router.push("/");
+    if (!isAuthenticated) router.push("/login");
   }, [isAuthenticated, router]);
 
   const onDrop = useCallback((accepted: File[], rejected: { file: File; errors: readonly { message: string }[] }[]) => {
@@ -156,22 +156,19 @@ export default function UploadPage() {
           }}
         >
           <input {...getInputProps()} />
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl mb-4"
-            style={{ background: isDragActive ? "rgba(59,130,246,0.15)" : "var(--bg-tertiary)" }}
-          >
+          <div className="flex items-center gap-3 mb-2">
             <Upload
-              className="h-6 w-6"
+              className="h-5 w-5 shrink-0"
               style={{ color: isDragActive ? "var(--accent-primary)" : "var(--text-tertiary)" }}
             />
+            <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+              {isDragReject
+                ? "Unsupported file type"
+                : isDragActive
+                ? "Drop to analyze"
+                : "Drag & drop contracts here"}
+            </h3>
           </div>
-          <h3 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
-            {isDragReject
-              ? "Unsupported file type"
-              : isDragActive
-              ? "Drop to analyze"
-              : "Drag & drop contracts here"}
-          </h3>
           <p className="mt-1.5 text-sm" style={{ color: "var(--text-tertiary)" }}>
             {isDragReject
               ? "Only PDF, DOCX, or TXT files are supported"
@@ -269,27 +266,22 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* Tips */}
+        {/* Supported formats — simple list, no cards */}
         {files.length === 0 && (
-          <div className="mt-8 grid grid-cols-3 gap-3">
-            {[
-              { title: "NDAs", desc: "Non-disclosure agreements analyzed for risky perpetual clauses" },
-              { title: "MSAs", desc: "Master service agreements checked for liability and termination" },
-              { title: "Leases", desc: "Commercial leases reviewed for unusual obligations" },
-            ].map((tip) => (
-              <div
-                key={tip.title}
-                className="rounded-xl border p-4"
-                style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
-              >
-                <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                  {tip.title}
-                </p>
-                <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-                  {tip.desc}
-                </p>
-              </div>
-            ))}
+          <div className="mt-8" style={{ borderTop: "1px solid var(--border-primary)", paddingTop: "1.5rem" }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-tertiary)" }}>Works great with</p>
+            <div className="grid grid-cols-3 gap-6">
+              {[
+                { title: "NDAs", desc: "Perpetual terms, broad scope, missing carve-outs" },
+                { title: "MSAs", desc: "Liability caps, indemnification, termination triggers" },
+                { title: "Leases", desc: "Hidden obligations, renewal traps, assignment clauses" },
+              ].map((tip) => (
+                <div key={tip.title}>
+                  <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>{tip.title}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)", maxWidth: "28ch" }}>{tip.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>

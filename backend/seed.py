@@ -26,6 +26,17 @@ DEMO_PASSWORD = "demo1234"
 DEMO_NAME = "Demo Attorney"
 
 
+def _read_sample(filename: str) -> str | None:
+    """Read a sample contract file from the sample_contracts directory."""
+    here = os.path.dirname(__file__)
+    path = os.path.join(here, "sample_contracts", filename)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+
 async def seed():  # noqa: C901
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -83,6 +94,7 @@ async def seed():  # noqa: C901
         print(f"• Adding {len(missing)} missing contract(s): {', '.join(missing)}")
 
         # ── Contract 1: Mutual NDA ─────────────────────────────────────────────
+        _nda_text = _read_sample("techcorp_mutual_nda.txt")
         nda = Contract(
             user_id=user.id,
             filename="demo_nda_acme.txt",
@@ -99,6 +111,7 @@ async def seed():  # noqa: C901
             overall_risk_score=0.48,
             risk_level="medium",
             status="analyzed",
+            raw_text=_nda_text,
             summary=(
                 "This Mutual NDA between Acme Technologies and Vertex Legal Solutions governs "
                 "the exchange of confidential information for an AI-legal workflow integration "
@@ -289,6 +302,80 @@ async def seed():  # noqa: C901
                     "a minimal procedural brake on abuse of the injunction right."
                 ),
             },
+            {
+                "clause_index": 5,
+                "section_heading": "Section 4 — Exclusions from Confidentiality",
+                "clause_text": (
+                    "The obligations of confidentiality set forth in this Agreement shall not "
+                    "apply to information that: (a) is or becomes publicly available through no "
+                    "fault of the receiving Party; (b) was already known to the receiving Party "
+                    "at the time of disclosure; (c) is independently developed by the receiving "
+                    "Party without use of or reference to the Confidential Information; or "
+                    "(d) is disclosed to the receiving Party by a third party without restriction "
+                    "and without breach of any obligation of confidentiality."
+                ),
+                "clause_type": "confidentiality",
+                "risk_score": 0.08,
+                "risk_level": "low",
+                "risk_category": "confidentiality",
+                "explanation": (
+                    "Standard four-part exclusion carve-out. These are the market-standard "
+                    "exclusions present in virtually every commercial NDA. Each carve-out is "
+                    "narrow and well-defined, and none creates unusual risk for either party.\n\n"
+                    "**Market context:** These exclusions are required for a commercially "
+                    "reasonable NDA — removing them would make confidentiality obligations "
+                    "unreasonably broad. Acceptable as written."
+                ),
+                "suggestion": None,
+            },
+            {
+                "clause_index": 6,
+                "section_heading": "Section 8 — Governing Law",
+                "clause_text": (
+                    "This Agreement shall be governed by and construed in accordance with the "
+                    "laws of the State of California, without regard to its conflict of laws "
+                    "provisions. Any dispute not resolved by negotiation shall be submitted to "
+                    "binding arbitration in San Francisco, California under the rules of the "
+                    "American Arbitration Association."
+                ),
+                "clause_type": "governing_law",
+                "risk_score": 0.15,
+                "risk_level": "low",
+                "risk_category": "governing_law",
+                "explanation": (
+                    "California governing law is standard and not unusual for Silicon Valley "
+                    "counterparties. The arbitration clause is AAA-standard. No material risk "
+                    "in the choice of law provision itself.\n\n"
+                    "**Market context:** California courts are sophisticated and well-suited "
+                    "for technology IP disputes. Note however that California's choice of law "
+                    "means the non-compete and IP assignment provisions in this NDA are subject "
+                    "to heightened California scrutiny under Cal. Bus. & Prof. Code § 16600."
+                ),
+                "suggestion": None,
+            },
+            {
+                "clause_index": 7,
+                "section_heading": "Section 9 — Term",
+                "clause_text": (
+                    "This Agreement shall remain in effect for a period of three (3) years from "
+                    "the Effective Date unless earlier terminated by either Party upon thirty "
+                    "(30) days' written notice. Either Party may terminate this Agreement at any "
+                    "time upon thirty (30) days' prior written notice to the other Party."
+                ),
+                "clause_type": "termination_convenience",
+                "risk_score": 0.12,
+                "risk_level": "low",
+                "risk_category": "termination",
+                "explanation": (
+                    "Three-year NDA term with 30-day termination for convenience. Reasonable "
+                    "duration for an exploration NDA. The 30-day notice period for convenience "
+                    "termination is acceptable and standard.\n\n"
+                    "**Market context:** NDAs for business exploration typically run 1-3 years. "
+                    "This term is within normal range. Note that Section 6.2's 5-year survival "
+                    "period extends obligations well beyond the agreement's base term."
+                ),
+                "suggestion": None,
+            },
         ]
 
         def _enrich(clauses_list):
@@ -305,6 +392,7 @@ async def seed():  # noqa: C901
                 db.add(Clause(contract_id=nda.id, **c))
 
         # ── Contract 2: Master SaaS Agreement with high risk ──────────────────
+        _saas_text = _read_sample("cloudsaas_subscription.txt")
         saas = Contract(
             user_id=user.id,
             filename="demo_saas_techco.txt",
@@ -321,6 +409,7 @@ async def seed():  # noqa: C901
             overall_risk_score=0.79,
             risk_level="high",
             status="analyzed",
+            raw_text=_saas_text,
             summary=(
                 "This Master SaaS Agreement presents significant commercial risk and should not "
                 "be executed without material revisions to at least three provisions. The "
@@ -592,6 +681,112 @@ async def seed():  # noqa: C901
                     "30-day notification of additions."
                 ),
             },
+            {
+                "clause_index": 5,
+                "section_heading": "Section 5 — Ownership of Work Product",
+                "clause_text": (
+                    "All customizations, configurations, integrations, and derivative works "
+                    "created by TechCo in connection with Enterprise Client's deployment shall "
+                    "be the sole and exclusive property of TechCo. Enterprise Client shall have "
+                    "no ownership interest in any work product created under this Agreement, "
+                    "including any custom modules or configurations paid for by Enterprise Client."
+                ),
+                "clause_type": "ip_ownership",
+                "risk_score": 0.71,
+                "risk_level": "high",
+                "risk_category": "ip_assignment",
+                "explanation": (
+                    "TechCo retains ownership of all customizations even those **paid for by "
+                    "Enterprise Client**. This means custom modules, workflow automations, and "
+                    "integrations built specifically for Enterprise Client's needs belong to "
+                    "TechCo and can be resold to competitors.\n\n"
+                    "**Market context:** SaaS customizations paid for by the customer are "
+                    "increasingly treated as work-for-hire in modern enterprise agreements, "
+                    "with the customer owning their configurations or at minimum receiving an "
+                    "irrevocable perpetual license to use them independently of the SaaS platform.\n\n"
+                    "**If triggered:** If Enterprise Client migrates away from TechCo, they "
+                    "lose all custom integrations they paid to build. Vendor lock-in is the "
+                    "intended effect of this provision."
+                ),
+                "suggestion": (
+                    "Add: \"Notwithstanding the foregoing, all customizations and configurations "
+                    "created specifically to Enterprise Client's specifications and paid for by "
+                    "Enterprise Client shall be subject to a perpetual, irrevocable, royalty-free "
+                    "license to Enterprise Client to use, modify, and operate such customizations "
+                    "in connection with any software platform, independent of the Service.\""
+                ),
+            },
+            {
+                "clause_index": 6,
+                "section_heading": "Section 4 — SLA and Uptime",
+                "clause_text": (
+                    "TechCo will use commercially reasonable efforts to maintain Service "
+                    "availability. TechCo provides no uptime guarantee or service level "
+                    "commitments. Enterprise Client acknowledges that scheduled and unscheduled "
+                    "maintenance may occur at any time. TechCo shall have no liability for "
+                    "any service outages, regardless of duration or cause."
+                ),
+                "clause_type": "sla",
+                "risk_score": 0.67,
+                "risk_level": "high",
+                "risk_category": "service_level",
+                "explanation": (
+                    "No SLA, no uptime guarantee, no credit mechanism, no liability for "
+                    "outages. \"Commercially reasonable efforts\" is the weakest possible "
+                    "contractual commitment — courts have found this standard satisfied by "
+                    "almost any non-negligent conduct.\n\n"
+                    "**Market context:** Enterprise SaaS standard is 99.9% uptime SLA with "
+                    "service credits (typically 10-30% of monthly fees per hour of excess "
+                    "downtime). Any SaaS agreement without an SLA for an enterprise customer "
+                    "is a negotiating failure.\n\n"
+                    "**If triggered:** A week-long outage affecting business operations yields "
+                    "zero contractual remedy. Combined with the $1,000 liability cap, practical "
+                    "recovery is zero regardless of actual damages."
+                ),
+                "suggestion": (
+                    "Require a standalone SLA with: (a) 99.9% monthly uptime commitment; "
+                    "(b) automatic service credits of 10% of monthly fees per each hour below "
+                    "SLA, up to 100% of monthly fees; (c) definition of 'downtime' excluding "
+                    "only scheduled maintenance with 5 days' advance notice; "
+                    "(d) termination right if SLA is breached for 2 consecutive months."
+                ),
+            },
+            {
+                "clause_index": 7,
+                "section_heading": "Section 16 — Assignment and Change of Control",
+                "clause_text": (
+                    "TechCo may assign this Agreement, in whole or in part, to any successor "
+                    "entity in connection with a merger, acquisition, or sale of all or "
+                    "substantially all of TechCo's assets, without Enterprise Client's prior "
+                    "written consent. Enterprise Client may not assign this Agreement without "
+                    "TechCo's prior written consent, which TechCo may withhold in its sole "
+                    "discretion. Any purported assignment in violation of this section is void."
+                ),
+                "clause_type": "assignment",
+                "risk_score": 0.55,
+                "risk_level": "medium",
+                "risk_category": "assignment",
+                "explanation": (
+                    "One-sided assignment: TechCo can freely assign upon M&A but Enterprise "
+                    "Client cannot without TechCo's consent. This means if TechCo is acquired "
+                    "by a competitor, Enterprise Client is suddenly in a contractual relationship "
+                    "with that competitor — with no exit right.\n\n"
+                    "**Market context:** Market standard in enterprise SaaS is either mutual "
+                    "assignment rights upon M&A, or a matching right: if TechCo can assign "
+                    "without consent, so can Enterprise Client.\n\n"
+                    "**If triggered:** TechCo could be acquired by a direct competitor of "
+                    "Enterprise Client. All contract data, customizations, and SLA history "
+                    "would pass to the competitor with no right to exit."
+                ),
+                "suggestion": (
+                    "Add parity: \"Enterprise Client may also assign this Agreement without "
+                    "consent in connection with its own merger, acquisition, or restructuring "
+                    "to any entity that agrees in writing to assume all obligations hereunder.\" "
+                    "Also add a change-of-control exit right: \"If TechCo is acquired by a "
+                    "direct competitor of Enterprise Client, Enterprise Client may terminate "
+                    "within 30 days without penalty.\""
+                ),
+            },
         ]
 
         _enrich(saas_clauses)
@@ -600,6 +795,7 @@ async def seed():  # noqa: C901
                 db.add(Clause(contract_id=saas.id, **c))
 
         # ── Contract 3: Vendor MSA — CRITICAL risk (the demo star) ────────────
+        _msa_text = _read_sample("acme_vendor_msa.txt")
         msa = Contract(
             user_id=user.id,
             filename="demo_vendor_msa.txt",
@@ -616,6 +812,7 @@ async def seed():  # noqa: C901
             overall_risk_score=0.91,
             risk_level="critical",
             status="analyzed",
+            raw_text=_msa_text,
             summary=(
                 "This Vendor MSA presents critical-level risk and should not proceed to execution "
                 "without senior partner review and material restructuring. Four provisions require "
@@ -920,6 +1117,113 @@ async def seed():  # noqa: C901
                 ),
                 "suggestion": None,
             },
+            {
+                "clause_index": 6,
+                "section_heading": "Section 5 — Fees and Rate Escalation",
+                "clause_text": (
+                    "GlobalSupply Partners shall invoice Meridian Holdings monthly for services "
+                    "rendered. GlobalSupply may increase its rates upon thirty (30) days' written "
+                    "notice. Rate increases shall be accepted by Meridian's continued use of the "
+                    "services following the notice period. In the event of a fee dispute, Meridian "
+                    "must continue paying all invoiced amounts pending resolution, and may recover "
+                    "any disputed amounts only after arbitration in GlobalSupply's favor."
+                ),
+                "clause_type": "payment_terms",
+                "risk_score": 0.73,
+                "risk_level": "high",
+                "risk_category": "payment",
+                "explanation": (
+                    "Two compounding risks: (1) GlobalSupply can raise rates unilaterally with "
+                    "only 30 days' notice, with no cap on the increase amount; (2) the fee "
+                    "dispute mechanism is explicitly one-sided — Meridian must pay disputed "
+                    "amounts upfront and can only recover after a full arbitration proceeding.\n\n"
+                    "**Market context:** Market standard for professional services MSAs is "
+                    "either fixed rates for the contract term or CPI-indexed increases with "
+                    "a cap (typically 3-5%). Dispute mechanisms should allow withholding of "
+                    "disputed amounts pending resolution, not require payment in advance.\n\n"
+                    "**If triggered:** GlobalSupply could double rates mid-engagement. "
+                    "Meridian must pay or risk breach, with no practical recourse until "
+                    "arbitration resolves months later."
+                ),
+                "suggestion": (
+                    "Add: \"Rate increases shall not exceed the lesser of (a) five percent (5%) "
+                    "above the prior year's rates or (b) the CPI increase for the prior 12 months. "
+                    "Meridian may withhold bona fide disputed amounts up to 20% of any invoice "
+                    "pending written dispute resolution, without being in breach of this Agreement.\""
+                ),
+            },
+            {
+                "clause_index": 7,
+                "section_heading": "Section 8.2 — Limitation of Liability",
+                "clause_text": (
+                    "GlobalSupply Partners' total liability to Meridian Holdings under this "
+                    "Agreement for any and all causes of action shall not exceed the fees paid "
+                    "by Meridian to GlobalSupply in the thirty (30) days immediately preceding "
+                    "the event giving rise to the claim. GlobalSupply shall have no liability "
+                    "for any indirect, consequential, or special damages regardless of cause."
+                ),
+                "clause_type": "limitation_of_liability",
+                "risk_score": 0.68,
+                "risk_level": "high",
+                "risk_category": "liability",
+                "explanation": (
+                    "GlobalSupply's liability is capped at 30 days of fees — approximately "
+                    "1/12th of annual engagement value. On a $2M/year supply chain management "
+                    "contract, GlobalSupply's exposure for a catastrophic supply chain failure "
+                    "would be approximately $167K, while Meridian could face millions in "
+                    "business disruption. Combined with the unlimited indemnification obligation "
+                    "flowing the other direction, the liability asymmetry is extreme.\n\n"
+                    "**Market context:** Standard vendor MSA caps are 12 months of fees paid "
+                    "in the prior year, with carve-outs for death/personal injury, gross "
+                    "negligence, willful misconduct, IP infringement, and confidentiality "
+                    "breaches. 30 days is significantly below market.\n\n"
+                    "**If triggered:** A major supply chain disruption caused by GlobalSupply's "
+                    "negligence would yield a recovery cap of ~1/12 the damages. Meridian is "
+                    "essentially self-insured against vendor performance failures."
+                ),
+                "suggestion": (
+                    "Counter-propose: \"Each party's cumulative liability shall not exceed the "
+                    "aggregate fees paid in the twelve (12) months preceding the claim. Carve out "
+                    "from this cap: (a) indemnification obligations; (b) confidentiality breaches; "
+                    "(c) gross negligence or willful misconduct; (d) personal injury or property "
+                    "damage caused by the party's own personnel.\" This brings the cap to market "
+                    "standard and maintains appropriate carve-outs."
+                ),
+            },
+            {
+                "clause_index": 8,
+                "section_heading": "Section 3.1 — Termination Notice",
+                "clause_text": (
+                    "Either party may terminate this Agreement for convenience upon sixty (60) "
+                    "days' prior written notice. Notwithstanding the foregoing, upon any "
+                    "termination by Meridian for convenience, Meridian shall pay GlobalSupply "
+                    "a termination fee equal to six (6) months of average monthly fees "
+                    "calculated over the preceding twelve (12) months."
+                ),
+                "clause_type": "termination_convenience",
+                "risk_score": 0.62,
+                "risk_level": "high",
+                "risk_category": "termination",
+                "explanation": (
+                    "60-day notice is within market range, but the six-month termination fee "
+                    "is significantly above market standard for a convenience termination. "
+                    "On a $2M/year contract, this represents approximately $1M in termination "
+                    "penalties — effectively creating a 6-month lock-in on top of the notice period.\n\n"
+                    "**Market context:** Termination fees in professional services MSAs are "
+                    "typically 30-60 days of fees, or none at all with adequate notice. Six months "
+                    "is an aggressive liquidated damages provision that may be challenged as a "
+                    "penalty rather than a genuine pre-estimate of damages.\n\n"
+                    "**If triggered during M&A:** An acquirer inheriting this contract who "
+                    "wants to consolidate vendors faces a $1M+ exit cost just to terminate."
+                ),
+                "suggestion": (
+                    "Propose: \"Either party may terminate for convenience upon ninety (90) days' "
+                    "written notice without payment of any termination fee.\" If GlobalSupply "
+                    "insists on a fee, cap it at 30 days of monthly fees (not 6 months), and "
+                    "add a carve-out: no termination fee applies if termination occurs within "
+                    "90 days of a change of control or if GlobalSupply is in material breach."
+                ),
+            },
         ]
 
         _enrich(msa_clauses)
@@ -928,6 +1232,7 @@ async def seed():  # noqa: C901
                 db.add(Clause(contract_id=msa.id, **c))
 
         # ── Contract 4: Executive Employment Agreement — LOW risk (green contrast) ──
+        _emp_text = _read_sample("executive_employment_agreement.txt")
         emp = Contract(
             user_id=user.id,
             filename="demo_employment_pinnacle.txt",
@@ -944,6 +1249,7 @@ async def seed():  # noqa: C901
             overall_risk_score=0.32,
             risk_level="low",
             status="analyzed",
+            raw_text=_emp_text,
             summary=(
                 "This Executive Employment Agreement is generally well-structured and largely "
                 "market-standard for a VP-level hire at a growth-stage technology company. "
