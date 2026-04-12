@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb } from "lucide-react";
+import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb } from "lucide-react";
 import { contractsApi, statsApi, searchApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
