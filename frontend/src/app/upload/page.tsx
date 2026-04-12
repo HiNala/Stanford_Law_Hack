@@ -260,7 +260,7 @@ function FileRow({
       }}
     >
       <div className="flex items-center gap-3 min-w-0">
-        <FileText className="h-4 w-4 flex-shrink-0" style={{ color: "var(--text-secondary)" }} />
+        <FileText className="h-4 w-4 shrink-0" style={{ color: "var(--text-secondary)" }} />
         <div className="min-w-0">
           <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
             {file.name}
@@ -271,7 +271,7 @@ function FileRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+      <div className="flex items-center gap-2 shrink-0 ml-3">
         {status === "pending" && (
           <button
             onClick={onRemove}

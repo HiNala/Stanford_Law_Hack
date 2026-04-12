@@ -43,4 +43,11 @@ class Clause(Base):
 
     __table_args__ = (
         Index("idx_clauses_contract_id", "contract_id"),
+        Index(
+            "idx_clauses_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )

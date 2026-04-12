@@ -1,14 +1,14 @@
 /**
  * API client for communicating with the ClauseGuard backend.
+ *
+ * All requests go to /api/* which Next.js rewrites to the backend.
+ * This eliminates any CORS issues for both regular requests and SSE streams.
  */
 
 import axios from "axios";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: "/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -59,7 +59,7 @@ export const analysisApi = {
     api.post(`/analysis/${contractId}/report`),
 };
 
-// Chat (SSE streaming — uses fetch, not axios)
+// Chat (SSE streaming — uses fetch for the stream, axios for history)
 export const chatApi = {
   send: async function* (contractId: string, message: string) {
     const token =
@@ -67,17 +67,14 @@ export const chatApi = {
         ? localStorage.getItem("clauseguard_token")
         : null;
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/chat/${contractId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ message, contract_id: contractId }),
-      }
-    );
+    const response = await fetch(`/api/chat/${contractId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ message, contract_id: contractId }),
+    });
 
     if (!response.ok || !response.body) {
       throw new Error("Chat stream failed");

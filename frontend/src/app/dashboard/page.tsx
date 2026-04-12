@@ -170,7 +170,7 @@ export default function DashboardPage() {
               className="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5"
               style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
             >
-              <Search className="h-4 w-4 flex-shrink-0" style={{ color: "var(--text-tertiary)" }} />
+              <Search className="h-4 w-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
               <input
                 type="text"
                 placeholder="Search contracts..."

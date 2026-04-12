@@ -77,6 +77,7 @@ async def process_contract(db: AsyncSession, contract_id: uuid.UUID) -> Contract
                 clause_text=chunk["clause_text"],
                 start_char=chunk["start_char"],
                 end_char=chunk["end_char"],
+                section_heading=chunk.get("section_heading"),
             )
             db.add(clause)
         await db.flush()
