@@ -11,6 +11,7 @@ import logging
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.clause import Clause
 from app.models.contract import Contract
@@ -183,14 +184,19 @@ async def analyze_all_clauses(
                 if isinstance(tf_result, Exception) or not tf_result:
                     continue
                 if tf_result.get("citations"):
-                    existing_meta = clause.metadata_ or {}
-                    existing_meta["legal_grounding"] = {
+                    # Create a NEW dict so SQLAlchemy detects the JSONB column as modified.
+                    # In-place mutation of the existing dict won't trigger change tracking
+                    # because the JSONB column type doesn't use MutableDict by default.
+                    new_meta = dict(clause.metadata_ or {})
+                    new_meta["legal_grounding"] = {
                         "source": tf_result["source"],
                         "verified": tf_result["verified"],
                         "citations": tf_result["citations"],
                         "provider": "TrustFoundry",
                     }
-                    clause.metadata_ = existing_meta
+                    clause.metadata_ = new_meta
+                    # Explicitly mark the column as modified to guarantee the flush writes it
+                    flag_modified(clause, "metadata_")
 
             await db.flush()
             grounded = sum(

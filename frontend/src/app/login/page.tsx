@@ -7,6 +7,7 @@ import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const DEMO_EMAIL = "demo@clauseguard.ai";
 const DEMO_PASSWORD = "demo1234";
@@ -82,9 +83,13 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center px-4"
+      className="flex min-h-screen items-center justify-center px-4 relative"
       style={{ background: "var(--bg-primary)" }}
     >
+      {/* Theme toggle — top right corner */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm space-y-8">
         {/* Brand */}
         <div className="text-center">
@@ -105,6 +110,25 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* M&A scenario context card */}
+        <div
+          className="rounded-xl border px-5 py-4 text-sm leading-relaxed"
+          style={{
+            background: "rgba(21,96,252,0.06)",
+            borderColor: "rgba(21,96,252,0.20)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <p className="font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+            The scenario
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            AcquiTech Capital is acquiring Meridian Holdings. Their counsel has{" "}
+            <strong style={{ color: "var(--text-primary)" }}>72 hours</strong> to review 4 contracts.
+            ClauseGuard analyzed all of them. Here&apos;s what it found.
+          </p>
+        </div>
+
         {/* Form card */}
         <div
           className="rounded-2xl border p-8 space-y-5"
@@ -122,7 +146,7 @@ export default function LoginPage() {
               loading={loading}
               className="w-full"
             >
-              Try Demo Login
+              View the Analysis →
             </Button>
             <p className="mt-2 text-center text-xs" style={{ color: "var(--text-tertiary)" }}>
               Instant access · no sign-up needed

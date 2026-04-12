@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   Shield, Zap, MessageSquare, Search, BarChart3,
-  CheckCircle2, ArrowRight, Sparkles, Scale, BookOpen,
+  CheckCircle2, ArrowRight, Scale, BookOpen,
 } from "lucide-react";
 import HeroSection from "@/components/ui/hero-section";
 
@@ -28,7 +28,7 @@ const FEATURES = [
     title: "Semantic Clause Search",
     description:
       "Search across your entire portfolio by meaning. Find every indemnification clause or change-of-control provision instantly.",
-    accent: "#8B5CF6",
+    accent: "#0EA5E9",
   },
   {
     icon: <Scale className="h-5 w-5" />,
@@ -82,14 +82,14 @@ const TESTIMONIALS = [
     name: "Sarah Chen",
     title: "Partner, M&A Practice",
     initials: "SC",
-    accent: "#3B82F6",
+    accent: "#1560FC",
   },
-  {
+    {
     quote: "The semantic search across our SaaS portfolio found 12 non-standard auto-renewal clauses we had no idea existed.",
     name: "Marcus Webb",
     title: "General Counsel, Series B Startup",
     initials: "MW",
-    accent: "#8B5CF6",
+    accent: "#0EA5E9",
   },
   {
     quote: "The verified legal citations next to each flagged clause is what separates this from every other contract tool I've tried.",
@@ -427,7 +427,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            © 2025 ClauseGuard. Built for Stanford Law Hackathon.
+            © 2026 ClauseGuard. Built for LLM × Law Hackathon #6.
           </p>
         </div>
       </footer>

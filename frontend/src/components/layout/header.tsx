@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Upload, LogOut } from "lucide-react";
+import { Shield, LayoutDashboard, Upload, LogOut, BarChart3 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { useContractStore } from "@/stores/contract-store";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -14,6 +16,9 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { contracts } = useContractStore();
+
+  const analyzedCount = contracts.filter((c) => c.status === "analyzed").length;
 
   const handleLogout = () => {
     logout();
@@ -26,8 +31,13 @@ export default function Header() {
       style={{ borderColor: "var(--border-primary)", background: "var(--bg-primary)" }}
     >
       <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-        <Shield className="h-5 w-5" style={{ color: "var(--accent-primary)" }} />
-        <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+        <div
+          className="flex h-6 w-6 items-center justify-center rounded-md"
+          style={{ background: "var(--accent-primary)" }}
+        >
+          <Shield className="h-3.5 w-3.5 text-white" />
+        </div>
+        <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
           ClauseGuard
         </span>
       </Link>
@@ -47,11 +57,28 @@ export default function Header() {
             {label}
           </Link>
         ))}
+
+        {/* Portfolio Report — shown when ≥2 contracts are analyzed */}
+        {analyzedCount >= 2 && (
+          <Link
+            href="/portfolio-report"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+            style={{
+              background: pathname === "/portfolio-report" ? "var(--bg-tertiary)" : "transparent",
+              color: pathname === "/portfolio-report" ? "var(--text-primary)" : "var(--text-secondary)",
+            }}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Portfolio
+          </Link>
+        )}
       </nav>
 
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
+
         {user && (
-          <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+          <span className="text-xs px-2" style={{ color: "var(--text-tertiary)" }}>
             {user.full_name || user.email}
           </span>
         )}

@@ -13,10 +13,11 @@
   --text-secondary: #9899A8;
   --text-tertiary: #62637A;
 
-  /* Brand Accent */
-  --accent-primary: #3B82F6;
-  --accent-hover: #2563EB;
-  --accent-muted: #1E3A5F;
+  /* Brand Accent — Precision Blue (not Tailwind blue-500) */
+  --accent-primary: #1560FC;
+  --accent-hover: #0F4DD6;
+  --accent-muted: #0C2860;
+  --accent-subtle: rgba(21, 96, 252, 0.08);
 
   /* Risk Heatmap Colors */
   --risk-critical: #EF4444;
@@ -35,6 +36,11 @@
   --risk-low-bg: rgba(34, 197, 94, 0.08);
   --risk-low-border: rgba(34, 197, 94, 0.2);
 
+  /* Document viewer — outer "desk" background (dark mode) */
+  --bg-doc: #0C0D14;
+  --bg-doc-paper: #FFFFFF;
+  --text-doc: #111111;
+
   /* Borders */
   --border-primary: #27272A;
   --border-secondary: #3F3F46;
@@ -44,6 +50,52 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Light Mode Overrides ─── */
+.light {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F7F8FA;
+  --bg-tertiary: #ECEEF2;
+  --bg-input: #ECEEF2;
+
+  --text-primary: #0D0E14;
+  --text-secondary: #4A4B5C;
+  --text-tertiary: #888A9B;
+
+  --accent-primary: #1560FC;
+  --accent-hover: #0F4DD6;
+  --accent-muted: #E8F0FF;
+  --accent-subtle: rgba(21, 96, 252, 0.07);
+
+  --risk-critical: #DC2626;
+  --risk-critical-bg: rgba(220, 38, 38, 0.07);
+  --risk-critical-border: rgba(220, 38, 38, 0.22);
+
+  --risk-high: #EA580C;
+  --risk-high-bg: rgba(234, 88, 12, 0.08);
+  --risk-high-border: rgba(234, 88, 12, 0.22);
+
+  --risk-medium: #CA8A04;
+  --risk-medium-bg: rgba(202, 138, 4, 0.07);
+  --risk-medium-border: rgba(202, 138, 4, 0.20);
+
+  --risk-low: #16A34A;
+  --risk-low-bg: rgba(22, 163, 74, 0.06);
+  --risk-low-border: rgba(22, 163, 74, 0.18);
+
+  /* Document viewer — outer "desk" background (light mode) */
+  --bg-doc: #E8EAF0;
+  --bg-doc-paper: #FFFFFF;
+  --text-doc: #111111;
+
+  --border-primary: #E4E6EA;
+  --border-secondary: #CDD0D8;
+  --border-hover: #9CA3AF;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
 }
 
 /* ─── Base styles ─── */
@@ -77,6 +129,14 @@ html, body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-hover);
+}
+
+/* Light mode scrollbars */
+.light ::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
 }
 
 /* ─── Typewriter cursor ─── */
@@ -120,9 +180,50 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── Indeterminate progress bar for processing contracts ─── */
+@keyframes shimmer-bar {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ─── Scan reveal — heatmap loading effect ─── */
+@keyframes scan-line {
+  from { transform: translateY(-100%); opacity: 0.6; }
+  to   { transform: translateY(300%); opacity: 0; }
+}
+
+/* ─── Risk glow on card border ─── */
+@keyframes border-glow-critical {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.0), inset 3px 0 0 0 #EF4444; }
+  50%       { box-shadow: 0 0 12px 0 rgba(239,68,68,0.25), inset 3px 0 0 0 #EF4444; }
+}
+
+/* ─── Number count-up ─── */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Subtle shimmer for loading states ─── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer-loading {
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
 /* ─── Utility classes ─── */
 .glass {
   background: rgba(20, 20, 23, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.light .glass {
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -183,3 +284,97 @@ html, body {
 
 /* ─── Smooth scroll for panels ─── */
 .scroll-smooth { scroll-behavior: smooth; }
+
+/* ─── Contract counter-loader animation ─── */
+/*
+  3 × 5 grid of square pixels. Each pixel slides horizontally to reshape
+  into a new digit every second — counting 0 → 9 on a 10s loop.
+  Cell size: 50px, gap: 20px, so one column step = 70px.
+*/
+.cgproc-timer {
+  display: grid;
+  grid-template-columns: repeat(3, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap: 20px;
+  grid-template-areas:
+    "a b c"
+    "d e f"
+    "g h i"
+    "j k l"
+    "m n o";
+}
+.cgproc-cell { border-radius: 10px; background-color: var(--accent-primary); }
+.cgproc-d1  { grid-area: a; animation: cgproc1  10s both infinite; }
+.cgproc-d2  { grid-area: b; animation: cgproc2  10s both infinite; }
+.cgproc-d3  { grid-area: c; }
+.cgproc-d4  { grid-area: d; animation: cgproc4  10s both infinite; }
+.cgproc-d5  { grid-area: e; display: none; }
+.cgproc-d6  { grid-area: f; animation: cgproc6  10s both infinite; }
+.cgproc-d7  { grid-area: g; animation: cgproc7  10s both infinite; }
+.cgproc-d8  { grid-area: h; animation: cgproc8  10s both infinite; }
+.cgproc-d9  { grid-area: i; }
+.cgproc-d10 { grid-area: j; animation: cgproc10 10s both infinite; }
+.cgproc-d11 { grid-area: k; display: none; }
+.cgproc-d12 { grid-area: l; animation: cgproc12 10s both infinite; }
+.cgproc-d13 { grid-area: m; animation: cgproc13 10s both infinite; }
+.cgproc-d14 { grid-area: n; animation: cgproc14 10s both infinite; }
+.cgproc-d15 { grid-area: o; }
+
+@keyframes cgproc1 {
+  0%,20%,30%,40%,50%,60%,70%,80%,90%,100% { transform: translateX(0); }
+  10% { transform: translateX(140px); }
+}
+@keyframes cgproc2 {
+  0%,20%,30%,50%,60%,70%,80%,90%,100% { transform: translateX(0); }
+  10%  { transform: translateX(70px); }
+  40%  { transform: translateX(70px); }
+}
+@keyframes cgproc4 {
+  0%,40%,50%,60%,80%,90%,100% { transform: translateX(0); }
+  10%  { transform: translateX(140px); }
+  20%  { transform: translateX(140px); }
+  30%  { transform: translateX(140px); }
+  70%  { transform: translateX(140px); }
+}
+@keyframes cgproc6 {
+  0%,10%,20%,30%,40%,70%,80%,90%,100% { transform: translateX(0); }
+  50%  { transform: translateX(-140px); }
+  60%  { transform: translateX(-140px); }
+}
+@keyframes cgproc7 {
+  0%,20%,30%,40%,50%,60%,80%,90%,100% { transform: translateX(0); }
+  10%  { transform: translateX(140px); }
+  70%  { transform: translateX(140px); }
+}
+@keyframes cgproc8 {
+  20%,30%,40%,50%,60%,80%,90% { transform: translateX(0); }
+  0%   { transform: translateX(70px); }
+  10%  { transform: translateX(70px); }
+  70%  { transform: translateX(70px); }
+  100% { transform: translateX(70px); }
+}
+@keyframes cgproc10 {
+  0%,20%,60%,80%,100% { transform: translateX(0); }
+  10%  { transform: translateX(140px); }
+  30%  { transform: translateX(140px); }
+  40%  { transform: translateX(140px); }
+  50%  { transform: translateX(140px); }
+  70%  { transform: translateX(140px); }
+  90%  { transform: translateX(140px); }
+}
+@keyframes cgproc12 {
+  0%,10%,30%,40%,50%,60%,70%,80%,90%,100% { transform: translateX(0); }
+  20%  { transform: translateX(-140px); }
+}
+@keyframes cgproc13 {
+  0%,20%,30%,50%,60%,80%,90%,100% { transform: translateX(0); }
+  10%  { transform: translateX(140px); }
+  40%  { transform: translateX(140px); }
+  70%  { transform: translateX(140px); }
+}
+@keyframes cgproc14 {
+  0%,20%,30%,50%,60%,80%,90%,100% { transform: translateX(0); }
+  10%  { transform: translateX(70px); }
+  40%  { transform: translateX(70px); }
+  70%  { transform: translateX(70px); }
+}

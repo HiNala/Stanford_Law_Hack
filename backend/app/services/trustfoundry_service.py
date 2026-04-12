@@ -8,15 +8,17 @@ knowledge base of the statutes and cases most relevant to commercial contract re
 Integration Points:
   - Clause analysis: enriches GPT-4o analysis with verified statute citations
   - Chat: adds relevant law to RAG context
-  - Reports: grounds critical findings in actual codeified law
+  - Reports: grounds critical findings in actual codified law
 
-Usage:
-  from app.services.trustfoundry_service import get_legal_context
-
-API Reference: https://trustfoundry.ai/legal-apis/
+API reference: https://api.trustfoundry.ai/public/v1/
+  POST /public/v1/agentic-search  body: {"query": str, "default_state": "CA"|"FED"|...}
+  Auth: X-API-Key header (NOT Bearer)
+  Response: application/x-ndjson — parse line-by-line
+  Results: "citations_ready" event → content.search_results[]
 """
 
 import asyncio
+import json
 import logging
 from typing import Any
 
@@ -310,7 +312,7 @@ _CACHED_LAW: dict[str, dict[str, list[dict]]] = {
     },
 }
 
-# Normalise jurisdiction codes
+# Normalise jurisdiction codes (full name → 2-letter)
 _JURISDICTION_MAP = {
     "california": "CA",
     "new york": "NY",
@@ -319,32 +321,68 @@ _JURISDICTION_MAP = {
     "florida": "FL",
     "illinois": "IL",
     "federal": "FED",
+    "washington": "WA",
+    "massachusetts": "MA",
+    "georgia": "GA",
+    "colorado": "CO",
+    "virginia": "VA",
 }
 
 
 def _normalise_jurisdiction(governing_law: str | None) -> str:
-    """Return a 2-letter state code or 'DEFAULT'."""
+    """Return a 2-letter state/FED code suitable for TrustFoundry, or 'DEFAULT'."""
     if not governing_law:
         return "DEFAULT"
     key = governing_law.lower().strip()
-    # Already a code?
-    if len(key) == 2:
+    # Already a 2-letter code?
+    if len(key) == 2 and key.isalpha():
         return key.upper()
-    return _JURISDICTION_MAP.get(key, "DEFAULT")
+    # "FED" / "federal"
+    if key in ("fed", "federal", "us", "u.s."):
+        return "FED"
+    mapped = _JURISDICTION_MAP.get(key)
+    if mapped:
+        return mapped
+    # Try matching a prefix (e.g. "New York law" → "new york")
+    for name, code in _JURISDICTION_MAP.items():
+        if key.startswith(name):
+            return code
+    return "DEFAULT"
 
 
 # ─── TrustFoundry API client ────────────────────────────────────────────────────
 
-_SEARCH_ENDPOINT_CANDIDATES = [
-    "/v1/search",
-    "/search",
-    "/api/v1/search",
-]
+# Correct TrustFoundry endpoint per official spec:
+# POST /public/v1/agentic-search   body: {"query": str, "default_state": "CA"|"FED"|...}
+# Auth: X-API-Key header (NOT Bearer)
+# Response: application/x-ndjson — parse line-by-line
+# Results live in "citations_ready" event → event["content"]["search_results"]
+_AGENTIC_SEARCH_PATH = "/public/v1/agentic-search"
+
+# Per-clause-type search queries optimised for legal relevance
+_QUERY_MAP: dict[str, str] = {
+    "non_compete": "non-compete clause enforceability restrictions post-employment",
+    "non_solicitation": "non-solicitation agreement enforceability employees customers",
+    "indemnification": "one-sided indemnification clause unlimited liability commercial contract",
+    "limitation_of_liability": "limitation of liability cap unconscionability commercial contract",
+    "data_privacy": "data privacy processing agreement CCPA GDPR obligations",
+    "ip_ownership": "intellectual property assignment work for hire ownership",
+    "auto_renewal": "automatic renewal clause consumer protection cancellation window",
+    "change_of_control": "change of control assignment termination M&A commercial contract",
+    "confidentiality": "confidentiality obligation duration trade secret nondisclosure",
+    "termination_convenience": "termination for convenience notice period commercial contract",
+    "termination_cause": "termination for cause cure period breach remedies",
+    "assignment": "contract assignment anti-assignment clause enforceability",
+    "exclusivity": "exclusivity clause enforceability restraint of trade",
+}
 
 
 class TrustFoundryService:
     """
     Integrates TrustFoundry's legal search and reasoning API.
+
+    Uses POST /public/v1/agentic-search with X-API-Key authentication.
+    Parses NDJSON streaming responses — collects the citations_ready event.
     Falls back to a curated pre-cached knowledge base when the API is unavailable.
     """
 
@@ -354,11 +392,9 @@ class TrustFoundryService:
             settings, "TRUSTFOUNDRY_API_URL", "https://api.trustfoundry.ai"
         ).rstrip("/")
         self._enabled: bool = bool(
-            getattr(settings, "TRUSTFOUNDRY_ENABLED", True)
-            and self._api_key
+            getattr(settings, "TRUSTFOUNDRY_ENABLED", True) and self._api_key
         )
-        self._live_available: bool | None = None  # lazily probed
-        self._search_path: str = "/v1/search"
+        self._live_available: bool | None = None  # lazily confirmed on first use
 
     # ── Public API ──────────────────────────────────────────────────────────────
 
@@ -374,7 +410,7 @@ class TrustFoundryService:
         Tries the live TrustFoundry API first; falls back to pre-cached data.
         Always returns a well-formed dict:
           {
-            "source": "trustfoundry" | "cached" | "none",
+            "source": "trustfoundry" | "trustfoundry_cached" | "none",
             "verified": bool,
             "citations": [ { "citation", "summary", "source_url", "verified" }, ... ],
           }
@@ -382,15 +418,28 @@ class TrustFoundryService:
         if not self._enabled:
             return self._cached_context(clause_type, governing_law)
 
-        # Try live API (lazy probe on first call)
+        # Confirm live availability once (lazy)
         if self._live_available is None:
             self._live_available = await self._probe_api()
 
         if self._live_available:
             try:
-                result = await self._search_live(clause_type, governing_law, clause_text)
-                if result:
-                    return {"source": "trustfoundry", "verified": True, "citations": result}
+                citations = await self._search_live(clause_type, governing_law, clause_text)
+                if citations:
+                    return {"source": "trustfoundry", "verified": True, "citations": citations}
+                # Empty live result → fall through to cache
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 429:
+                    # Rate limited — don't disable permanently, just use cache this round
+                    logger.warning("TrustFoundry rate limited (429) — using cache for this call")
+                elif exc.response.status_code == 402:
+                    logger.warning("TrustFoundry insufficient credits (402) — using cache")
+                    self._live_available = False
+                elif exc.response.status_code == 401:
+                    logger.warning("TrustFoundry API key rejected (401) — disabling live calls")
+                    self._live_available = False
+                else:
+                    logger.warning("TrustFoundry HTTP error %s — using cache", exc.response.status_code)
             except Exception as exc:
                 logger.warning("TrustFoundry live call failed: %s", exc)
                 self._live_available = False
@@ -400,30 +449,36 @@ class TrustFoundryService:
     # ── Live API helpers ────────────────────────────────────────────────────────
 
     async def _probe_api(self) -> bool:
-        """Check whether the API is reachable and the key is valid."""
-        timeout = httpx.Timeout(8.0)
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            for path in _SEARCH_ENDPOINT_CANDIDATES:
-                for auth_header in [
-                    ("Authorization", f"Bearer {self._api_key}"),
-                    ("X-API-Key", self._api_key),
-                ]:
-                    try:
-                        resp = await client.get(
-                            f"{self._base_url}{path}",
-                            headers={auth_header[0]: auth_header[1]},
-                            params={"q": "test", "limit": "1"},
-                        )
-                        if resp.status_code < 400:
-                            self._search_path = path
-                            logger.info("TrustFoundry API reachable at %s", path)
-                            return True
-                        if resp.status_code == 401:
-                            logger.warning("TrustFoundry API key rejected (401)")
-                            return False
-                    except Exception:
-                        continue
-        logger.info("TrustFoundry API not reachable — using pre-cached legal knowledge")
+        """
+        Verify the API key is valid with a minimal POST to /public/v1/agentic-search.
+        Per spec: auth via X-API-Key header.
+        """
+        timeout = httpx.Timeout(10.0)
+        headers = {
+            "X-API-Key": self._api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/x-ndjson",
+        }
+        body = {"query": "contract law", "default_state": "FED"}
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.post(
+                    f"{self._base_url}{_AGENTIC_SEARCH_PATH}",
+                    headers=headers,
+                    json=body,
+                )
+                if resp.status_code == 401:
+                    logger.warning("TrustFoundry API key invalid (401) — live search disabled")
+                    return False
+                if resp.status_code == 402:
+                    logger.warning("TrustFoundry insufficient credits (402) — live search disabled")
+                    return False
+                if resp.status_code < 500:
+                    # Any 2xx/3xx/4xx that isn't auth failure = endpoint reachable
+                    logger.info("TrustFoundry API reachable (status %s)", resp.status_code)
+                    return True
+        except Exception as exc:
+            logger.info("TrustFoundry API not reachable: %s — using pre-cached knowledge", exc)
         return False
 
     async def _search_live(
@@ -432,44 +487,119 @@ class TrustFoundryService:
         governing_law: str | None,
         clause_text: str,
     ) -> list[dict] | None:
-        """Query the live TrustFoundry search API."""
-        query_map = {
-            "non_compete": "non-compete agreement enforceability restrictions",
-            "indemnification": "one-sided indemnification clause unlimited liability",
-            "auto_renewal": "automatic renewal contract consumer protection",
-            "change_of_control": "change of control assignment termination",
-            "data_privacy": "data privacy CCPA GDPR processing agreement",
-            "ip_ownership": "intellectual property assignment work for hire",
-            "limitation_of_liability": "limitation of liability cap unconscionability",
-            "confidentiality": "confidentiality trade secret duration obligation",
-            "non_solicitation": "non-solicitation employee customer enforceability",
-        }
-        query = query_map.get(clause_type, f"{clause_type.replace('_', ' ')} contract law")
-        params: dict[str, str] = {"q": query, "limit": "3"}
-        if governing_law:
-            params["jurisdiction"] = governing_law
+        """
+        Query TrustFoundry POST /public/v1/agentic-search.
 
-        headers = {"Authorization": f"Bearer {self._api_key}", "Accept": "application/json"}
-        timeout = httpx.Timeout(15.0)
+        Per spec:
+          - Auth: X-API-Key header (NOT Bearer)
+          - Body: {"query": str, "default_state": "CA"|"FED"|...}
+          - Response: application/x-ndjson — MUST parse line-by-line
+          - Results: "citations_ready" event → content.search_results[]
+        """
+        query = _QUERY_MAP.get(
+            clause_type,
+            f"{clause_type.replace('_', ' ')} contract clause law enforceability",
+        )
+        jurisdiction = _normalise_jurisdiction(governing_law)
+        # FED is valid; DEFAULT → FED (most broadly applicable)
+        state_param = jurisdiction if jurisdiction != "DEFAULT" else "FED"
+
+        headers = {
+            "X-API-Key": self._api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/x-ndjson",
+        }
+        body = {"query": query, "default_state": state_param}
+        timeout = httpx.Timeout(30.0)
+
         async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.get(
-                f"{self._base_url}{self._search_path}",
+            resp = await client.post(
+                f"{self._base_url}{_AGENTIC_SEARCH_PATH}",
                 headers=headers,
-                params=params,
+                json=body,
             )
             resp.raise_for_status()
-            data = resp.json()
 
-        raw = data.get("results", data.get("items", data if isinstance(data, list) else []))
-        citations = []
-        for item in raw[:3]:
-            citations.append({
-                "citation": item.get("citation") or item.get("title") or "Unknown",
-                "summary": item.get("summary") or item.get("excerpt") or item.get("text", "")[:300],
-                "source_url": item.get("url") or item.get("source_url"),
-                "verified": True,
-            })
-        return citations or None
+            # Parse NDJSON line-by-line — resp.json() will fail on NDJSON
+            citations: list[dict] = []
+            for raw_line in resp.text.splitlines():
+                line = raw_line.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                event_type = event.get("type", "")
+
+                if event_type == "citations_ready":
+                    # Primary results location per spec
+                    search_results = (
+                        event.get("content", {}).get("search_results", [])
+                        if isinstance(event.get("content"), dict)
+                        else []
+                    )
+                    for item in search_results[:3]:
+                        cit = self._normalise_citation(item)
+                        if cit:
+                            citations.append(cit)
+                    break  # citations_ready is the terminal event we need
+
+                elif event_type == "error":
+                    detail = event.get("detail") or event.get("message") or "TrustFoundry error"
+                    logger.warning("TrustFoundry stream error: %s", detail)
+                    return None
+
+                elif event_type == "confused":
+                    # API couldn't understand the query — return None to use cache
+                    logger.info("TrustFoundry returned 'confused' — using cache for %s", clause_type)
+                    return None
+
+            return citations if citations else None
+
+    @staticmethod
+    def _normalise_citation(item: dict) -> dict | None:
+        """
+        Map a TrustFoundry citations_ready search_result item to our internal format.
+
+        Actual API fields (from live response inspection):
+          header       — human-readable case/law name (e.g. "Edwards v. Arthur Andersen LLP")
+          citation_tag — markdown link "[Name - Bluebook Cite](url)" — contains the formal cite
+          excerpt      — relevant text snippet from the source
+          url          — source URL
+          result_type  — "case", "statute", "regulation", etc.
+        """
+        if not item:
+            return None
+
+        # Extract the formal citation from citation_tag markdown "[Name - Cite](url)"
+        # e.g. "[Strategix v. Infocrossing - 142 Cal. App. 4th 1068](https://...)" → "142 Cal. App. 4th 1068"
+        citation_str = item.get("header") or "Unknown"
+        citation_tag = item.get("citation_tag", "")
+        if citation_tag and " - " in citation_tag:
+            # Grab the part between " - " and "]("
+            inner = citation_tag.split("[", 1)[-1].rsplit("](", 1)[0]  # text inside [...]
+            parts = inner.split(" - ", 1)
+            if len(parts) == 2 and parts[1].strip():
+                # Use "Name - Formal Cite" as the full citation string
+                citation_str = f"{parts[0].strip()} — {parts[1].strip()}"
+
+        summary_str = (
+            item.get("excerpt")
+            or item.get("summary")
+            or item.get("description")
+            or ""
+        )[:500]
+
+        source_url = item.get("url") or item.get("source_url")
+
+        return {
+            "citation": citation_str,
+            "summary": summary_str,
+            "source_url": source_url,
+            "verified": True,
+        }
 
     # ── Cached fallback ─────────────────────────────────────────────────────────
 

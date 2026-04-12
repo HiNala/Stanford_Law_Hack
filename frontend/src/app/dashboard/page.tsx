@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb } from "lucide-react";
+import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb, Clock, RefreshCw } from "lucide-react";
 import { contractsApi, statsApi, searchApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"date" | "risk">("date");
+  const [sortBy, setSortBy] = useState<"date" | "risk">("risk");
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
   const [semanticQuery, setSemanticQuery] = useState("");
   const [semanticResults, setSemanticResults] = useState<SearchResult[]>([]);
@@ -44,10 +44,12 @@ export default function DashboardPage() {
       return;
     }
     loadAll();
-    // Only poll while at least one contract is processing
+    // Poll while any contract is still in a non-terminal state
     const interval = setInterval(() => {
-      const hasProcessing = contracts.some((c) => c.status === "processing");
-      if (hasProcessing) loadAll();
+      const hasPending = contracts.some(
+        (c) => c.status === "processing" || c.status === "uploaded"
+      );
+      if (hasPending) loadAll();
     }, 5000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,8 +91,16 @@ export default function DashboardPage() {
     }
   };
 
+  // Contracts awaiting or currently in analysis — always shown, unfiltered
+  const pendingContracts = useMemo(
+    () => contracts.filter((c) => c.status !== "analyzed"),
+    [contracts]
+  );
+
+  // Analyzed contracts — respect search/filter/sort
   const filtered = useMemo(() => {
     const list = contracts.filter((c) => {
+      if (c.status !== "analyzed") return false;
       const matchesSearch =
         !searchQuery ||
         (c.title || c.original_filename).toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -107,7 +117,6 @@ export default function DashboardPage() {
         return (b.overall_risk_score ?? 0) - (a.overall_risk_score ?? 0);
       });
     }
-    // default: newest first
     return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [contracts, searchQuery, riskFilter, sortBy]);
 
@@ -152,7 +161,7 @@ export default function DashboardPage() {
                 style={{
                   borderColor: "var(--accent-primary)",
                   color: "var(--accent-primary)",
-                  background: "rgba(59,130,246,0.06)",
+                  background: "rgba(21,96,252,0.06)",
                 }}
               >
                 <BarChart3 className="h-4 w-4" />
@@ -169,6 +178,38 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Acquisition scenario context — only shown when contracts are present */}
+        {contracts.length > 0 && (
+          <div
+            className="flex items-center justify-between rounded-xl border px-5 py-3.5 mb-6"
+            style={{
+              background: "rgba(21,96,252,0.05)",
+              borderColor: "rgba(21,96,252,0.18)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="h-2 w-2 rounded-full animate-pulse shrink-0"
+                style={{ background: "var(--accent-primary)" }}
+              />
+              <div>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                  AcquiTech Capital acquiring Meridian Holdings
+                </span>
+                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                  {" "}— {contracts.filter(c => c.status === "analyzed").length} of {contracts.length} contracts analyzed
+                </span>
+              </div>
+            </div>
+            <span
+              className="text-xs font-semibold rounded-full px-2.5 py-1"
+              style={{ background: "rgba(239,68,68,0.1)", color: "var(--risk-critical)" }}
+            >
+              72-hour review window
+            </span>
+          </div>
+        )}
 
         {/* Portfolio stats bar */}
         {portfolioStats && portfolioStats.total_contracts > 0 && (
@@ -213,7 +254,7 @@ export default function DashboardPage() {
                 onClick={() => setRiskFilter(riskFilter === level ? "all" : level)}
                 className={cn(
                   "rounded-xl border p-3 text-left transition-all",
-                  riskFilter === level ? "" : "hover:border-zinc-600"
+                  riskFilter === level ? "" : ""
                 )}
                 style={{
                   background: riskFilter === level ? `${riskHexColor(level)}12` : "var(--bg-secondary)",
@@ -300,6 +341,53 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ── In-Progress / Needs Analysis section ── */}
+        {!loading && pendingContracts.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-3.5 w-3.5" style={{ color: "var(--accent-primary)" }} />
+              <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                In Progress
+              </h2>
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
+              >
+                {pendingContracts.length}
+              </span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {pendingContracts.map((contract, idx) => (
+                <ContractCard
+                  key={contract.id}
+                  contract={contract}
+                  cardIndex={idx}
+                  onClick={() => router.push(`/review/${contract.id}`)}
+                  onDelete={async () => {
+                    try { await contractsApi.delete(contract.id); await loadAll(); } catch { /* silent */ }
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Analyzed contracts section ── */}
+        {!loading && contracts.some(c => c.status === "analyzed") && (
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "var(--risk-low)" }} />
+            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+              Analyzed
+            </h2>
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
+            >
+              {contracts.filter(c => c.status === "analyzed").length}
+            </span>
+          </div>
+        )}
+
         {/* Contract grid */}
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -311,13 +399,13 @@ export default function DashboardPage() {
               />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && pendingContracts.length === 0 ? (
           <EmptyState
             hasContracts={contracts.length > 0}
             onUpload={() => router.push("/upload")}
             onClearFilter={() => { setSearchQuery(""); setRiskFilter("all"); }}
           />
-        ) : (
+        ) : filtered.length === 0 ? null : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((contract, idx) => (
               <ContractCard
@@ -470,6 +558,8 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
     return () => clearTimeout(t);
   }, [confirmDelete]);
 
+  const riskColor = riskHexColor(contract.risk_level ?? "low");
+
   return (
     // div[role=button] instead of <button> to allow nested <button> for delete confirm
     <div
@@ -477,120 +567,187 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      className="group flex flex-col rounded-xl border p-5 text-left transition-all duration-200 cursor-pointer"
+      className="group flex flex-col rounded-xl border text-left transition-all duration-200 cursor-pointer overflow-hidden"
       style={{
         background: contract.status === "error" ? "rgba(239,68,68,0.04)" : "var(--bg-secondary)",
-        borderColor: contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
+        borderColor: contract.status === "analyzed" && contract.risk_level
+          ? `${riskColor}35`
+          : contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(8px)",
-        transition: "opacity 0.35s ease, transform 0.35s ease, border-color 0.15s, box-shadow 0.15s",
+        transform: visible ? "translateY(0)" : "translateY(10px)",
+        transition: "opacity 0.4s ease, transform 0.4s ease, border-color 0.2s, box-shadow 0.2s",
+        boxShadow: visible && contract.status === "analyzed" && contract.risk_level === "critical"
+          ? `0 0 0 1px ${riskColor}20, 0 4px 20px ${riskColor}10`
+          : "none",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.6)" : "var(--border-secondary)";
+        if (contract.status === "analyzed" && contract.risk_level) {
+          el.style.borderColor = `${riskColor}70`;
+          el.style.boxShadow = `0 0 0 1px ${riskColor}30, 0 8px 28px ${riskColor}15`;
+        } else {
+          el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.6)" : "var(--border-secondary)";
+        }
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
+        if (contract.status === "analyzed" && contract.risk_level) {
+          el.style.borderColor = `${riskColor}35`;
+          el.style.boxShadow = contract.risk_level === "critical" ? `0 0 0 1px ${riskColor}20, 0 4px 20px ${riskColor}10` : "none";
+        } else {
+          el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
+          el.style.boxShadow = "none";
+        }
       }}
     >
-      {/* Top row: status + delete */}
-      <div className="flex items-start justify-between">
-        <StatusBadge status={contract.status} />
-        <div className="flex items-center gap-1.5">
-          {contract.status !== "processing" && (
-            confirmDelete ? (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="rounded px-1.5 py-0.5 text-xs font-semibold"
-                  style={{ background: "var(--risk-critical-bg)", color: "var(--risk-critical)", border: "1px solid var(--risk-critical-border)" }}
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
-                  className="rounded px-1.5 py-0.5 text-xs"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-                className="rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: "var(--text-tertiary)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--risk-critical)")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
-                title="Delete contract"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Name */}
-      <h3
-        className="mt-3 text-sm font-semibold leading-snug truncate"
-        style={{ color: "var(--text-primary)" }}
-        title={contract.title || contract.original_filename}
-      >
-        {contract.title || contract.original_filename}
-      </h3>
-
-      {/* Parties */}
-      {parties.length > 0 && (
-        <p className="mt-0.5 text-xs truncate" style={{ color: "var(--text-tertiary)" }} title={parties.join(" · ")}>
-          {parties.slice(0, 2).join(" · ")}
-        </p>
+      {/* Risk color accent bar across top */}
+      {contract.status === "analyzed" && contract.risk_level && (
+        <div
+          className="h-0.5 w-full"
+          style={{
+            background: `linear-gradient(90deg, ${riskColor}, ${riskColor}00)`,
+            opacity: barReady ? 1 : 0,
+            transition: "opacity 0.5s ease 0.2s",
+          }}
+        />
       )}
 
-      {/* Type + size */}
-      <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
-        {contract.contract_type || contract.file_type.toUpperCase()}
-        {contract.file_size_bytes ? ` · ${formatFileSize(contract.file_size_bytes)}` : ""}
-      </p>
+      <div className="p-5 flex flex-col flex-1">
+        {/* Top row: status + delete */}
+        <div className="flex items-start justify-between">
+          <StatusBadge status={contract.status} />
+          <div className="flex items-center gap-1.5">
+            {contract.status !== "processing" && (
+              confirmDelete ? (
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                    className="rounded px-1.5 py-0.5 text-xs font-semibold"
+                    style={{ background: "var(--risk-critical-bg)", color: "var(--risk-critical)", border: "1px solid var(--risk-critical-border)" }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                    className="rounded px-1.5 py-0.5 text-xs"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                  className="rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: "var(--text-tertiary)" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--risk-critical)")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
+                  title="Delete contract"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )
+            )}
+          </div>
+        </div>
 
-      {/* Risk score bar */}
-      {contract.status === "analyzed" && contract.risk_level ? (
-        <div className="mt-auto pt-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
+        {/* Name */}
+        <h3
+          className="mt-3 text-sm font-semibold leading-snug line-clamp-2"
+          style={{ color: "var(--text-primary)" }}
+          title={contract.title || contract.original_filename}
+        >
+          {contract.title || contract.original_filename}
+        </h3>
+
+        {/* Parties */}
+        {parties.length > 0 && (
+          <p className="mt-0.5 text-xs truncate" style={{ color: "var(--text-tertiary)" }} title={parties.join(" · ")}>
+            {parties.slice(0, 2).join(" · ")}
+          </p>
+        )}
+
+        {/* Type */}
+        <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>
+          {contract.contract_type || contract.file_type?.toUpperCase() || "Contract"}
+        </p>
+
+        {/* Risk score — dramatic display */}
+        {contract.status === "analyzed" && contract.risk_level ? (
+          <div className="mt-auto pt-4">
+            <div className="flex items-end justify-between mb-2">
+              <div>
+                <span
+                  className="text-3xl font-black tabular-nums leading-none"
+                  style={{
+                    color: riskColor,
+                    opacity: barReady ? 1 : 0,
+                    transition: "opacity 0.4s ease 0.3s",
+                    animation: barReady ? "count-up 0.4s ease 0.3s both" : "none",
+                  }}
+                >
+                  {riskPct}
+                </span>
+                <span className="text-sm font-medium ml-0.5" style={{ color: riskColor, opacity: 0.7 }}>%</span>
+              </div>
               <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: riskHexColor(contract.risk_level) }}
-              />
-              <span className="text-xs font-medium capitalize" style={{ color: riskHexColor(contract.risk_level) }}>
-                {contract.risk_level} risk
+                className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
+                style={{
+                  color: riskColor,
+                  background: `${riskColor}15`,
+                }}
+              >
+                {contract.risk_level}
               </span>
             </div>
-            <span className="text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>
-              {riskPct}%
-            </span>
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: barReady ? `${riskPct}%` : "0%",
+                  background: `linear-gradient(90deg, ${riskColor}90, ${riskColor})`,
+                  transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
+                }}
+              />
+            </div>
           </div>
-          <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: barReady ? `${riskPct}%` : "0%",
-                background: riskHexColor(contract.risk_level),
-                transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
-              }}
-            />
+        ) : contract.status === "error" ? (
+          <div className="mt-auto pt-4 flex items-center gap-2">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--risk-critical)" }} />
+            <p className="text-xs" style={{ color: "var(--risk-critical)" }}>
+              Analysis failed — click to retry
+            </p>
           </div>
-        </div>
-      ) : contract.status === "error" ? (
-        <p className="mt-auto pt-4 text-xs" style={{ color: "var(--risk-critical)" }}>
-          Analysis failed — delete and re-upload to retry
-        </p>
-      ) : (
-        <p className="mt-auto pt-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
-          {formatDate(contract.created_at)}
-        </p>
-      )}
+        ) : contract.status === "processing" ? (
+          <div className="mt-auto pt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="h-1.5 w-1.5 rounded-full animate-pulse shrink-0"
+                style={{ background: "var(--accent-primary)" }}
+              />
+              <p className="text-xs" style={{ color: "var(--accent-primary)" }}>Analyzing…</p>
+            </div>
+            {/* Animated indeterminate bar */}
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  background: "var(--accent-primary)",
+                  width: "40%",
+                  animation: "shimmer-bar 1.4s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-auto pt-4 flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              Waiting to analyze · {formatDate(contract.created_at)}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -611,7 +768,7 @@ function StatusBadge({ status }: { status: string }) {
     return (
       <span
         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium border"
-        style={{ color: "var(--accent-primary)", background: "rgba(59,130,246,0.1)", borderColor: "rgba(59,130,246,0.3)" }}
+        style={{ color: "var(--accent-primary)", background: "var(--accent-subtle)", borderColor: "rgba(21,96,252,0.3)" }}
       >
         <svg className="h-3 w-3 animate-spin" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" opacity="0.25" />
@@ -655,7 +812,7 @@ function EmptyState({
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border py-16"
         style={{ borderColor: "var(--border-primary)", borderStyle: "dashed" }}>
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No contracts match your search.</p>
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No analyzed contracts match your filter.</p>
         <button onClick={onClearFilter} className="mt-3 text-sm" style={{ color: "var(--accent-primary)" }}>
           Clear filters
         </button>

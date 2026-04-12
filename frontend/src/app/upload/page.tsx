@@ -15,6 +15,7 @@ import {
 import { contractsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn, formatFileSize } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface UploadedFile {
   file: File;
@@ -132,6 +133,9 @@ export default function UploadPage() {
           <h1 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
             Upload Contracts
           </h1>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -149,7 +153,7 @@ export default function UploadPage() {
               ? "var(--accent-primary)"
               : "var(--border-secondary)",
             background: isDragActive
-              ? "rgba(59,130,246,0.05)"
+              ? "rgba(21,96,252,0.05)"
               : isDragReject
               ? "var(--risk-critical-bg)"
               : "var(--bg-secondary)",

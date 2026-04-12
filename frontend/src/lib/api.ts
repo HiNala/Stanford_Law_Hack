@@ -56,6 +56,8 @@ export const clausesApi = {
 // Analysis
 export const analysisApi = {
   status: (contractId: string) => api.get(`/analysis/${contractId}/status`),
+  triggerAnalysis: (contractId: string, forceReanalyze = false) =>
+    api.post(`/analysis/${contractId}/analyze`, { force_reanalyze: forceReanalyze }),
   report: (contractId: string) =>
     api.post(`/analysis/${contractId}/report`),
   portfolioReport: (contractIds?: string[]) =>

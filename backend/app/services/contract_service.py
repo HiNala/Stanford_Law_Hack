@@ -4,7 +4,7 @@ import os
 import uuid
 import logging
 
-from sqlalchemy import select, func, asc, desc
+from sqlalchemy import select, delete, func, asc, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -61,6 +61,10 @@ async def process_contract(db: AsyncSession, contract_id: uuid.UUID) -> Contract
         contract.status = "processing"
         await db.flush()
 
+        # Remove any clauses from a previous (possibly failed) run before creating new ones
+        await db.execute(delete(Clause).where(Clause.contract_id == contract_id))
+        await db.flush()
+
         # Step 1: Extract text
         logger.info(f"Extracting text from {contract.file_path}")
         raw_text = extract_text(contract.file_path, contract.file_type)
@@ -71,6 +75,9 @@ async def process_contract(db: AsyncSession, contract_id: uuid.UUID) -> Contract
         # Step 2: Chunk into clauses
         logger.info(f"Chunking contract {contract_id}")
         chunks = chunk_contract_text(raw_text)
+
+        if not chunks:
+            raise ValueError("No text content could be extracted or chunked from this file.")
 
         for chunk in chunks:
             clause = Clause(

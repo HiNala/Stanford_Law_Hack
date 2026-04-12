@@ -20,6 +20,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import { analysisApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ function TriageCard({ entry, tier }: { entry: TriageEntry; tier: "red" | "orange
   return (
     <button
       onClick={() => router.push(`/review/${entry.contract_id}`)}
-      className="w-full text-left rounded-xl border p-4 transition-all hover:opacity-90 hover:shadow-md"
+      className="w-full text-left rounded-xl border p-4 transition-all"
       style={{ borderColor: borderMap[tier], background: bgMap[tier] }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -154,7 +155,7 @@ function TriageCard({ entry, tier }: { entry: TriageEntry; tier: "red" | "orange
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-mono font-bold" style={{ color: riskColor(entry.risk_level) }}>
+          <span className="text-xs font-bold tabular-nums" style={{ color: riskColor(entry.risk_level) }}>
             {Math.round(entry.risk_score * 100)}
           </span>
           <RiskBadge level={entry.risk_level} />
@@ -219,8 +220,8 @@ function ActionItemCard({ item }: { item: ActionItem }) {
       )}
 
       {item.legal_reference && (
-        <div className="ml-9 rounded-lg border p-2.5" style={{ background: "rgba(59,130,246,0.04)", borderColor: "rgba(59,130,246,0.15)" }}>
-          <p className="text-xs font-mono font-semibold" style={{ color: "var(--accent-primary)" }}>
+        <div className="ml-9 rounded-lg border p-2.5" style={{ background: "rgba(21,96,252,0.04)", borderColor: "rgba(21,96,252,0.15)" }}>
+          <p className="text-xs font-semibold" style={{ color: "var(--accent-primary)" }}>
             📜 {item.legal_reference}
           </p>
         </div>
@@ -245,7 +246,7 @@ export default function PortfolioReportPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) { router.replace("/"); return; }
+    if (!token) { router.replace("/login"); return; }
     loadReport();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -318,26 +319,85 @@ export default function PortfolioReportPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--bg-primary)" }}>
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--accent-primary)" }} />
-          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Generating portfolio risk report…</p>
+        <div className="flex flex-col items-center gap-5">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-2xl"
+            style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
+          >
+            <Loader2 className="h-7 w-7 animate-spin" style={{ color: "var(--accent-primary)" }} />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Generating portfolio report…</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Analyzing all contracts and cross-contract patterns</p>
+          </div>
+          {/* Skeleton shimmer bars */}
+          <div className="w-72 space-y-2 mt-2">
+            {[100, 80, 90, 60].map((w, i) => (
+              <div
+                key={i}
+                className="h-3 rounded-full shimmer-loading"
+                style={{ width: `${w}%` }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   if (error) {
+    // Special empty state when no contracts are analyzed yet
+    const isEmpty = error.toLowerCase().includes("no analyzed") || error.toLowerCase().includes("not enough") || error.toLowerCase().includes("need at least");
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4" style={{ background: "var(--bg-primary)" }}>
-        <AlertTriangle className="h-8 w-8" style={{ color: "var(--risk-high)" }} />
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{error}</p>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="text-sm underline"
-          style={{ color: "var(--accent-primary)" }}
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 px-4" style={{ background: "var(--bg-primary)" }}>
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ background: isEmpty ? "var(--bg-tertiary)" : "var(--risk-high-bg)", border: `1px solid ${isEmpty ? "var(--border-secondary)" : "var(--risk-high-border)"}` }}
         >
-          Back to Dashboard
-        </button>
+          {isEmpty
+            ? <BarChart3 className="h-7 w-7" style={{ color: "var(--text-tertiary)" }} />
+            : <AlertTriangle className="h-7 w-7" style={{ color: "var(--risk-high)" }} />
+          }
+        </div>
+        <div className="text-center max-w-xs">
+          <p className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+            {isEmpty ? "No contracts analyzed yet" : "Report generation failed"}
+          </p>
+          <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+            {isEmpty
+              ? "Analyze at least 2 contracts to generate a portfolio risk report with cross-contract insights."
+              : error
+            }
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium"
+            style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Dashboard
+          </button>
+          {isEmpty ? (
+            <button
+              onClick={() => router.push("/upload")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              Upload Contracts
+            </button>
+          ) : (
+            <button
+              onClick={loadReport}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              <Loader2 className="h-3.5 w-3.5" />
+              Retry
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -369,10 +429,11 @@ export default function PortfolioReportPage() {
               <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Portfolio Risk Report</span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
               {report_metadata.contracts_analyzed} contracts · {report_metadata.total_clauses_reviewed} clauses
             </span>
+            <ThemeToggle />
             <button
               onClick={downloadMarkdown}
               className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
@@ -397,8 +458,10 @@ export default function PortfolioReportPage() {
           style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
         >
           <div className="flex flex-wrap items-center gap-3 mb-5">
-            <Shield className="h-5 w-5" style={{ color: "var(--accent-primary)" }} />
-            <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Risk Overview</h2>
+            <h2 className="text-base font-semibold font-display flex items-center gap-2" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+              <Shield className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+              Risk Overview
+            </h2>
             <RiskBadge level={risk_overview.overall_risk_level} />
             {report.trustfoundry_grounded > 0 && (
               <span
@@ -419,9 +482,9 @@ export default function PortfolioReportPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>Portfolio Risk Score</span>
-              <span className="text-sm font-bold font-mono" style={{ color: riskColor(risk_overview.overall_risk_level) }}>
+              <p className="text-sm font-bold tabular-nums" style={{ color: riskColor(risk_overview.overall_risk_level) }}>
                 {Math.round(risk_overview.overall_risk_score * 100)} / 100
-              </span>
+              </p>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
               <div
@@ -434,21 +497,24 @@ export default function PortfolioReportPage() {
             </div>
           </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {/* Stats row — flat, no nested cards */}
+          <div
+            className="grid grid-cols-2 sm:grid-cols-4"
+            style={{ borderTop: "1px solid var(--border-primary)", borderBottom: "1px solid var(--border-primary)" }}
+          >
             {[
               { label: "Critical", value: risk_overview.risk_distribution.critical, color: "var(--risk-critical)" },
               { label: "High", value: risk_overview.risk_distribution.high, color: "var(--risk-high)" },
               { label: "Medium", value: risk_overview.risk_distribution.medium, color: "var(--risk-medium)" },
               { label: "Low", value: risk_overview.risk_distribution.low, color: "var(--risk-low)" },
-            ].map(({ label, value, color }) => (
+            ].map(({ label, value, color }, i) => (
               <div
                 key={label}
-                className="rounded-xl border p-4 text-center"
-                style={{ background: "var(--bg-tertiary)", borderColor: "var(--border-secondary)" }}
+                className="py-4 px-5"
+                style={{ borderRight: i < 3 ? "1px solid var(--border-primary)" : undefined }}
               >
+                <p className="text-xs mb-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
                 <p className="text-2xl font-bold tabular-nums" style={{ color }}>{value}</p>
-                <p className="mt-0.5 text-xs uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>{label}</p>
               </div>
             ))}
           </div>
@@ -461,8 +527,10 @@ export default function PortfolioReportPage() {
         {/* Contract Triage */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Scale className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
-            <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Contract Triage</h2>
+            <h2 className="text-base font-semibold font-display flex items-center gap-2" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+              <Scale className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+              Contract Triage
+            </h2>
           </div>
 
           {contract_triage.immediate_attention.length > 0 && (
@@ -512,8 +580,8 @@ export default function PortfolioReportPage() {
         {priority_action_items.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
-              <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+              <h2 className="text-base font-semibold font-display flex items-center gap-2" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+                <Zap className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
                 Priority Action Items
               </h2>
               <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
@@ -532,8 +600,8 @@ export default function PortfolioReportPage() {
         {cross_contract_patterns.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Users className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
-              <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+              <h2 className="text-base font-semibold font-display flex items-center gap-2" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+                <Users className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
                 Cross-Contract Patterns
               </h2>
             </div>
