@@ -266,6 +266,12 @@ function RiskDistributionChart({ summary }: { summary: ContractAnalysisSummary }
     { key: "low" as const, label: "Low" },
   ];
 
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div
       className="rounded-xl border p-5 space-y-4"
@@ -288,8 +294,12 @@ function RiskDistributionChart({ summary }: { summary: ContractAnalysisSummary }
           return (
             <div
               key={key}
-              className="h-full transition-all duration-700"
-              style={{ width: `${pct}%`, background: riskHexColor(key) }}
+              className="h-full"
+              style={{
+                width: animated ? `${pct}%` : "0%",
+                background: riskHexColor(key),
+                transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)",
+              }}
               title={`${key}: ${dist[key]} (${Math.round(pct)}%)`}
             />
           );
@@ -310,8 +320,12 @@ function RiskDistributionChart({ summary }: { summary: ContractAnalysisSummary }
               </div>
               <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
                 <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${pct}%`, background: riskHexColor(key) }}
+                  className="h-full rounded-full"
+                  style={{
+                    width: animated ? `${pct}%` : "0%",
+                    background: riskHexColor(key),
+                    transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)",
+                  }}
                 />
               </div>
               <div className="w-12 flex items-center justify-between shrink-0">

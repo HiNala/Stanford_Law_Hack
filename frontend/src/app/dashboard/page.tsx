@@ -270,22 +270,6 @@ export default function DashboardPage() {
               />
             </div>
             <select
-              value={riskFilter}
-              onChange={(e) => setRiskFilter(e.target.value)}
-              className="rounded-xl border px-3 py-2.5 text-sm outline-none"
-              style={{
-                background: "var(--bg-secondary)",
-                borderColor: "var(--border-primary)",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <option value="all">All risk levels</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-            <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "date" | "risk")}
               className="rounded-xl border px-3 py-2.5 text-sm outline-none"
@@ -488,19 +472,21 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       className="group flex flex-col rounded-xl border p-5 text-left transition-all duration-200 cursor-pointer"
       style={{
-        background: "var(--bg-secondary)",
-        borderColor: "var(--border-primary)",
+        background: contract.status === "error" ? "rgba(239,68,68,0.04)" : "var(--bg-secondary)",
+        borderColor: contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(8px)",
         transition: "opacity 0.35s ease, transform 0.35s ease, border-color 0.15s, box-shadow 0.15s",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.6)" : "var(--border-secondary)";
+        el.style.boxShadow = contract.status === "error" ? "0 4px 12px rgba(239,68,68,0.15)" : "var(--shadow-md)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
+        el.style.boxShadow = "none";
       }}
     >
       {/* Top row: icon + status + delete */}
@@ -608,6 +594,10 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
             />
           </div>
         </div>
+      ) : contract.status === "error" ? (
+        <p className="mt-auto pt-4 text-xs" style={{ color: "var(--risk-critical)" }}>
+          Analysis failed — delete and re-upload to retry
+        </p>
       ) : (
         <p className="mt-auto pt-4 text-xs" style={{ color: "var(--text-tertiary)" }}>
           {formatDate(contract.created_at)}
