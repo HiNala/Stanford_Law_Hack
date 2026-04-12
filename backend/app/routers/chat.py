@@ -2,6 +2,7 @@
 
 import uuid
 import json
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -12,8 +13,9 @@ from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatMessageResponse, ChatHistoryResponse
 from app.services.contract_service import get_contract
-from app.services.chat_service import chat_with_contract, get_chat_history
+from app.services.chat_service import chat_with_contract, retrieve_relevant_clauses, get_chat_history
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -30,12 +32,26 @@ async def chat(
         raise HTTPException(status_code=404, detail="Contract not found")
 
     if contract.status != "analyzed":
-        raise HTTPException(status_code=400, detail="Contract has not been analyzed yet")
+        raise HTTPException(status_code=400, detail="Contract analysis must complete before using chat")
+
+    if not payload.message or not payload.message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     async def event_stream():
-        async for chunk in chat_with_contract(db, contract_id, current_user.id, payload.message):
-            yield f"data: {json.dumps({'content': chunk})}\n\n"
-        yield "data: [DONE]\n\n"
+        try:
+            # First event: send context clause IDs so frontend can highlight them
+            context_clauses = await retrieve_relevant_clauses(db, contract_id, payload.message)
+            clause_ids = [str(c.id) for c in context_clauses]
+            yield f"data: {json.dumps({'type': 'context', 'clause_ids': clause_ids})}\n\n"
+
+            # Stream tokens
+            async for chunk in chat_with_contract(db, contract_id, current_user.id, payload.message):
+                yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
+
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        except Exception as e:
+            logger.error(f"Chat stream error: {e}")
+            yield f"data: {json.dumps({'type': 'error', 'detail': 'Analysis service temporarily unavailable'})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 

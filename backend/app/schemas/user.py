@@ -3,14 +3,14 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserCreate(BaseModel):
     """Schema for user registration."""
-    email: str
-    password: str
-    full_name: str | None = None
+    email: str = Field(..., description="Valid email address")
+    password: str = Field(..., min_length=8, description="Minimum 8 characters")
+    full_name: str | None = Field(None, max_length=255)
 
 
 class UserLogin(BaseModel):
@@ -33,4 +33,5 @@ class TokenResponse(BaseModel):
     """Schema for JWT token response."""
     access_token: str
     token_type: str = "bearer"
+    expires_in: int = 86400
     user: UserResponse

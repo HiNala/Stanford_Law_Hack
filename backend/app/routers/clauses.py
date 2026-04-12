@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -17,6 +17,8 @@ router = APIRouter(prefix="/clauses", tags=["clauses"])
 @router.get("/{contract_id}", response_model=ClauseListResponse)
 async def list_clauses(
     contract_id: uuid.UUID,
+    risk_level: str | None = Query(None, description="Filter by risk level"),
+    risk_category: str | None = Query(None, description="Filter by risk category"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -26,10 +28,37 @@ async def list_clauses(
         raise HTTPException(status_code=404, detail="Contract not found")
 
     clauses = await get_contract_clauses(db, contract_id)
+
+    # Apply optional filters
+    if risk_level:
+        clauses = [c for c in clauses if c.risk_level == risk_level]
+    if risk_category:
+        clauses = [c for c in clauses if c.risk_category == risk_category]
+
     return ClauseListResponse(
         clauses=[ClauseResponse.model_validate(c) for c in clauses],
         total=len(clauses),
     )
+
+
+@router.get("/{contract_id}/clause/{clause_id}", response_model=ClauseResponse)
+async def get_single_clause(
+    contract_id: uuid.UUID,
+    clause_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get a single clause with full details."""
+    contract = await get_contract(db, contract_id)
+    if not contract or contract.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Contract not found")
+
+    clauses = await get_contract_clauses(db, contract_id)
+    clause = next((c for c in clauses if c.id == clause_id), None)
+    if not clause:
+        raise HTTPException(status_code=404, detail="Clause not found")
+
+    return ClauseResponse.model_validate(clause)
 
 
 @router.get("/{contract_id}/summary", response_model=ContractAnalysisSummary)

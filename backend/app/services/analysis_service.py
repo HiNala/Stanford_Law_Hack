@@ -1,4 +1,8 @@
-"""Risk analysis service — scores and explains each clause using GPT-4o."""
+"""Risk analysis service — scores and explains each clause using GPT-4o.
+
+Enhanced with CUAD/Kira-inspired 25-category taxonomy, market benchmarking,
+impact assessment, and confidence scoring.
+"""
 
 import uuid
 import logging
@@ -12,15 +16,45 @@ from app.services.ai_service import get_json_completion, get_completion
 
 logger = logging.getLogger(__name__)
 
-RISK_ANALYSIS_SYSTEM_PROMPT = """You are a senior legal risk analyst. Analyze the following contract clause and provide a structured risk assessment.
+# 25-category taxonomy inspired by CUAD dataset and Kira smart fields
+CLAUSE_TAXONOMY = (
+    "change_of_control, termination_convenience, termination_cause, "
+    "indemnification, limitation_of_liability, non_compete, non_solicitation, "
+    "ip_ownership, assignment, exclusivity, most_favored_nation, "
+    "confidentiality, data_privacy, insurance, audit_rights, warranty, "
+    "force_majeure, governing_law, dispute_resolution, notice, survival, "
+    "payment_terms, auto_renewal, sla, general"
+)
 
-Respond ONLY with valid JSON containing these fields:
-- risk_score: float from 0.0 (no risk) to 1.0 (critical risk)
-- risk_level: one of "low", "medium", "high", "critical"
-- risk_category: one of "financial", "termination", "indemnification", "ip_assignment", "non_compete", "compliance", "change_of_control", "liability", "confidentiality", "general"
-- clause_type: what type of clause this is (e.g. "termination", "payment_terms", "warranty", "governing_law", "indemnification", "confidentiality", "non_compete", "force_majeure", "limitation_of_liability", "general")
-- explanation: 2-3 sentence plain-English explanation of why this clause is or is not risky
-- suggestion: if risk is medium or higher, suggest safer alternative language; if low risk, set to null"""
+RISK_ANALYSIS_SYSTEM_PROMPT = f"""You are a senior associate attorney at a top-tier M&A and corporate transactional practice. You are conducting contract due diligence for a partner. Your analysis must be precise enough that the partner could rely on it to advise a client.
+
+Analyze the contract clause below and return a JSON object with EXACTLY these fields:
+
+{{
+  "risk_score": <float 0.0-1.0, where 0.0=no risk, 1.0=critical>,
+  "risk_level": "<low|medium|high|critical>",
+  "clause_type": "<one of the 25 types listed below>",
+  "risk_category": "<same value as clause_type>",
+  "explanation": "<2-3 sentences: what this clause does and why it is or is not risky. Be concrete and specific — cite the actual language.>",
+  "market_comparison": "<how this compares to market standard for this clause type — reference concrete norms, e.g. '15-day notice is well below the 30-90 day standard for MSAs; most commercial agreements require 60 days'>",
+  "impact_if_triggered": "<practical worst-case scenario if this clause is exercised against your client — quantify exposure where possible, e.g. 'unlimited indemnification exposure with no cap'>",
+  "suggestion": "<specific, actionable safer alternative language the client should request, or null if the clause is low-risk>",
+  "confidence": <float 0.0-1.0 reflecting certainty of this assessment given the clause text provided>
+}}
+
+Clause types (pick exactly one): {CLAUSE_TAXONOMY}
+
+Scoring guidance:
+- One-sided provisions always score higher than bilateral/mutual ones
+- Below-market notice periods, caps, or terms score higher than market-standard
+- Missing standard protections score high or critical (no liability cap → critical; no mutual indemnification → high)
+- Change-of-control termination rights: always high or critical — these are M&A deal-breakers
+- Uncapped indemnification or unlimited liability: always critical
+- Standard boilerplate (notice in writing, governing law in major US jurisdiction): low risk
+- Short auto-renewal windows under 30 days: high risk
+- Perpetual confidentiality obligations: high risk (unenforceable in many jurisdictions)
+
+Respond ONLY with the JSON object. No markdown fences. No preamble. No trailing text."""
 
 METADATA_SYSTEM_PROMPT = """You are a legal document analyst. Extract key metadata from this contract text.
 
@@ -30,8 +64,9 @@ Respond ONLY with valid JSON containing:
 - effective_date: when the contract takes effect (YYYY-MM-DD or null)
 - expiration_date: when it expires (YYYY-MM-DD or null)
 - governing_law: jurisdiction (string or null)
+- contract_value: any stated dollar value or consideration (string or null)
 - contract_type: one of "NDA", "MSA", "Employment", "Lease", "SaaS", "Vendor", "IP_License", "Partnership", "Settlement", "Other"
-- summary: 3-5 sentence executive summary of the contract"""
+- summary: 3-5 sentence executive summary of the contract highlighting the most critical risk areas and key commercial terms"""
 
 
 async def analyze_clause(clause_text: str) -> dict:
@@ -61,19 +96,32 @@ async def analyze_all_clauses(db: AsyncSession, contract_id: uuid.UUID) -> int:
             clause.risk_level = analysis.get("risk_level", "low")
             clause.risk_category = analysis.get("risk_category", "general")
             clause.clause_type = analysis.get("clause_type", "general")
-            clause.explanation = analysis.get("explanation", "")
+
+            # Build rich explanation that includes market context and impact
+            base_explanation = analysis.get("explanation", "")
+            market = analysis.get("market_comparison", "")
+            impact = analysis.get("impact_if_triggered", "")
+
+            rich_parts = [base_explanation]
+            if market:
+                rich_parts.append(f"**Market context:** {market}")
+            if impact and analysis.get("risk_level") in ("medium", "high", "critical"):
+                rich_parts.append(f"**If triggered:** {impact}")
+
+            clause.explanation = "\n\n".join(p for p in rich_parts if p)
             clause.suggestion = analysis.get("suggestion")
             analyzed += 1
         except Exception as e:
             logger.error(f"Failed to analyze clause {clause.id}: {e}")
             clause.risk_level = "medium"
-            clause.explanation = "Analysis failed — flagged for manual review."
+            clause.explanation = "Analysis could not be completed — flagged for manual review."
 
     await db.flush()
 
-    # Compute overall contract risk score
+    # Compute overall contract risk score using max-influenced weighted average
     scored_clauses = [c for c in clauses if c.risk_score is not None]
     if scored_clauses:
+        # Weight by text length (longer clauses matter more)
         total_weight = sum(len(c.clause_text) for c in scored_clauses)
         if total_weight > 0:
             weighted_score = sum(
@@ -82,17 +130,22 @@ async def analyze_all_clauses(db: AsyncSession, contract_id: uuid.UUID) -> int:
         else:
             weighted_score = sum(c.risk_score for c in scored_clauses) / len(scored_clauses)
 
+        # Boost score if there are any critical clauses (so the overall score reflects severity)
+        critical_count = sum(1 for c in scored_clauses if c.risk_level == "critical")
+        if critical_count > 0:
+            weighted_score = min(weighted_score * (1 + 0.1 * critical_count), 1.0)
+
         contract_result = await db.execute(
             select(Contract).where(Contract.id == contract_id)
         )
         contract = contract_result.scalar_one_or_none()
         if contract:
             contract.overall_risk_score = round(weighted_score, 3)
-            if weighted_score >= 0.75:
+            if weighted_score >= 0.70:
                 contract.risk_level = "critical"
-            elif weighted_score >= 0.5:
+            elif weighted_score >= 0.45:
                 contract.risk_level = "high"
-            elif weighted_score >= 0.25:
+            elif weighted_score >= 0.20:
                 contract.risk_level = "medium"
             else:
                 contract.risk_level = "low"

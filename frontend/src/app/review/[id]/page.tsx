@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  use,
-} from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,38 +12,10 @@ import {
 } from "lucide-react";
 import { contractsApi, clausesApi, analysisApi, chatApi } from "@/lib/api";
 import { useContractStore } from "@/stores/contract-store";
+import { usePolling } from "@/hooks/use-polling";
+import { useTypewriter } from "@/hooks/use-typewriter";
 import { cn, riskHexColor, formatRiskPercent } from "@/lib/utils";
 import type { Contract, Clause, ContractAnalysisSummary } from "@/types";
-
-// ─── Typewriter hook ───────────────────────────────────────────────────────────
-function useTypewriter(text: string, speed = 14, enabled = true) {
-  const [displayed, setDisplayed] = useState("");
-  const [done, setDone] = useState(false);
-  const indexRef = useRef(0);
-
-  useEffect(() => {
-    if (!enabled || !text) {
-      setDisplayed(text);
-      setDone(true);
-      return;
-    }
-    setDisplayed("");
-    setDone(false);
-    indexRef.current = 0;
-    const interval = setInterval(() => {
-      if (indexRef.current < text.length) {
-        setDisplayed(text.slice(0, indexRef.current + 1));
-        indexRef.current++;
-      } else {
-        clearInterval(interval);
-        setDone(true);
-      }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed, enabled]);
-
-  return { displayed, done };
-}
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function ReviewPage({
@@ -75,12 +41,33 @@ export default function ReviewPage({
   const [activeTab, setActiveTab] = useState<"analysis" | "chat">("analysis");
   const analysisScrollRef = useRef<HTMLDivElement>(null);
   const clauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const pollingCleanupRef = useRef<(() => void) | null>(null);
 
-  // Clean up polling interval when component unmounts
-  useEffect(() => {
-    return () => { pollingCleanupRef.current?.(); };
-  }, []);
+  // Robust polling via the pre-built hook (stale-closure-safe)
+  usePolling(
+    async () => {
+      try {
+        const res = await analysisApi.status(id);
+        if (res.data.status === "analyzed") {
+          setPolling(false);
+          await loadAnalysis();
+          const contractRes = await contractsApi.get(id);
+          setCurrentContract(contractRes.data);
+          return true; // stop
+        }
+        if (res.data.status === "error") {
+          setPolling(false);
+          const contractRes = await contractsApi.get(id);
+          setCurrentContract(contractRes.data);
+          return true; // stop
+        }
+      } catch {
+        return true; // stop on network error
+      }
+      return false; // keep polling
+    },
+    3000,
+    polling
+  );
 
   useEffect(() => {
     loadContract();
@@ -97,7 +84,6 @@ export default function ReviewPage({
         await loadAnalysis();
       } else if (contract.status === "processing") {
         setPolling(true);
-        pollingCleanupRef.current = startPolling();
       }
     } catch {
       router.push("/dashboard");
@@ -105,30 +91,6 @@ export default function ReviewPage({
       setLoading(false);
     }
   };
-
-  const startPolling = useCallback(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await analysisApi.status(id);
-        if (res.data.status === "analyzed") {
-          clearInterval(interval);
-          setPolling(false);
-          await loadAnalysis();
-          const contractRes = await contractsApi.get(id);
-          setCurrentContract(contractRes.data);
-        } else if (res.data.status === "error") {
-          clearInterval(interval);
-          setPolling(false);
-          const contractRes = await contractsApi.get(id);
-          setCurrentContract(contractRes.data);
-        }
-      } catch {
-        clearInterval(interval);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
 
   const loadAnalysis = async () => {
     try {
@@ -138,7 +100,6 @@ export default function ReviewPage({
       ]);
       setClauses(clauseRes.data.clauses);
       setAnalysisSummary(summaryRes.data);
-      // Trigger heatmap cascade after a small delay
       setTimeout(() => setHeatmapReady(true), 100);
     } catch {
       /* silently handle */
@@ -603,10 +564,9 @@ function ClauseDetail({
   clause: Clause;
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }) {
-  const { displayed: displayedExplanation, done } = useTypewriter(
+  const { displayed: displayedExplanation, isDone } = useTypewriter(
     clause.explanation ?? "",
-    12,
-    true
+    { speed: 12 }
   );
 
   return (
@@ -668,8 +628,8 @@ function ClauseDetail({
           <p
             className={cn(
               "text-sm leading-relaxed",
-              !done && "typewriter-cursor",
-              done && "typewriter-cursor-done"
+              !isDone && "typewriter-cursor",
+              isDone && "typewriter-cursor-done"
             )}
             style={{ color: "var(--text-primary)" }}
           >

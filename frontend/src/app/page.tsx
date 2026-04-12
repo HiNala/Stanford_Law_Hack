@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Shield } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
-import { cn } from "@/lib/utils";
+import Button from "@/components/ui/button";
+import Input from "@/components/ui/input";
 
 const DEMO_EMAIL = "demo@clauseguard.ai";
 const DEMO_PASSWORD = "hackathon2026";
@@ -23,29 +24,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
+  useEffect(() => { hydrate(); }, [hydrate]);
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/dashboard");
-    }
+    if (isAuthenticated) router.replace("/dashboard");
   }, [isAuthenticated, router]);
-
-  // Auto-focus email on mount
-  useEffect(() => {
-    emailRef.current?.focus();
-  }, []);
+  useEffect(() => { emailRef.current?.focus(); }, []);
 
   const validate = () => {
     const errs: { email?: string; password?: string } = {};
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      errs.email = "Enter a valid email address";
-    }
-    if (password.length < 8) {
-      errs.password = "Password must be at least 8 characters";
-    }
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = "Enter a valid email";
+    if (password.length < 8) errs.password = "At least 8 characters required";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -76,7 +64,6 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      // Try login first, if it fails register then login
       let res;
       try {
         res = await authApi.login(DEMO_EMAIL, DEMO_PASSWORD);
@@ -99,7 +86,7 @@ export default function LoginPage() {
       style={{ background: "var(--bg-primary)" }}
     >
       <div className="w-full max-w-sm space-y-8">
-        {/* Logo */}
+        {/* Brand */}
         <div className="text-center">
           <div
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
@@ -129,102 +116,60 @@ export default function LoginPage() {
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg px-3 py-2.5 text-sm border outline-none transition-colors"
-                  style={{
-                    background: "var(--bg-input)",
-                    borderColor: "var(--border-primary)",
-                    color: "var(--text-primary)",
-                  }}
-                  placeholder="Jane Smith"
-                  onFocus={(e) => (e.target.style.borderColor = "var(--accent-primary)")}
-                  onBlur={(e) => (e.target.style.borderColor = "var(--border-primary)")}
-                />
-              </div>
+              <Input
+                label="Full Name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Smith"
+              />
             )}
 
-            <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                Email
-              </label>
-              <input
-                ref={emailRef}
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })); }}
-                className="w-full rounded-lg px-3 py-2.5 text-sm border outline-none transition-colors"
-                style={{
-                  background: "var(--bg-input)",
-                  borderColor: fieldErrors.email ? "var(--risk-critical)" : "var(--border-primary)",
-                  color: "var(--text-primary)",
-                }}
-                placeholder="you@lawfirm.com"
-                onFocus={(e) => !fieldErrors.email && (e.target.style.borderColor = "var(--accent-primary)")}
-                onBlur={(e) => !fieldErrors.email && (e.target.style.borderColor = "var(--border-primary)")}
-              />
-              {fieldErrors.email && (
-                <p className="mt-1 text-xs" style={{ color: "var(--risk-critical)" }}>{fieldErrors.email}</p>
-              )}
-            </div>
+            <Input
+              ref={emailRef}
+              id="email"
+              label="Email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setFieldErrors((p) => ({ ...p, email: undefined }));
+              }}
+              placeholder="you@lawfirm.com"
+              error={fieldErrors.email}
+            />
 
-            <div>
-              <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setFieldErrors((p) => ({ ...p, password: undefined })); }}
-                className="w-full rounded-lg px-3 py-2.5 text-sm border outline-none transition-colors"
-                style={{
-                  background: "var(--bg-input)",
-                  borderColor: fieldErrors.password ? "var(--risk-critical)" : "var(--border-primary)",
-                  color: "var(--text-primary)",
-                }}
-                placeholder="••••••••"
-                onFocus={(e) => !fieldErrors.password && (e.target.style.borderColor = "var(--accent-primary)")}
-                onBlur={(e) => !fieldErrors.password && (e.target.style.borderColor = "var(--border-primary)")}
-              />
-              {fieldErrors.password && (
-                <p className="mt-1 text-xs" style={{ color: "var(--risk-critical)" }}>{fieldErrors.password}</p>
-              )}
-            </div>
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setFieldErrors((p) => ({ ...p, password: undefined }));
+              }}
+              placeholder="••••••••"
+              error={fieldErrors.password}
+            />
 
             {error && (
               <div
                 className="rounded-lg px-3 py-2.5 text-xs"
-                style={{ background: "var(--risk-critical-bg)", color: "var(--risk-critical)", border: "1px solid var(--risk-critical-border)" }}
+                style={{
+                  background: "var(--risk-critical-bg)",
+                  color: "var(--risk-critical)",
+                  border: "1px solid var(--risk-critical-border)",
+                }}
               >
                 {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity disabled:opacity-50"
-              style={{ background: loading ? "var(--accent-hover)" : "var(--accent-primary)" }}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  {isRegister ? "Creating account..." : "Signing in..."}
-                </span>
-              ) : (
-                isRegister ? "Create Account" : "Sign In"
-              )}
-            </button>
+            <Button type="submit" loading={loading} className="w-full">
+              {isRegister ? "Create Account" : "Sign In"}
+            </Button>
           </form>
 
           {/* Divider */}
@@ -234,30 +179,16 @@ export default function LoginPage() {
             <div className="flex-1 border-t" style={{ borderColor: "var(--border-primary)" }} />
           </div>
 
-          {/* Demo Login */}
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleDemoLogin}
             disabled={loading}
-            className="w-full rounded-lg border py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
-            style={{
-              borderColor: "var(--border-secondary)",
-              color: "var(--text-secondary)",
-              background: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.borderColor = "var(--border-hover)";
-              (e.target as HTMLButtonElement).style.color = "var(--text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.borderColor = "var(--border-secondary)";
-              (e.target as HTMLButtonElement).style.color = "var(--text-secondary)";
-            }}
+            className="w-full"
           >
-            Demo Login
-          </button>
+            Try Demo Login
+          </Button>
 
-          {/* Toggle register/login */}
           <p className="text-center text-xs" style={{ color: "var(--text-tertiary)" }}>
             {isRegister ? "Already have an account?" : "Need an account?"}{" "}
             <button

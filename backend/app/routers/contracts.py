@@ -13,7 +13,7 @@ from app.database import get_db, async_session_factory
 from app.middleware.auth import get_current_user
 from app.models.contract import Contract
 from app.models.user import User
-from app.schemas.contract import ContractResponse, ContractListResponse, ContractUploadResponse
+from app.schemas.contract import ContractResponse, ContractListItem, ContractListResponse, ContractUploadResponse
 from app.services.contract_service import (
     create_contract,
     process_contract,
@@ -99,24 +99,35 @@ async def upload_contract(
 
     return ContractUploadResponse(
         id=contract.id,
-        filename=file.filename,
+        original_filename=file.filename,
+        file_type=ext,
+        file_size_bytes=len(content),
         status="processing",
-        message="Contract uploaded successfully. Analysis has started.",
+        created_at=contract.created_at,
+        message="Contract uploaded successfully. Analysis in progress.",
     )
 
 
 @router.get("/", response_model=ContractListResponse)
 async def list_contracts(
-    skip: int = 0,
-    limit: int = 50,
+    page: int = 1,
+    page_size: int = 20,
+    status_filter: str | None = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List all contracts for the current user."""
-    contracts, total = await get_user_contracts(db, current_user.id, skip, limit)
+    """List all contracts for the current user with pagination."""
+    page_size = min(page_size, 100)
+    skip = (page - 1) * page_size
+    contracts, total = await get_user_contracts(db, current_user.id, skip, page_size)
     return ContractListResponse(
-        contracts=[ContractResponse.model_validate(c) for c in contracts],
+        items=[ContractListItem.model_validate(c) for c in contracts],
         total=total,
+        page=page,
+        page_size=page_size,
+        has_more=(skip + page_size) < total,
     )
 
 
@@ -131,3 +142,61 @@ async def get_contract_detail(
     if not contract or contract.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Contract not found")
     return ContractResponse.model_validate(contract)
+
+
+@router.delete("/{contract_id}")
+async def delete_contract(
+    contract_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a contract and all associated clauses and chat messages."""
+    contract = await get_contract(db, contract_id)
+    if not contract or contract.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Contract not found")
+    if contract.status == "processing":
+        raise HTTPException(status_code=409, detail="Cannot delete a contract that is currently being processed")
+
+    # Delete file from disk
+    if contract.file_path and os.path.exists(contract.file_path):
+        try:
+            os.remove(contract.file_path)
+        except OSError:
+            logger.warning(f"Could not delete file: {contract.file_path}")
+
+    await db.delete(contract)
+    await db.flush()
+    return {"detail": "Contract deleted successfully"}
+
+
+@router.get("/{contract_id}/status")
+async def get_contract_status(
+    contract_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lightweight endpoint for polling processing status."""
+    contract = await get_contract(db, contract_id)
+    if not contract or contract.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Contract not found")
+
+    clauses = await get_contract_clauses(db, contract_id) if contract.status in ("processing", "analyzed") else []
+    analyzed = sum(1 for c in clauses if c.risk_level is not None)
+    total = len(clauses)
+
+    progress = None
+    if contract.status == "processing" and total > 0:
+        progress = {
+            "stage": "analyzing_clauses" if analyzed < total else "extracting_metadata",
+            "clauses_analyzed": analyzed,
+            "total_clauses": total,
+            "percent_complete": int((analyzed / total) * 100) if total else 0,
+        }
+
+    return {
+        "id": contract.id,
+        "status": contract.status,
+        "overall_risk_score": contract.overall_risk_score,
+        "risk_level": contract.risk_level,
+        "progress": progress,
+    }

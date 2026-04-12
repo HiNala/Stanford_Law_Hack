@@ -115,4 +115,9 @@ export const searchApi = {
     api.post("/search/", { query, contract_id: contractId, top_k: topK }),
 };
 
+// Portfolio stats
+export const statsApi = {
+  get: () => api.get("/stats/"),
+};
+
 export default api;

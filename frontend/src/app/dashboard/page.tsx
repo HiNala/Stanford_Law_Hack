@@ -2,20 +2,30 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, LogOut, Shield, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
-import { contractsApi } from "@/lib/api";
+import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3 } from "lucide-react";
+import { contractsApi, statsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
-import { cn, formatRiskPercent, riskColor, riskDotColor, riskHexColor, formatDate, formatFileSize } from "@/lib/utils";
+import { cn, formatRiskPercent, riskHexColor, formatDate, formatFileSize } from "@/lib/utils";
+import Header from "@/components/layout/header";
 import type { Contract } from "@/types";
+
+interface PortfolioStats {
+  total_contracts: number;
+  contracts_by_status: Record<string, number>;
+  average_risk_score: number;
+  highest_risk_contract: { id: string; title: string; risk_score: number } | null;
+  risk_distribution: { critical: number; high: number; medium: number; low: number };
+}
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, user, logout, hydrate } = useAuthStore();
+  const { isAuthenticated, hydrate } = useAuthStore();
   const { contracts, setContracts } = useContractStore();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
+  const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -26,27 +36,25 @@ export default function DashboardPage() {
       router.push("/");
       return;
     }
-    loadContracts();
-    // Poll for processing contracts
-    const interval = setInterval(loadContracts, 5000);
+    loadAll();
+    const interval = setInterval(loadAll, 5000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const loadContracts = async () => {
+  const loadAll = async () => {
     try {
-      const res = await contractsApi.list();
-      setContracts(res.data.contracts);
+      const [contractsRes, statsRes] = await Promise.allSettled([
+        contractsApi.list(),
+        statsApi.get(),
+      ]);
+      if (contractsRes.status === "fulfilled") setContracts(contractsRes.value.data.contracts);
+      if (statsRes.status === "fulfilled") setPortfolioStats(statsRes.value.data);
     } catch {
       // silently fail on refresh
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push("/");
   };
 
   const filtered = useMemo(() => {
@@ -74,39 +82,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
-      {/* Header */}
-      <header
-        className="border-b h-14 flex items-center"
-        style={{ borderColor: "var(--border-primary)", background: "var(--bg-secondary)" }}
-      >
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg"
-              style={{ background: "var(--accent-primary)" }}
-            >
-              <Shield className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-              ClauseGuard
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-              {user?.email}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="rounded-lg p-1.5 transition-colors"
-              style={{ color: "var(--text-tertiary)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-tertiary)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Content */}
       <main className="mx-auto max-w-7xl px-6 py-8">
@@ -114,10 +90,10 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-              Your Contracts
+              Contract Portfolio
             </h1>
             <p className="mt-1 text-sm" style={{ color: "var(--text-tertiary)" }}>
-              {contracts.length} contract{contracts.length !== 1 ? "s" : ""} in portfolio
+              {contracts.length} contract{contracts.length !== 1 ? "s" : ""} under review
               {processingCount > 0 && (
                 <span className="ml-2" style={{ color: "var(--accent-primary)" }}>
                   · {processingCount} analyzing...
@@ -134,6 +110,36 @@ export default function DashboardPage() {
             Upload Contract
           </button>
         </div>
+
+        {/* Portfolio stats bar */}
+        {portfolioStats && portfolioStats.total_contracts > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <StatCard
+              label="Avg Portfolio Risk"
+              value={`${Math.round(portfolioStats.average_risk_score * 100)}%`}
+              icon={<TrendingUp className="h-4 w-4" />}
+              accent={portfolioStats.average_risk_score > 0.5 ? "var(--risk-high)" : portfolioStats.average_risk_score > 0.25 ? "var(--risk-medium)" : "var(--risk-low)"}
+            />
+            <StatCard
+              label="Critical Clauses"
+              value={portfolioStats.risk_distribution.critical.toLocaleString()}
+              icon={<AlertCircle className="h-4 w-4" />}
+              accent="var(--risk-critical)"
+            />
+            <StatCard
+              label="High-Risk Clauses"
+              value={portfolioStats.risk_distribution.high.toLocaleString()}
+              icon={<BarChart3 className="h-4 w-4" />}
+              accent="var(--risk-high)"
+            />
+            <StatCard
+              label="Analyzed"
+              value={`${portfolioStats.contracts_by_status["analyzed"] ?? 0} / ${portfolioStats.total_contracts}`}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              accent="var(--risk-low)"
+            />
+          </div>
+        )}
 
         {/* Stats bar */}
         {contracts.length > 0 && (
@@ -404,6 +410,36 @@ function EmptyState({
         <Plus className="h-4 w-4" />
         Upload Contract
       </button>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  accent,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  accent: string;
+}) {
+  return (
+    <div
+      className="rounded-xl border p-4 flex items-center gap-3"
+      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+    >
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+        style={{ background: `${accent}18`, color: accent }}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+        <p className="text-lg font-bold leading-tight" style={{ color: accent }}>{value}</p>
+      </div>
     </div>
   );
 }

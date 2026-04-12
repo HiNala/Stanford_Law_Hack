@@ -3,13 +3,13 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
     """Schema for sending a chat message."""
-    message: str
-    contract_id: uuid.UUID
+    message: str = Field(..., max_length=2000, description="User question about the contract")
+    contract_id: uuid.UUID | None = None
 
 
 class ChatMessageResponse(BaseModel):
@@ -32,9 +32,11 @@ class ChatHistoryResponse(BaseModel):
 
 class SearchRequest(BaseModel):
     """Schema for semantic search."""
-    query: str
-    contract_id: uuid.UUID | None = None
-    top_k: int = 5
+    query: str = Field(..., description="Natural language search query")
+    contract_ids: list[uuid.UUID] = Field(default_factory=list, description="Contract IDs to search within (empty = all)")
+    contract_id: uuid.UUID | None = Field(None, description="Single contract filter (backwards compat)")
+    limit: int = Field(10, ge=1, le=50)
+    top_k: int = Field(10, ge=1, le=50, description="Alias for limit")
 
 
 class SearchResult(BaseModel):
