@@ -110,59 +110,44 @@ export default function HomePage() {
       {/* ── Features ── */}
       <section id="features" className="px-6 py-24 md:px-12 lg:px-20">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium mb-4"
-              style={{ borderColor: "var(--border-secondary)", color: "var(--text-tertiary)", background: "var(--bg-secondary)" }}
-            >
-              <Sparkles className="h-3 w-3" style={{ color: "var(--accent-primary)" }} />
-              Everything your legal team needs
-            </span>
-            <h2 className="text-4xl font-bold md:text-5xl" style={{ color: "var(--text-primary)" }}>
-              Contract intelligence,{" "}
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                end-to-end.
-              </span>
+          <div className="mb-16 max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--accent-primary)" }}>
+              Capabilities
+            </p>
+            <h2 className="font-display text-4xl md:text-5xl leading-tight" style={{ color: "var(--text-primary)" }}>
+              Contract intelligence, end&#8209;to&#8209;end.
             </h2>
-            <p className="mt-4 max-w-xl mx-auto text-lg" style={{ color: "var(--text-secondary)" }}>
-              From first upload to final signature, ClauseGuard makes contract risk visible and actionable.
+            <p className="mt-5 text-lg max-w-lg" style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
+              From first upload to final signature, every risk is visible before it costs you.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(({ icon, title, description, accent }) => (
+          {/* Asymmetric 2-col layout — avoids identical card grid anti-pattern */}
+          <div className="grid grid-cols-1 gap-0 md:grid-cols-2">
+            {FEATURES.map(({ icon, title, description, accent }, i) => (
               <div
                 key={title}
-                className="rounded-2xl border p-6 transition-all duration-200 group"
-                style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = `${accent}40`;
-                  (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 1px ${accent}20, 0 8px 24px rgba(0,0,0,0.3)`;
+                className="flex gap-4 p-6 transition-colors duration-200"
+                style={{
+                  borderTop: i >= 2 ? "1px solid var(--border-primary)" : undefined,
+                  borderRight: i % 2 === 0 ? "1px solid var(--border-primary)" : undefined,
+                  borderBottom: i < 4 ? "1px solid var(--border-primary)" : undefined,
                 }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = `${accent}07`)}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               >
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl mb-4 transition-transform group-hover:scale-110"
-                  style={{ background: `${accent}18`, color: accent }}
-                >
+                {/* Icon inline with content — no stacked tile */}
+                <div className="shrink-0 mt-0.5" style={{ color: accent }}>
                   {icon}
                 </div>
-                <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
-                  {title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                  {description}
-                </p>
+                <div>
+                  <h3 className="text-base font-semibold mb-1.5" style={{ color: "var(--text-primary)" }}>
+                    {title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", maxWidth: "38ch" }}>
+                    {description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -176,49 +161,38 @@ export default function HomePage() {
         style={{ borderTop: "1px solid var(--border-primary)", borderBottom: "1px solid var(--border-primary)" }}
       >
         <div className="mx-auto max-w-5xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold md:text-5xl" style={{ color: "var(--text-primary)" }}>
-              From upload to insight{" "}
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #3B82F6 0%, #22C55E 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                in 30 seconds.
-              </span>
+          <div className="mb-16 max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--accent-primary)" }}>
+              How it works
+            </p>
+            <h2 className="font-display text-4xl md:text-5xl leading-tight" style={{ color: "var(--text-primary)" }}>
+              From upload to insight in 30 seconds.
             </h2>
-            <p className="mt-4 text-lg" style={{ color: "var(--text-secondary)" }}>
+            <p className="mt-5 text-lg" style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
               No training. No configuration. Just drop your contract and go.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
             {HOW_IT_WORKS.map(({ step, title, description }, i) => (
               <div key={step} className="relative">
                 {i < HOW_IT_WORKS.length - 1 && (
                   <div
-                    className="hidden lg:block absolute top-7 left-full w-full h-px -translate-x-4"
-                    style={{ background: "linear-gradient(90deg, var(--border-secondary), transparent)" }}
+                    className="hidden lg:block absolute top-5 left-full w-full h-px -translate-x-4"
+                    style={{ background: "var(--border-primary)" }}
                   />
                 )}
+                {/* Solid step number — no gradient text */}
                 <div
-                  className="text-5xl font-black mb-4 tabular-nums"
-                  style={{
-                    background: "linear-gradient(135deg, var(--border-secondary) 0%, transparent 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
+                  className="text-sm font-semibold tabular-nums mb-4 inline-flex items-center justify-center h-8 w-8 rounded-full"
+                  style={{ background: "var(--bg-tertiary)", color: "var(--accent-primary)", border: "1px solid var(--border-secondary)" }}
                 >
-                  {step}
+                  {i + 1}
                 </div>
                 <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
                   {title}
                 </h3>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", maxWidth: "30ch" }}>
                   {description}
                 </p>
               </div>
@@ -230,24 +204,47 @@ export default function HomePage() {
       {/* ── Social Proof ── */}
       <section className="px-6 py-24 md:px-12 lg:px-20">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold md:text-4xl" style={{ color: "var(--text-primary)" }}>
-              Trusted by legal teams moving fast
+          {/* Stats row — solid text, no gradient numbers */}
+          <div
+            className="grid grid-cols-2 md:grid-cols-4 mb-16"
+            style={{ borderBottom: "1px solid var(--border-primary)" }}
+          >
+            {[
+              { value: "14M+", label: "Laws & cases indexed" },
+              { value: "25", label: "Clause categories scored" },
+              { value: "<30s", label: "Average analysis time" },
+              { value: "100%", label: "Clause coverage" },
+            ].map(({ value, label }, i) => (
+              <div
+                key={label}
+                className="py-8 px-6"
+                style={{ borderRight: i < 3 ? "1px solid var(--border-primary)" : undefined }}
+              >
+                <p className="font-display text-4xl mb-1" style={{ color: "var(--text-primary)" }}>{value}</p>
+                <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mb-10">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--accent-primary)" }}>What people say</p>
+            <h2 className="font-display text-3xl md:text-4xl" style={{ color: "var(--text-primary)" }}>
+              Trusted by legal teams moving fast.
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-px md:grid-cols-3" style={{ border: "1px solid var(--border-primary)" }}>
             {TESTIMONIALS.map(({ quote, name, title, initials, accent }) => (
               <div
                 key={name}
-                className="rounded-2xl border p-6 flex flex-col"
-                style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+                className="p-8 flex flex-col"
+                style={{ background: "var(--bg-secondary)" }}
               >
-                <p className="text-sm leading-relaxed flex-1 mb-6" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-base leading-relaxed flex-1 mb-8" style={{ color: "var(--text-secondary)", maxWidth: "40ch" }}>
                   &ldquo;{quote}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white shrink-0"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shrink-0"
                     style={{ background: accent }}
                   >
                     {initials}
@@ -257,38 +254,6 @@ export default function HomePage() {
                     <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{title}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats row */}
-          <div
-            className="mt-12 grid grid-cols-2 gap-px md:grid-cols-4 rounded-2xl overflow-hidden"
-            style={{ border: "1px solid var(--border-primary)" }}
-          >
-            {[
-              { value: "14M+", label: "Laws & cases indexed" },
-              { value: "25", label: "Clause categories scored" },
-              { value: "<30s", label: "Average analysis time" },
-              { value: "100%", label: "Clause coverage" },
-            ].map(({ value, label }) => (
-              <div
-                key={label}
-                className="flex flex-col items-center justify-center py-8 px-4 text-center"
-                style={{ background: "var(--bg-secondary)" }}
-              >
-                <span
-                  className="text-3xl font-black tabular-nums mb-1"
-                  style={{
-                    background: "linear-gradient(135deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  {value}
-                </span>
-                <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -302,9 +267,10 @@ export default function HomePage() {
         style={{ borderTop: "1px solid var(--border-primary)" }}
       >
         <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold md:text-5xl" style={{ color: "var(--text-primary)" }}>
-              Simple pricing
+          <div className="mb-12">
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--accent-primary)" }}>Pricing</p>
+            <h2 className="font-display text-4xl md:text-5xl" style={{ color: "var(--text-primary)" }}>
+              Simple pricing.
             </h2>
             <p className="mt-4 text-lg" style={{ color: "var(--text-secondary)" }}>
               Start free. Scale as your practice grows.
@@ -347,7 +313,7 @@ export default function HomePage() {
                 style={{
                   background: highlight ? "var(--accent-muted)" : "var(--bg-secondary)",
                   borderColor: highlight ? "var(--accent-primary)" : "var(--border-primary)",
-                  boxShadow: highlight ? "0 0 30px rgba(59,130,246,0.15)" : "none",
+                  boxShadow: "none",
                 }}
               >
                 {highlight && (
@@ -395,53 +361,42 @@ export default function HomePage() {
 
       {/* ── Final CTA ── */}
       <section
-        className="px-6 py-24 md:px-12 lg:px-20"
+        className="px-6 py-32 md:px-12 lg:px-20"
         style={{ borderTop: "1px solid var(--border-primary)" }}
       >
-        <div
-          className="mx-auto max-w-4xl rounded-3xl p-12 text-center relative overflow-hidden"
-          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-primary)" }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-30"
-            style={{ background: "radial-gradient(ellipse at 50% 0%, #3B82F650, transparent 60%)" }}
-          />
-          <div className="relative">
-            <div
-              className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl mb-6"
+        <div className="mx-auto max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-6" style={{ color: "var(--accent-primary)" }}>Get started</p>
+          <h2 className="font-display text-5xl md:text-6xl leading-tight mb-6" style={{ color: "var(--text-primary)" }}>
+            Ready to see what&apos;s hiding in your contracts?
+          </h2>
+          <p className="text-xl mb-10" style={{ color: "var(--text-secondary)", maxWidth: "48ch", lineHeight: 1.7 }}>
+            Upload your first contract free. No credit card, no setup, no waiting.
+          </p>
+          <div className="flex flex-col sm:flex-row items-start gap-4">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white transition-opacity hover:opacity-85"
               style={{ background: "var(--accent-primary)" }}
             >
-              <Shield className="h-7 w-7 text-white" />
-            </div>
-            <h2 className="text-4xl font-bold md:text-5xl mb-4" style={{ color: "var(--text-primary)" }}>
-              Ready to see what&apos;s hiding in your contracts?
-            </h2>
-            <p className="text-lg mb-8 max-w-xl mx-auto" style={{ color: "var(--text-secondary)" }}>
-              Upload your first contract free. No credit card, no setup, no waiting.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-semibold text-white transition-all hover:opacity-90"
-                style={{
-                  background: "linear-gradient(135deg, var(--accent-primary) 0%, #6366F1 100%)",
-                  boxShadow: "0 0 30px rgba(59,130,246,0.35)",
-                }}
-              >
-                <Shield className="h-4 w-4" />
-                Analyze a Contract Free
-              </Link>
-              <a
-                href="#features"
-                className="inline-flex items-center gap-2 text-sm"
-                style={{ color: "var(--text-tertiary)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--accent-primary)")}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
-              >
-                Learn more
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            </div>
+              <Shield className="h-4 w-4" />
+              Analyze a Contract Free
+            </Link>
+            <a
+              href="#features"
+              className="inline-flex items-center gap-2 text-base px-6 py-3 rounded-lg border transition-colors"
+              style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              }}
+            >
+              Learn more
+              <ArrowRight className="h-4 w-4" />
+            </a>
           </div>
         </div>
       </section>

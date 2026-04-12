@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-17-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/pgvector-vector%20search-336791?style=flat-square" alt="pgvector" />
   <img src="https://img.shields.io/badge/OpenAI-GPT--4o-412991?style=flat-square&logo=openai" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/TrustFoundry-Legal%20AI-4F46E5?style=flat-square" alt="TrustFoundry" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker" alt="Docker" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
 </p>
@@ -53,16 +54,16 @@ Enterprise contract intelligence tools like Harvey AI ($11B valuation) and Kira 
 │  │   Port 3000   │    │   Port 8000   │    │   Port 5432   │  │
 │  └──────────────┘    └──────┬───────┘    └──────────────┘  │
 │                             │                               │
-│                    ┌────────▼────────┐                      │
-│                    │   OpenAI API     │                      │
-│                    │  GPT-4o +        │                      │
-│                    │  text-embed-3-sm │                      │
-│                    └─────────────────┘                      │
+│                    ┌────────▼────────┐  ┌─────────────────┐ │
+│                    │   OpenAI API     │  │  TrustFoundry   │ │
+│                    │  GPT-4o +        │  │  14M+ US laws,  │ │
+│                    │  text-embed-3-sm │  │  verified cites  │ │
+│                    └─────────────────┘  └─────────────────┘ │
 │                                                             │
 │  Processing Pipeline:                                       │
 │  Upload → Extract Text → Chunk Clauses → Embed (pgvector)  │
-│  → Analyze Risk (GPT-4o) → Market Benchmarking             │
-│  → Extract Metadata → Store → Display Heatmap              │
+│  → Analyze Risk (GPT-4o) → Legal Grounding (TrustFoundry)  │
+│  → Market Benchmarking → Extract Metadata → Display Heatmap│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,6 +80,7 @@ Enterprise contract intelligence tools like Harvey AI ($11B valuation) and Kira 
 | **ORM** | SQLAlchemy 2.0 (async) | Declarative models with relationship loading |
 | **Database** | PostgreSQL 17 + pgvector | Relational storage + 1536-dim vector embeddings |
 | **AI** | OpenAI GPT-4o | Clause risk analysis, chat completions, report generation |
+| **Legal Knowledge** | TrustFoundry | Verified citations from 14M+ US laws, regulations, and cases |
 | **Embeddings** | text-embedding-3-small | Semantic search via cosine similarity |
 | **Auth** | JWT (HS256) | Stateless bearer token authentication |
 | **Infrastructure** | Docker Compose | One-command deployment with health checks |
@@ -139,9 +141,9 @@ docker compose exec backend python seed.py
 For hackathon presentations, follow this 60-second flow:
 
 1. **Open** http://localhost:3000 → click **"Try Demo Login"**
-2. **Dashboard** → 3 pre-analyzed contracts with red / orange / green risk badges and portfolio stats
+2. **Dashboard** → 4 pre-analyzed contracts with red / orange / yellow / green risk badges and portfolio stats
 3. **Click the Vendor MSA** (critical risk) → watch the heatmap cascade light up red
-4. **Click a red clause** → the analysis panel shows market comparison, impact assessment, and suggested redline
+4. **Click a red clause** → the analysis panel shows market comparison, impact assessment, suggested redline, and **verified legal citation via TrustFoundry**
 5. **Switch to Chat AI** → ask: *"Is the indemnification mutual or one-sided?"*
 6. **Watch streaming response** → AI cites the section, explains uncapped exposure, suggests specific language
 7. **Click Report** → generate a due diligence memo with Critical Findings and Next Steps
@@ -151,6 +153,7 @@ For hackathon presentations, follow this 60-second flow:
 - Harvey AI has no visual heatmap. Our cascading heatmap is a visual differentiator.
 - Spellbook requires Microsoft Word. We're web-native and instant.
 - Our AI reasons at senior associate level — market benchmarks, not just flag/no-flag.
+- Every critical finding is grounded in verified law via **TrustFoundry** (14M+ US laws and cases).
 - Three-click path from upload to actionable risk summary.
 
 ---
@@ -287,15 +290,16 @@ Each clause analysis includes:
 
 ## Demo Contracts
 
-Three pre-built demo contracts with realistic clause data are included in `backend/sample_contracts/`:
+Four pre-built demo contracts with realistic clause data and pre-analyzed risk scores:
 
 | Contract | Risk | Notable Issues |
 |----------|------|----------------|
 | Vendor MSA — GlobalSupply Partners | **Critical** (91%) | Uncapped one-sided indemnification, 5-day change-of-control termination, perpetual IP license-back, 36-month worldwide non-compete |
 | Master SaaS Agreement — TechCo LLC | **High** (79%) | 15-day auto-renewal trap, $1,000 liability cap, one-sided indemnification, no DPA for data privacy |
 | Mutual NDA — Acme Technologies | **Medium** (48%) | Standard mutual NDA with overbroad IP assignment clause and 5-year post-termination survival |
+| Executive Employment — Pinnacle Dynamics | **Low** (32%) | Reasonable non-compete with Texas jurisdiction, standard severance, narrow IP assignment |
 
-The Vendor MSA is designed to be the "wow" moment — judges see four critical-red clauses light up immediately.
+All critical and high-risk clauses include **verified legal citations via TrustFoundry** (e.g., Cal. Bus. & Prof. Code § 16600, N.Y. Gen. Oblig. Law § 5-322.1). The Vendor MSA is designed to be the "wow" moment — judges see four critical-red clauses light up immediately.
 
 ---
 
@@ -321,6 +325,7 @@ See the **[Demo Script](docs/DEMO-SCRIPT.md)** for presentation walkthrough and 
 | | ClauseGuard | Harvey AI | Spellbook | Kira |
 |--|-------------|-----------|-----------|------|
 | Visual risk heatmap | ✅ | ❌ | ❌ | ❌ |
+| Verified legal citations | ✅ (TrustFoundry) | ✅ (LexisNexis) | ❌ | ❌ |
 | Instant (zero onboarding) | ✅ | ❌ | ❌ | ❌ |
 | Web-native | ✅ | ✅ | ❌ | ❌ |
 | Market benchmarking | ✅ | ❌ | ✅ | ✅ |
