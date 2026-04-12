@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { contractsApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store";
 import { cn, formatFileSize } from "@/lib/utils";
 
 interface UploadedFile {
@@ -24,10 +25,16 @@ interface UploadedFile {
 
 export default function UploadPage() {
   const router = useRouter();
+  const { isAuthenticated, hydrate } = useAuthStore();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const onDrop = useCallback((accepted: File[], rejected: { file: File; errors: { message: string }[] }[]) => {
+  useEffect(() => { hydrate(); }, [hydrate]);
+  useEffect(() => {
+    if (!isAuthenticated) router.push("/");
+  }, [isAuthenticated, router]);
+
+  const onDrop = useCallback((accepted: File[], rejected: { file: File; errors: readonly { message: string }[] }[]) => {
     const newFiles = accepted.map((file) => ({ file, status: "pending" as const }));
     setFiles((prev) => {
       // Prevent duplicate files

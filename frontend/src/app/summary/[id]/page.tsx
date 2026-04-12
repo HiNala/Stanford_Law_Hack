@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, RefreshCw, Copy, TrendingUp } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, Download, TrendingUp } from "lucide-react";
 import { contractsApi, analysisApi, clausesApi } from "@/lib/api";
 import { riskHexColor, formatRiskPercent } from "@/lib/utils";
 import type { Contract, ContractAnalysisSummary } from "@/types";
@@ -21,6 +21,7 @@ export default function SummaryPage({
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [hasFullReport, setHasFullReport] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -35,6 +36,9 @@ export default function SummaryPage({
       ]);
       setContract(contractRes.data);
       if (summaryRes) setSummary(summaryRes.data);
+      // Use the stored summary as the initial report if no full report has been generated yet.
+      // Seeded contracts have a pre-written executive summary in contract.summary.
+      // The Regenerate button lets users produce a full AI memo on demand.
       if (contractRes.data.summary) setReport(contractRes.data.summary);
     } catch {
       router.push("/dashboard");
@@ -48,6 +52,7 @@ export default function SummaryPage({
     try {
       const res = await analysisApi.report(id);
       setReport(res.data.report);
+      setHasFullReport(true);
     } catch {
       setReport("Failed to generate report. Please try again.");
     } finally {
@@ -63,6 +68,20 @@ export default function SummaryPage({
     } catch {
       // Clipboard permission denied or unavailable (non-HTTPS, Firefox, etc.)
     }
+  };
+
+  const downloadMarkdown = () => {
+    const filename =
+      (contract?.title || contract?.original_filename || "report")
+        .replace(/[^a-z0-9_\-\.]/gi, "_")
+        .toLowerCase() + "_due_diligence.md";
+    const blob = new Blob([report], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -113,6 +132,23 @@ export default function SummaryPage({
           {report && (
             <div className="flex items-center gap-2">
               <button
+                onClick={downloadMarkdown}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                style={{
+                  background: "var(--accent-primary)",
+                  color: "#fff",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLElement).style.background = "var(--accent-hover)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLElement).style.background = "var(--accent-primary)")
+                }
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download Report
+              </button>
+              <button
                 onClick={copyMarkdown}
                 className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
                 style={{
@@ -130,7 +166,7 @@ export default function SummaryPage({
                 style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
-                {generating ? "Generating..." : "Regenerate"}
+                {generating ? "Generating..." : hasFullReport ? "Regenerate" : "Generate Full Report"}
               </button>
             </div>
           )}

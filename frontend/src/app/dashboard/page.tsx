@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2 } from "lucide-react";
-import { contractsApi, statsApi } from "@/lib/api";
+import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight } from "lucide-react";
+import { contractsApi, statsApi, searchApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
 import { cn, riskHexColor, formatDate, formatFileSize } from "@/lib/utils";
 import Header from "@/components/layout/header";
-import type { Contract } from "@/types";
+import type { Contract, SearchResult } from "@/types";
 
 interface PortfolioStats {
   total_contracts: number;
@@ -27,6 +27,10 @@ export default function DashboardPage() {
   const [riskFilter, setRiskFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "risk">("date");
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
+  const [semanticQuery, setSemanticQuery] = useState("");
+  const [semanticResults, setSemanticResults] = useState<SearchResult[]>([]);
+  const [semanticLoading, setSemanticLoading] = useState(false);
+  const [semanticSearched, setSemanticSearched] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -55,6 +59,21 @@ export default function DashboardPage() {
       // silently fail on refresh
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runSemanticSearch = async (query?: string) => {
+    const q = (query ?? semanticQuery).trim();
+    if (!q) return;
+    setSemanticLoading(true);
+    setSemanticSearched(true);
+    try {
+      const res = await searchApi.search(q);
+      setSemanticResults((res.data as { results: SearchResult[] }).results ?? []);
+    } catch {
+      setSemanticResults([]);
+    } finally {
+      setSemanticLoading(false);
     }
   };
 
@@ -127,24 +146,28 @@ export default function DashboardPage() {
         {portfolioStats && portfolioStats.total_contracts > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <StatCard
+              index={0}
               label="Avg Portfolio Risk"
               value={`${Math.round(portfolioStats.average_risk_score * 100)}%`}
               icon={<TrendingUp className="h-4 w-4" />}
               accent={portfolioStats.average_risk_score > 0.5 ? "var(--risk-high)" : portfolioStats.average_risk_score > 0.25 ? "var(--risk-medium)" : "var(--risk-low)"}
             />
             <StatCard
+              index={1}
               label="Critical Clauses"
               value={portfolioStats.risk_distribution.critical.toLocaleString()}
               icon={<AlertCircle className="h-4 w-4" />}
               accent="var(--risk-critical)"
             />
             <StatCard
+              index={2}
               label="High-Risk Clauses"
               value={portfolioStats.risk_distribution.high.toLocaleString()}
               icon={<BarChart3 className="h-4 w-4" />}
               accent="var(--risk-high)"
             />
             <StatCard
+              index={3}
               label="Analyzed"
               value={`${portfolioStats.contracts_by_status["analyzed"] ?? 0} / ${portfolioStats.total_contracts}`}
               icon={<CheckCircle2 className="h-4 w-4" />}
@@ -265,6 +288,119 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        {/* Semantic Search Section — search clause library across all contracts */}
+        {contracts.some((c) => c.status === "analyzed") && (
+          <div className="mt-12">
+            <div className="flex items-center gap-2 mb-4">
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-lg"
+                style={{ background: "rgba(59,130,246,0.12)", color: "var(--accent-primary)" }}
+              >
+                <Zap className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
+                  Search Clause Library
+                </h2>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                  Semantic search across all your contracts using natural language
+                </p>
+              </div>
+            </div>
+
+            {/* Search input */}
+            <div className="flex gap-2">
+              <div
+                className="flex flex-1 items-center gap-2 rounded-xl border px-4 py-3"
+                style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+              >
+                <Search className="h-4 w-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+                <input
+                  type="text"
+                  placeholder='e.g. "change of control termination clauses" or "one-sided indemnification"'
+                  value={semanticQuery}
+                  onChange={(e) => setSemanticQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") runSemanticSearch(); }}
+                  className="flex-1 bg-transparent text-sm outline-none"
+                  style={{ color: "var(--text-primary)" }}
+                />
+              </div>
+              <button
+                onClick={() => runSemanticSearch()}
+                disabled={!semanticQuery.trim() || semanticLoading}
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
+                style={{ background: "var(--accent-primary)" }}
+              >
+                {semanticLoading ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                ) : (
+                  <>Search <ArrowRight className="h-3.5 w-3.5" /></>
+                )}
+              </button>
+            </div>
+
+            {/* Example chips */}
+            {!semanticSearched && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {[
+                  "change of control termination",
+                  "one-sided indemnification",
+                  "non-compete restrictions",
+                  "data privacy obligations",
+                  "short notice period",
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => {
+                      setSemanticQuery(chip);
+                      runSemanticSearch(chip);
+                    }}
+                    className="rounded-full border px-3 py-1 text-xs transition-colors"
+                    style={{
+                      borderColor: "var(--border-secondary)",
+                      color: "var(--text-secondary)",
+                      background: "var(--bg-tertiary)",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-primary)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--accent-primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Search results */}
+            {semanticSearched && !semanticLoading && (
+              <div className="mt-4">
+                {semanticResults.length === 0 ? (
+                  <p className="text-sm py-6 text-center" style={{ color: "var(--text-tertiary)" }}>
+                    No relevant clauses found. Try a different query.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                      {semanticResults.length} relevant clause{semanticResults.length !== 1 ? "s" : ""} found
+                    </p>
+                    {semanticResults.map((result) => (
+                      <SearchResultCard
+                        key={result.clause_id}
+                        result={result}
+                        onClick={() => router.push(`/review/${result.contract_id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -274,10 +410,14 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
   const riskScore = contract.overall_risk_score ?? 0;
   const riskPct = Math.round(riskScore * 100);
   const [visible, setVisible] = useState(false);
+  const [barReady, setBarReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), cardIndex * 60);
+    const t = setTimeout(() => {
+      setVisible(true);
+      setTimeout(() => setBarReady(true), 120);
+    }, cardIndex * 60);
     return () => clearTimeout(t);
   }, [cardIndex]);
 
@@ -316,9 +456,20 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
       <div className="flex items-start justify-between">
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg"
-          style={{ background: "var(--bg-tertiary)" }}
+          style={{
+            background: contract.status === "analyzed" && contract.risk_level
+              ? `${riskHexColor(contract.risk_level)}18`
+              : "var(--bg-tertiary)",
+          }}
         >
-          <FileText className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
+          <FileText
+            className="h-4 w-4"
+            style={{
+              color: contract.status === "analyzed" && contract.risk_level
+                ? riskHexColor(contract.risk_level)
+                : "var(--text-secondary)",
+            }}
+          />
         </div>
         <div className="flex items-center gap-1.5">
           <StatusBadge status={contract.status} />
@@ -390,10 +541,11 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
           </div>
           <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
             <div
-              className="h-full rounded-full transition-all duration-500"
+              className="h-full rounded-full"
               style={{
-                width: `${riskPct}%`,
+                width: barReady ? `${riskPct}%` : "0%",
                 background: riskHexColor(contract.risk_level),
+                transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
               }}
             />
           </div>
@@ -500,21 +652,97 @@ function EmptyState({
   );
 }
 
+function SearchResultCard({
+  result,
+  onClick,
+}: {
+  result: SearchResult;
+  onClick: () => void;
+}) {
+  const matchPct = Math.round(result.similarity_score * 100);
+  return (
+    <button
+      onClick={onClick}
+      className="w-full rounded-xl border p-4 text-left transition-all"
+      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-sm)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-xs font-semibold truncate" style={{ color: "var(--text-secondary)" }}>
+              {result.contract_title || "Unknown Contract"}
+            </span>
+            {result.section_heading && (
+              <>
+                <span style={{ color: "var(--border-secondary)" }}>·</span>
+                <span className="text-xs truncate" style={{ color: "var(--text-tertiary)" }}>
+                  {result.section_heading}
+                </span>
+              </>
+            )}
+          </div>
+          <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--text-primary)" }}>
+            {result.clause_text}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {result.risk_level && (
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium capitalize"
+              style={{
+                color: riskHexColor(result.risk_level),
+                background: `${riskHexColor(result.risk_level)}15`,
+              }}
+            >
+              {result.risk_level}
+            </span>
+          )}
+          <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            {matchPct}% match
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 function StatCard({
   label,
   value,
   icon,
   accent,
+  index = 0,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   accent: string;
+  index?: number;
 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), index * 80);
+    return () => clearTimeout(t);
+  }, [index]);
+
   return (
     <div
       className="rounded-xl border p-4 flex items-center gap-3"
-      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+      style={{
+        background: "var(--bg-secondary)",
+        borderColor: "var(--border-primary)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(6px)",
+        transition: "opacity 0.35s ease, transform 0.35s ease",
+      }}
     >
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"

@@ -3,7 +3,7 @@
 import uuid
 from datetime import date, datetime, timezone
 
-from sqlalchemy import String, Text, Float, Integer, Date, DateTime, ForeignKey
+from sqlalchemy import String, Text, Float, Integer, Date, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -50,3 +50,8 @@ class Contract(Base):
     user = relationship("User", back_populates="contracts")
     clauses = relationship("Clause", back_populates="contract", cascade="all, delete-orphan")
     chat_messages = relationship("ChatMessage", back_populates="contract", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_contracts_user_id", "user_id"),
+        Index("idx_contracts_user_status", "user_id", "status"),
+    )

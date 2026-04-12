@@ -85,6 +85,7 @@ app.include_router(stats.router, prefix="/api", include_in_schema=False)
 
 
 @app.get("/health")
+@app.get("/api/health", include_in_schema=False)
 @app.get("/api/v1/health", include_in_schema=False)
 async def health_check():
     """Health check endpoint with database connectivity status."""

@@ -276,6 +276,7 @@ async def seed():  # noqa: C901
             user_id=user.id,
             filename="demo_saas_techco.txt",
             original_filename="Master SaaS Agreement — TechCo LLC.txt",
+            file_path="/app/uploads/demo_saas_techco.txt",
             file_type="txt",
             file_size_bytes=11200,
             title="Master SaaS Agreement — TechCo LLC",

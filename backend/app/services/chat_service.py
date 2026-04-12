@@ -58,16 +58,36 @@ async def retrieve_relevant_clauses(
     query: str,
     top_k: int = 6,
 ) -> list[Clause]:
-    """Retrieve the most semantically similar clauses to a query using pgvector."""
-    query_embedding = await get_embedding(query)
+    """Retrieve the most semantically similar clauses to a query using pgvector.
 
-    result = await db.execute(
+    Falls back to highest-risk clauses when no embeddings exist (e.g. seeded demo contracts).
+    """
+    # Check if any clauses have embeddings for this contract
+    count_result = await db.execute(
         select(Clause)
         .where(Clause.contract_id == contract_id)
         .where(Clause.embedding.isnot(None))
-        .order_by(Clause.embedding.cosine_distance(query_embedding))
-        .limit(top_k)
+        .limit(1)
     )
+    has_embeddings = count_result.scalar_one_or_none() is not None
+
+    if has_embeddings:
+        query_embedding = await get_embedding(query)
+        result = await db.execute(
+            select(Clause)
+            .where(Clause.contract_id == contract_id)
+            .where(Clause.embedding.isnot(None))
+            .order_by(Clause.embedding.cosine_distance(query_embedding))
+            .limit(top_k)
+        )
+    else:
+        # No embeddings — fall back to highest-risk clauses as context
+        result = await db.execute(
+            select(Clause)
+            .where(Clause.contract_id == contract_id)
+            .order_by(Clause.risk_score.desc().nullslast())
+            .limit(top_k)
+        )
     return list(result.scalars().all())
 
 

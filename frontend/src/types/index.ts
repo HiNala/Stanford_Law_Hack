@@ -95,6 +95,7 @@ export interface ChatMessage {
 export interface SearchResult {
   clause_id: string;
   contract_id: string;
+  contract_title: string | null;
   clause_text: string;
   clause_type: string | null;
   risk_level: string | null;

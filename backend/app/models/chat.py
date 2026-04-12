@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Text, DateTime, ForeignKey
+from sqlalchemy import String, Text, DateTime, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,3 +33,7 @@ class ChatMessage(Base):
 
     contract = relationship("Contract", back_populates="chat_messages")
     user = relationship("User", back_populates="chat_messages")
+
+    __table_args__ = (
+        Index("idx_chat_messages_contract_id", "contract_id"),
+    )

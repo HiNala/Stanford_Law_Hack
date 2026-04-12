@@ -9,7 +9,7 @@ import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 
 const DEMO_EMAIL = "demo@clauseguard.ai";
-const DEMO_PASSWORD = "hackathon2026";
+const DEMO_PASSWORD = "demo1234";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -114,6 +114,28 @@ export default function LoginPage() {
             boxShadow: "var(--shadow-lg)",
           }}
         >
+            {/* Demo CTA — primary action for hackathon */}
+          <div>
+            <Button
+              type="button"
+              onClick={handleDemoLogin}
+              loading={loading}
+              className="w-full"
+            >
+              Try Demo Login
+            </Button>
+            <p className="mt-2 text-center text-xs" style={{ color: "var(--text-tertiary)" }}>
+              Instant access · no sign-up needed
+            </p>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 border-t" style={{ borderColor: "var(--border-primary)" }} />
+            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>or sign in with email</span>
+            <div className="flex-1 border-t" style={{ borderColor: "var(--border-primary)" }} />
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegister && (
               <Input
@@ -167,27 +189,10 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" loading={loading} className="w-full">
+            <Button type="submit" loading={loading} variant="secondary" className="w-full">
               {isRegister ? "Create Account" : "Sign In"}
             </Button>
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 border-t" style={{ borderColor: "var(--border-primary)" }} />
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>or</span>
-            <div className="flex-1 border-t" style={{ borderColor: "var(--border-primary)" }} />
-          </div>
-
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full"
-          >
-            Try Demo Login
-          </Button>
 
           <p className="text-center text-xs" style={{ color: "var(--text-tertiary)" }}>
             {isRegister ? "Already have an account?" : "Need an account?"}{" "}

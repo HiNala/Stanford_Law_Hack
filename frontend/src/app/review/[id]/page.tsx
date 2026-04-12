@@ -8,6 +8,7 @@ import {
   Send,
   Download,
   ChevronRight,
+  CheckCircle2,
   Sparkles,
   Calendar,
   Scale,
@@ -313,19 +314,20 @@ function ReviewHeader({
 }
 
 // ─── Processing state ───────────────────────────────────────────────────────────
+const PROCESSING_STEPS = [
+  "Extracting text...",
+  "Chunking clauses...",
+  "Generating embeddings...",
+  "Running risk analysis...",
+  "Extracting metadata...",
+];
+
 function ProcessingState() {
-  const steps = [
-    "Extracting text...",
-    "Chunking clauses...",
-    "Generating embeddings...",
-    "Running risk analysis...",
-    "Extracting metadata...",
-  ];
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentStep((s) => (s < steps.length - 1 ? s + 1 : s));
+      setCurrentStep((s) => (s < PROCESSING_STEPS.length - 1 ? s + 1 : s));
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -350,15 +352,13 @@ function ProcessingState() {
           Analyzing contract
         </h3>
         <div className="space-y-2 text-left">
-          {steps.map((step, i) => (
+          {PROCESSING_STEPS.map((step, i) => (
             <div key={step} className="flex items-center gap-2.5">
               {i < currentStep ? (
-                <div
-                  className="h-4 w-4 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "var(--risk-low)" }}
-                >
-                  <span className="text-white text-xs">✓</span>
-                </div>
+                <CheckCircle2
+                  className="h-4 w-4 shrink-0"
+                  style={{ color: "var(--risk-low)" }}
+                />
               ) : i === currentStep ? (
                 <div
                   className="h-4 w-4 rounded-full border-2 border-t-transparent animate-spin shrink-0"

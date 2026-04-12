@@ -72,8 +72,11 @@ async def chat(
             clause_ids = [str(c.id) for c in context_clauses]
             yield f"data: {json.dumps({'type': 'context', 'clause_ids': clause_ids})}\n\n"
 
-            # Stream tokens
-            async for chunk in chat_with_contract(db, contract_id, current_user.id, payload.message):
+            # Stream tokens — pass pre-fetched clauses to avoid a second vector search
+            async for chunk in chat_with_contract(
+                db, contract_id, current_user.id, payload.message,
+                prefetched_clauses=context_clauses,
+            ):
                 yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
 
             yield f"data: {json.dumps({'type': 'done'})}\n\n"

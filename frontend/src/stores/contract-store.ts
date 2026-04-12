@@ -16,7 +16,7 @@ interface ContractState {
   setClauses: (clauses: Clause[]) => void;
   setAnalysisSummary: (summary: ContractAnalysisSummary | null) => void;
   setLoading: (loading: boolean) => void;
-  updateContractStatus: (id: string, status: string) => void;
+  updateContractStatus: (id: string, status: Contract["status"]) => void;
 }
 
 export const useContractStore = create<ContractState>((set) => ({

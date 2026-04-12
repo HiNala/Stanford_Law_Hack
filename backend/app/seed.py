@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DEMO_EMAIL = "demo@clauseguard.ai"
-DEMO_PASSWORD = "hackathon2026"
+DEMO_PASSWORD = "demo1234"
 DEMO_NAME = "Demo User"
 
 SAMPLE_CONTRACTS_DIR = Path(__file__).parent.parent / "sample_contracts"
