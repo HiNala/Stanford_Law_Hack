@@ -1,0 +1,103 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of January 15, 2026, by and between:
+
+Acme Technologies, Inc., a Delaware corporation with its principal office at 1200 Innovation Drive, Palo Alto, CA 94301 ("Acme"), and
+
+Vertex Legal Solutions, LLC, a California limited liability company with its principal office at 450 Market Street, Suite 800, San Francisco, CA 94105 ("Vertex").
+
+Collectively referred to as the "Parties" and individually as a "Party."
+
+SECTION 1. PURPOSE
+
+The Parties wish to explore a potential business relationship concerning the integration of artificial intelligence tools into legal workflow systems (the "Purpose"). In connection with the Purpose, each Party may disclose to the other certain confidential and proprietary information. The Parties agree to the following terms governing the use and protection of such information.
+
+SECTION 2. DEFINITION OF CONFIDENTIAL INFORMATION
+
+"Confidential Information" means any and all non-public information, whether in oral, written, electronic, or visual form, disclosed by either Party to the other, including but not limited to: trade secrets, inventions, patents, patent applications, copyrights, trademarks, business plans, financial data, customer lists, vendor relationships, software code, algorithms, technical specifications, product roadmaps, marketing strategies, pricing models, employee information, and any other information designated as confidential or that reasonably should be understood to be confidential given the nature of the information and the circumstances of disclosure.
+
+Confidential Information does not include information that: (a) is or becomes publicly available through no fault of the receiving Party; (b) was already known to the receiving Party prior to disclosure without restriction; (c) is independently developed by the receiving Party without use of or reference to the disclosing Party's Confidential Information; or (d) is lawfully obtained from a third party without restriction on disclosure.
+
+SECTION 3. OBLIGATIONS OF THE RECEIVING PARTY
+
+3.1 The receiving Party shall: (a) hold the Confidential Information in strict confidence; (b) not disclose the Confidential Information to any third party without the prior written consent of the disclosing Party; (c) use the Confidential Information solely for the Purpose; and (d) protect the Confidential Information using the same degree of care it uses to protect its own confidential information, but in no event less than reasonable care.
+
+3.2 The receiving Party may disclose Confidential Information only to its employees, contractors, and advisors who have a need to know for the Purpose and who are bound by confidentiality obligations no less restrictive than those contained herein.
+
+3.3 The receiving Party shall promptly notify the disclosing Party in writing upon discovery of any unauthorized use or disclosure of Confidential Information.
+
+SECTION 4. EXCLUSIONS FROM OBLIGATIONS
+
+The obligations set forth in Section 3 shall not apply to the extent that the receiving Party is required to disclose Confidential Information by law, regulation, or court order, provided that the receiving Party: (a) gives the disclosing Party prompt written notice of such requirement prior to disclosure (to the extent legally permitted); (b) cooperates with the disclosing Party in seeking a protective order or other appropriate remedy; and (c) discloses only that portion of the Confidential Information that is legally required to be disclosed.
+
+SECTION 5. INTELLECTUAL PROPERTY
+
+5.1 All Confidential Information remains the exclusive property of the disclosing Party. Nothing in this Agreement grants the receiving Party any license, right, or interest in or to the disclosing Party's Confidential Information, except as expressly set forth herein.
+
+5.2 Any inventions, improvements, or derivative works created by either Party using the other Party's Confidential Information shall be the sole and exclusive property of the disclosing Party, and the receiving Party hereby assigns all right, title, and interest in and to such inventions, improvements, or derivative works to the disclosing Party.
+
+SECTION 6. TERM AND TERMINATION
+
+6.1 This Agreement shall be effective as of the date first written above and shall continue for a period of three (3) years unless earlier terminated by either Party upon thirty (30) days' prior written notice to the other Party.
+
+6.2 The obligations of confidentiality set forth in this Agreement shall survive termination for a period of five (5) years from the date of termination.
+
+6.3 Upon termination or expiration, each Party shall promptly return or destroy all Confidential Information received from the other Party, including all copies, notes, and summaries thereof, and shall certify in writing that it has done so.
+
+SECTION 7. REMEDIES
+
+The Parties acknowledge that any breach of this Agreement may cause irreparable harm to the disclosing Party for which monetary damages would be an inadequate remedy. Accordingly, the disclosing Party shall be entitled to seek equitable relief, including injunction and specific performance, in addition to all other remedies available at law or in equity, without the necessity of proving actual damages or posting any bond or other security.
+
+SECTION 8. NON-SOLICITATION
+
+During the term of this Agreement and for a period of two (2) years following its termination, neither Party shall, directly or indirectly, solicit, recruit, or hire any employee, contractor, or consultant of the other Party with whom it had contact or about whom it received Confidential Information in connection with the Purpose, without the prior written consent of the other Party.
+
+SECTION 9. NON-COMPETE
+
+During the term of this Agreement and for a period of eighteen (18) months following its termination, the receiving Party shall not, directly or indirectly, engage in, assist, or have any active interest in any business activity that competes with the disclosing Party's business as it relates to the Purpose, within the State of California. This restriction applies to the receiving Party and its officers, directors, employees, agents, and affiliates.
+
+SECTION 10. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL EITHER PARTY BE LIABLE TO THE OTHER PARTY FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR RELATED TO THIS AGREEMENT, REGARDLESS OF WHETHER SUCH DAMAGES ARE BASED ON CONTRACT, TORT, STRICT LIABILITY, OR ANY OTHER THEORY, EVEN IF THE PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE TOTAL AGGREGATE LIABILITY OF EACH PARTY UNDER THIS AGREEMENT SHALL NOT EXCEED ONE HUNDRED THOUSAND DOLLARS ($100,000).
+
+SECTION 11. INDEMNIFICATION
+
+Each Party (the "Indemnifying Party") agrees to indemnify, defend, and hold harmless the other Party and its officers, directors, employees, agents, and successors (collectively, the "Indemnified Parties") from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to: (a) any breach of this Agreement by the Indemnifying Party; (b) any unauthorized use or disclosure of Confidential Information by the Indemnifying Party or its representatives; or (c) any negligent or wrongful act or omission of the Indemnifying Party in connection with this Agreement.
+
+SECTION 12. GOVERNING LAW AND DISPUTE RESOLUTION
+
+12.1 This Agreement shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of laws principles.
+
+12.2 Any dispute arising out of or in connection with this Agreement shall first be submitted to mediation in San Francisco, California. If mediation fails to resolve the dispute within sixty (60) days, either Party may initiate binding arbitration under the rules of the American Arbitration Association. The arbitration shall be conducted in San Francisco, California, and the decision of the arbitrator shall be final and binding on both Parties.
+
+12.3 The prevailing Party in any arbitration or litigation shall be entitled to recover its reasonable attorneys' fees and costs from the non-prevailing Party.
+
+SECTION 13. GENERAL PROVISIONS
+
+13.1 Entire Agreement. This Agreement constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior and contemporaneous agreements, understandings, negotiations, and discussions, whether oral or written.
+
+13.2 Amendment. This Agreement may not be amended or modified except by a written instrument signed by both Parties.
+
+13.3 Assignment. Neither Party may assign this Agreement or any of its rights or obligations hereunder without the prior written consent of the other Party; provided, however, that either Party may assign this Agreement to a successor in connection with a merger, acquisition, or sale of all or substantially all of its assets without the other Party's consent.
+
+13.4 Severability. If any provision of this Agreement is held to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect.
+
+13.5 Waiver. The failure of either Party to enforce any provision of this Agreement shall not constitute a waiver of that Party's right to enforce that provision or any other provision in the future.
+
+13.6 Notices. All notices under this Agreement shall be in writing and shall be deemed delivered when sent by certified mail, return receipt requested, or by nationally recognized overnight courier, to the addresses set forth above or such other address as a Party may designate in writing.
+
+13.7 Counterparts. This Agreement may be executed in counterparts, each of which shall be deemed an original and all of which together shall constitute one and the same instrument.
+
+IN WITNESS WHEREOF, the Parties have executed this Agreement as of the date first written above.
+
+ACME TECHNOLOGIES, INC.
+By: ___________________________
+Name: Sarah Chen
+Title: Chief Executive Officer
+Date: January 15, 2026
+
+VERTEX LEGAL SOLUTIONS, LLC
+By: ___________________________
+Name: Michael Rodriguez
+Title: Managing Partner
+Date: January 15, 2026
