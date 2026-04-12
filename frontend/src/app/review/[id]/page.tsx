@@ -10,24 +10,15 @@ import {
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  FileText,
   Shield,
   Send,
   Download,
-  AlertTriangle,
   ChevronRight,
   Sparkles,
 } from "lucide-react";
 import { contractsApi, clausesApi, analysisApi, chatApi } from "@/lib/api";
 import { useContractStore } from "@/stores/contract-store";
-import {
-  cn,
-  riskHighlightColor,
-  riskColor,
-  riskDotColor,
-  riskHexColor,
-  formatRiskPercent,
-} from "@/lib/utils";
+import { cn, riskHexColor, formatRiskPercent } from "@/lib/utils";
 import type { Contract, Clause, ContractAnalysisSummary } from "@/types";
 
 // ─── Typewriter hook ───────────────────────────────────────────────────────────
@@ -84,6 +75,12 @@ export default function ReviewPage({
   const [activeTab, setActiveTab] = useState<"analysis" | "chat">("analysis");
   const analysisScrollRef = useRef<HTMLDivElement>(null);
   const clauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pollingCleanupRef = useRef<(() => void) | null>(null);
+
+  // Clean up polling interval when component unmounts
+  useEffect(() => {
+    return () => { pollingCleanupRef.current?.(); };
+  }, []);
 
   useEffect(() => {
     loadContract();
@@ -100,7 +97,7 @@ export default function ReviewPage({
         await loadAnalysis();
       } else if (contract.status === "processing") {
         setPolling(true);
-        startPolling();
+        pollingCleanupRef.current = startPolling();
       }
     } catch {
       router.push("/dashboard");
