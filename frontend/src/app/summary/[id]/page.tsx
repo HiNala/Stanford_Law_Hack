@@ -134,28 +134,8 @@ export default function SummaryPage({
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8 space-y-6">
-        {/* Stats summary */}
-        {summary && (
-          <div className="grid grid-cols-4 gap-3">
-            {(["critical", "high", "medium", "low"] as const).map((level) => (
-              <div
-                key={level}
-                className="rounded-xl border p-4 text-center"
-                style={{
-                  background: "var(--bg-secondary)",
-                  borderColor: `${riskHexColor(level)}30`,
-                }}
-              >
-                <p className="text-2xl font-bold" style={{ color: riskHexColor(level) }}>
-                  {summary.risk_distribution[level]}
-                </p>
-                <p className="text-xs capitalize mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                  {level}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Risk distribution — visual bar chart + counts */}
+        {summary && <RiskDistributionChart summary={summary} />}
 
         {/* Contract metadata card */}
         {contract && (
@@ -231,6 +211,99 @@ export default function SummaryPage({
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// ─── Risk Distribution horizontal bar chart ─────────────────────────────────
+function RiskDistributionChart({ summary }: { summary: ContractAnalysisSummary }) {
+  const total = summary.total_clauses || 1;
+  const dist = summary.risk_distribution;
+  const levels = [
+    { key: "critical" as const, label: "Critical" },
+    { key: "high" as const, label: "High" },
+    { key: "medium" as const, label: "Medium" },
+    { key: "low" as const, label: "Low" },
+  ];
+
+  return (
+    <div
+      className="rounded-xl border p-5 space-y-4"
+      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+          Risk Distribution
+        </span>
+        <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+          {total} clauses analyzed
+        </span>
+      </div>
+
+      {/* Stacked bar */}
+      <div className="h-3 rounded-full overflow-hidden flex" style={{ background: "var(--bg-tertiary)" }}>
+        {levels.map(({ key }) => {
+          const pct = (dist[key] / total) * 100;
+          if (pct === 0) return null;
+          return (
+            <div
+              key={key}
+              className="h-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: riskHexColor(key) }}
+              title={`${key}: ${dist[key]} (${Math.round(pct)}%)`}
+            />
+          );
+        })}
+      </div>
+
+      {/* Row bars with counts */}
+      <div className="space-y-2.5 pt-1">
+        {levels.map(({ key, label }) => {
+          const count = dist[key];
+          const pct = Math.round((count / total) * 100);
+          return (
+            <div key={key} className="flex items-center gap-3">
+              <div className="w-16 text-right shrink-0">
+                <span className="text-xs font-medium" style={{ color: riskHexColor(key) }}>
+                  {label}
+                </span>
+              </div>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${pct}%`, background: riskHexColor(key) }}
+                />
+              </div>
+              <div className="w-12 flex items-center justify-between shrink-0">
+                <span className="text-xs tabular-nums font-bold" style={{ color: riskHexColor(key) }}>
+                  {count}
+                </span>
+                <span className="text-xs tabular-nums" style={{ color: "var(--text-tertiary)" }}>
+                  {pct}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Overall risk score */}
+      <div
+        className="flex items-center justify-between pt-2 border-t"
+        style={{ borderColor: "var(--border-primary)" }}
+      >
+        <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+          Overall risk score
+        </span>
+        <span
+          className="text-sm font-bold"
+          style={{
+            color: riskHexColor(summary.risk_level ?? "low"),
+          }}
+        >
+          {formatRiskPercent(summary.overall_risk_score)} — {(summary.risk_level ?? "").toUpperCase()}
+        </span>
+      </div>
     </div>
   );
 }

@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3 } from "lucide-react";
+import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2 } from "lucide-react";
 import { contractsApi, statsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
-import { cn, formatRiskPercent, riskHexColor, formatDate, formatFileSize } from "@/lib/utils";
+import { cn, riskHexColor, formatDate, formatFileSize } from "@/lib/utils";
 import Header from "@/components/layout/header";
 import type { Contract } from "@/types";
 
@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [riskFilter, setRiskFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "risk">("date");
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function DashboardPage() {
         contractsApi.list(),
         statsApi.get(),
       ]);
-      if (contractsRes.status === "fulfilled") setContracts(contractsRes.value.data.contracts);
+      if (contractsRes.status === "fulfilled") setContracts(contractsRes.value.data.items ?? []);
       if (statsRes.status === "fulfilled") setPortfolioStats(statsRes.value.data);
     } catch {
       // silently fail on refresh
@@ -58,7 +59,7 @@ export default function DashboardPage() {
   };
 
   const filtered = useMemo(() => {
-    return contracts.filter((c) => {
+    const list = contracts.filter((c) => {
       const matchesSearch =
         !searchQuery ||
         (c.title || c.original_filename).toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -66,7 +67,18 @@ export default function DashboardPage() {
       const matchesRisk = riskFilter === "all" || c.risk_level === riskFilter;
       return matchesSearch && matchesRisk;
     });
-  }, [contracts, searchQuery, riskFilter]);
+    if (sortBy === "risk") {
+      const order = { critical: 0, high: 1, medium: 2, low: 3 };
+      return [...list].sort((a, b) => {
+        const ao = order[a.risk_level as keyof typeof order] ?? 4;
+        const bo = order[b.risk_level as keyof typeof order] ?? 4;
+        if (ao !== bo) return ao - bo;
+        return (b.overall_risk_score ?? 0) - (a.overall_risk_score ?? 0);
+      });
+    }
+    // default: newest first
+    return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [contracts, searchQuery, riskFilter, sortBy]);
 
   const riskCounts = useMemo(() => {
     const counts = { critical: 0, high: 0, medium: 0, low: 0 };
@@ -202,6 +214,19 @@ export default function DashboardPage() {
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "date" | "risk")}
+              className="rounded-xl border px-3 py-2.5 text-sm outline-none"
+              style={{
+                background: "var(--bg-secondary)",
+                borderColor: "var(--border-primary)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              <option value="date">Newest first</option>
+              <option value="risk">Highest risk first</option>
+            </select>
           </div>
         )}
 
@@ -224,11 +249,18 @@ export default function DashboardPage() {
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((contract) => (
+            {filtered.map((contract, idx) => (
               <ContractCard
                 key={contract.id}
                 contract={contract}
+                cardIndex={idx}
                 onClick={() => router.push(`/review/${contract.id}`)}
+                onDelete={async () => {
+                  try {
+                    await contractsApi.delete(contract.id);
+                    await loadAll();
+                  } catch { /* silently fail */ }
+                }}
               />
             ))}
           </div>
@@ -238,17 +270,38 @@ export default function DashboardPage() {
   );
 }
 
-function ContractCard({ contract, onClick }: { contract: Contract; onClick: () => void }) {
+function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Contract; cardIndex: number; onClick: () => void; onDelete: () => void }) {
   const riskScore = contract.overall_risk_score ?? 0;
   const riskPct = Math.round(riskScore * 100);
+  const [visible, setVisible] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), cardIndex * 60);
+    return () => clearTimeout(t);
+  }, [cardIndex]);
+
+  // Auto-cancel confirm state after 3s if user doesn't act
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const t = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmDelete]);
 
   return (
-    <button
+    // div[role=button] instead of <button> to allow nested <button> for delete confirm
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group flex flex-col rounded-xl border p-5 text-left transition-all duration-200"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className="group flex flex-col rounded-xl border p-5 text-left transition-all duration-200 cursor-pointer"
       style={{
         background: "var(--bg-secondary)",
         borderColor: "var(--border-primary)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(8px)",
+        transition: "opacity 0.35s ease, transform 0.35s ease, border-color 0.15s, box-shadow 0.15s",
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
@@ -259,7 +312,7 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
         (e.currentTarget as HTMLElement).style.boxShadow = "none";
       }}
     >
-      {/* Top row: icon + status */}
+      {/* Top row: icon + status + delete */}
       <div className="flex items-start justify-between">
         <div
           className="flex h-9 w-9 items-center justify-center rounded-lg"
@@ -267,7 +320,40 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
         >
           <FileText className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
         </div>
-        <StatusBadge status={contract.status} />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status={contract.status} />
+          {contract.status !== "processing" && (
+            confirmDelete ? (
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  className="rounded px-1.5 py-0.5 text-xs font-semibold"
+                  style={{ background: "var(--risk-critical-bg)", color: "var(--risk-critical)", border: "1px solid var(--risk-critical-border)" }}
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                  className="rounded px-1.5 py-0.5 text-xs"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                className="rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: "var(--text-tertiary)" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--risk-critical)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
+                title="Delete contract"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )
+          )}
+        </div>
       </div>
 
       {/* Name */}
@@ -317,7 +403,7 @@ function ContractCard({ contract, onClick }: { contract: Contract; onClick: () =
           {formatDate(contract.created_at)}
         </p>
       )}
-    </button>
+    </div>
   );
 }
 

@@ -1,0 +1,114 @@
+CLOUD SOFTWARE SUBSCRIPTION AGREEMENT
+
+This Cloud Software Subscription Agreement ("Agreement") is entered into as of February 1, 2025 ("Effective Date") by and between:
+
+CLOUDSTACK TECHNOLOGIES, INC., a Delaware corporation ("Provider"); and
+
+FRONTIER FINANCIAL ADVISORS, LLC, a Texas limited liability company ("Customer").
+
+1. DEFINITIONS
+
+"Service" means Provider's cloud-based financial analytics platform, including all modules, features, and functionality made available to Customer under this Agreement.
+
+"Documentation" means the user manuals, technical specifications, and help materials made available by Provider.
+
+"Customer Data" means all data, information, and content uploaded or entered by Customer into the Service.
+
+"Subscription Term" means the Initial Term and any renewal periods.
+
+2. LICENSE AND ACCESS
+
+2.1 License Grant. Provider grants Customer a limited, non-exclusive, non-transferable, revocable license to access and use the Service solely for Customer's internal business purposes during the Subscription Term, subject to the terms of this Agreement.
+
+2.2 License Restrictions. Customer shall not: (a) sublicense, resell, or redistribute the Service; (b) reverse engineer, decompile, or disassemble the Service; (c) use the Service to build a competing product; (d) exceed the number of authorized users specified in the applicable Order Form; or (e) remove any proprietary notices.
+
+2.3 Provider's Right to Modify Service. Provider reserves the right to modify, update, or discontinue any feature, functionality, or aspect of the Service at any time, with or without notice to Customer. Provider shall not be liable for any damages arising from such modifications or discontinuation.
+
+3. SUBSCRIPTION FEES AND PAYMENT
+
+3.1 Fees. Customer agrees to pay the subscription fees set forth in the Order Form ("Fees"). All Fees are stated in U.S. dollars and are non-refundable.
+
+3.2 Payment. Provider will invoice Customer annually in advance. Payment is due within fifteen (15) days of the invoice date.
+
+3.3 Price Increases. Provider may increase Fees upon notice to Customer at any time. Price increases shall take effect at the beginning of the next billing cycle following notice, provided such notice is given at least one (1) business day before the next billing cycle. Customer's continued use of the Service following a price increase constitutes acceptance of the new pricing.
+
+3.4 Late Payment. Fees not paid within fifteen (15) days of the due date shall accrue interest at the rate of two percent (2%) per month, compounded monthly, and Provider may suspend Customer's access to the Service without notice.
+
+3.5 Taxes. All Fees are exclusive of taxes. Customer is responsible for all applicable taxes, levies, and duties.
+
+4. TERM AND RENEWAL
+
+4.1 Initial Term. This Agreement commences on the Effective Date and continues for one (1) year ("Initial Term").
+
+4.2 Automatic Renewal. THIS AGREEMENT WILL AUTOMATICALLY RENEW FOR SUCCESSIVE ONE-YEAR TERMS AT THEN-CURRENT PRICING UNLESS CUSTOMER PROVIDES WRITTEN NOTICE OF NON-RENEWAL AT LEAST SEVEN (7) CALENDAR DAYS BEFORE THE END OF THE THEN-CURRENT SUBSCRIPTION TERM. Customer acknowledges that it is Customer's sole responsibility to track renewal dates and provide timely cancellation notice. Provider is under no obligation to provide renewal reminders.
+
+4.3 Early Termination. If Customer terminates this Agreement prior to the end of the then-current Subscription Term for any reason other than Provider's uncured material breach, Customer shall immediately pay Provider all Fees that would have been due for the remainder of the then-current Subscription Term as a termination fee, which the parties agree is reasonable liquidated damages and not a penalty.
+
+5. SERVICE LEVELS
+
+5.1 No SLA. PROVIDER MAKES NO REPRESENTATIONS OR WARRANTIES REGARDING SERVICE AVAILABILITY, UPTIME, OR PERFORMANCE. THE SERVICE IS PROVIDED ON AN "AS-IS" AND "AS-AVAILABLE" BASIS. PROVIDER SHALL NOT BE LIABLE FOR ANY SERVICE OUTAGES, MAINTENANCE WINDOWS, OR PERFORMANCE DEGRADATION OF ANY KIND.
+
+5.2 Maintenance. Provider may take the Service offline for maintenance at any time without notice to Customer.
+
+5.3 Support. Provider shall use commercially reasonable efforts to respond to support requests submitted via email within seven (7) business days. Provider provides no guarantee of issue resolution timelines.
+
+6. DATA RIGHTS AND PRIVACY
+
+6.1 Customer Data License. Customer hereby grants Provider a perpetual, irrevocable, worldwide, royalty-free, sublicensable license to collect, store, process, analyze, copy, modify, use, create derivative works from, display, and distribute Customer Data and any data derived therefrom for any purpose, including: (a) providing and improving the Service; (b) developing new products and services; (c) training and improving Provider's artificial intelligence, machine learning, and analytics systems; (d) creating aggregated and anonymized industry benchmarks; and (e) any other commercial purpose Provider deems appropriate.
+
+6.2 Aggregated Data. Provider may use Customer Data in aggregated and anonymized form without restriction, and such aggregated data shall be owned exclusively by Provider.
+
+6.3 Data Security. Provider implements "industry-standard" security measures. Provider shall not be liable for any data breach, unauthorized access, or data loss, regardless of cause. Customer is advised to maintain independent backups of all data.
+
+6.4 Data Upon Termination. Following termination of this Agreement, Provider will retain Customer Data for up to ninety (90) days, after which Provider may permanently delete such data without notice. Customer is responsible for exporting its data prior to termination. Provider has no obligation to export or transfer data following termination.
+
+6.5 CCPA Compliance. Provider is not a "service provider" as defined under the California Consumer Privacy Act. Customer represents and warrants that it has obtained all necessary consents to share any personal information with Provider under this Agreement.
+
+7. INTELLECTUAL PROPERTY
+
+7.1 Provider IP. Provider retains all rights, title, and interest in and to the Service, Documentation, and all related intellectual property. This Agreement does not transfer any ownership rights.
+
+7.2 Feedback. If Customer provides any feedback, suggestions, or ideas regarding the Service ("Feedback"), Customer assigns all rights in such Feedback to Provider, and Provider may use such Feedback without restriction or compensation to Customer.
+
+8. INDEMNIFICATION
+
+8.1 Customer Indemnification. Customer shall indemnify, defend, and hold harmless Provider and its affiliates, officers, directors, and employees from any claims, damages, and expenses arising from: (a) Customer's use of the Service; (b) Customer's breach of this Agreement; (c) Customer Data; or (d) Customer's violation of any applicable law. Customer's indemnification obligations are unlimited and not subject to any cap.
+
+8.2 Provider Indemnification. Provider shall indemnify Customer solely for third-party claims of direct copyright infringement of the Service, subject to a cap of One Hundred Dollars ($100.00).
+
+9. LIMITATION OF LIABILITY
+
+9.1 EXCLUSION OF DAMAGES. IN NO EVENT SHALL PROVIDER BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, PUNITIVE, OR CONSEQUENTIAL DAMAGES, INCLUDING LOSS OF DATA, REVENUE, PROFITS, BUSINESS OPPORTUNITY, OR GOODWILL, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+9.2 AGGREGATE CAP. PROVIDER'S TOTAL AGGREGATE LIABILITY TO CUSTOMER FOR ALL CLAIMS ARISING OUT OF OR RELATED TO THIS AGREEMENT SHALL NOT EXCEED THE LESSER OF: (A) THE FEES PAID BY CUSTOMER IN THE THIRTY (30) DAYS PRECEDING THE CLAIM; OR (B) ONE HUNDRED DOLLARS ($100.00). CUSTOMER ACKNOWLEDGES THAT THIS LIMITATION IS A FUNDAMENTAL ELEMENT OF THE BASIS OF THE BARGAIN BETWEEN THE PARTIES.
+
+10. WARRANTIES AND DISCLAIMERS
+
+10.1 DISCLAIMER. PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, OR THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.
+
+10.2 High-Risk Uses. THE SERVICE IS NOT DESIGNED FOR USE IN HIGH-RISK ACTIVITIES INCLUDING, WITHOUT LIMITATION, THE OPERATION OF FINANCIAL EXCHANGES, HEALTHCARE SYSTEMS, OR ANY OTHER APPLICATION WHERE FAILURE COULD RESULT IN SIGNIFICANT HARM. CUSTOMER AGREES NOT TO USE THE SERVICE FOR SUCH PURPOSES.
+
+11. ASSIGNMENT
+
+11.1 Provider may assign this Agreement at any time without Customer's consent. Customer may not assign this Agreement without Provider's prior written consent.
+
+12. GENERAL
+
+12.1 Governing Law. This Agreement is governed by the laws of the State of Delaware.
+
+12.2 Dispute Resolution. All disputes shall be resolved by binding arbitration in Delaware. Customer waives any right to a jury trial and any right to participate in class action proceedings.
+
+12.3 Updates to Agreement. Provider reserves the right to update this Agreement at any time. Provider will notify Customer of material changes by posting updated terms to Provider's website. Customer's continued use of the Service following such posting constitutes Customer's acceptance of the updated terms.
+
+12.4 Entire Agreement. This Agreement, together with any Order Forms, constitutes the entire agreement between the parties. Any terms in Customer's purchase orders are superseded by this Agreement.
+
+12.5 Severability. Unenforceable provisions shall be modified to the minimum extent necessary to make them enforceable.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+CLOUDSTACK TECHNOLOGIES, INC.                     FRONTIER FINANCIAL ADVISORS, LLC
+
+By: ___________________________                   By: ___________________________
+Name: Alex Rivera                                  Name: Robert Kessler
+Title: Chief Revenue Officer                       Title: Chief Operating Officer
+Date: February 1, 2025                             Date: February 1, 2025

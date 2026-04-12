@@ -4,7 +4,7 @@ import os
 import uuid
 import logging
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, asc, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -116,20 +116,37 @@ async def get_contract(db: AsyncSession, contract_id: uuid.UUID) -> Contract | N
 
 
 async def get_user_contracts(
-    db: AsyncSession, user_id: uuid.UUID, skip: int = 0, limit: int = 50
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 50,
+    status_filter: str | None = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
 ) -> tuple[list[Contract], int]:
-    """Fetch all contracts for a user with pagination."""
+    """Fetch all contracts for a user with pagination, filtering, and sorting."""
+    base = select(Contract).where(Contract.user_id == user_id)
+
+    if status_filter:
+        base = base.where(Contract.status == status_filter)
+
+    # Count total matching rows
     count_result = await db.execute(
-        select(func.count(Contract.id)).where(Contract.user_id == user_id)
+        select(func.count()).select_from(base.subquery())
     )
     total = count_result.scalar() or 0
 
+    # Determine sort column
+    sort_columns = {
+        "created_at": Contract.created_at,
+        "overall_risk_score": Contract.overall_risk_score,
+        "title": Contract.title,
+    }
+    sort_col = sort_columns.get(sort_by, Contract.created_at)
+    order = sort_col.asc() if sort_order == "asc" else sort_col.desc()
+
     result = await db.execute(
-        select(Contract)
-        .where(Contract.user_id == user_id)
-        .order_by(Contract.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+        base.order_by(order).offset(skip).limit(limit)
     )
     contracts = list(result.scalars().all())
     return contracts, total

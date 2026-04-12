@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db, async_session_factory
+from app.exceptions import AppException
 from app.middleware.auth import get_current_user
 from app.models.contract import Contract
 from app.models.user import User
@@ -64,17 +65,28 @@ async def upload_contract(
 ):
     """Upload a contract file and kick off the analysis pipeline."""
     if not file.filename:
-        raise HTTPException(status_code=400, detail="No filename provided")
+        raise AppException(status_code=400, detail="No filename provided", error_code="VALIDATION_ERROR")
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
     allowed = settings.ALLOWED_EXTENSIONS.split(",")
     if ext not in allowed:
-        raise HTTPException(status_code=400, detail=f"File type .{ext} not supported. Allowed: {allowed}")
+        raise AppException(
+            status_code=400,
+            detail=f"Unsupported file type. Allowed: {', '.join(allowed)}",
+            error_code="UNSUPPORTED_FILE_TYPE",
+        )
 
     content = await file.read()
+    if len(content) == 0:
+        raise AppException(status_code=400, detail="Uploaded file is empty", error_code="EMPTY_FILE")
+
     size_mb = len(content) / (1024 * 1024)
     if size_mb > settings.MAX_FILE_SIZE_MB:
-        raise HTTPException(status_code=400, detail=f"File too large. Max: {settings.MAX_FILE_SIZE_MB}MB")
+        raise AppException(
+            status_code=413,
+            detail=f"File size exceeds maximum allowed ({settings.MAX_FILE_SIZE_MB}MB)",
+            error_code="FILE_TOO_LARGE",
+        )
 
     # Save to disk
     unique_name = f"{uuid.uuid4().hex}_{file.filename}"
@@ -112,7 +124,7 @@ async def upload_contract(
 async def list_contracts(
     page: int = 1,
     page_size: int = 20,
-    status_filter: str | None = None,
+    status: str | None = None,
     sort_by: str = "created_at",
     sort_order: str = "desc",
     db: AsyncSession = Depends(get_db),
@@ -121,7 +133,15 @@ async def list_contracts(
     """List all contracts for the current user with pagination."""
     page_size = min(page_size, 100)
     skip = (page - 1) * page_size
-    contracts, total = await get_user_contracts(db, current_user.id, skip, page_size)
+    contracts, total = await get_user_contracts(
+        db,
+        current_user.id,
+        skip,
+        page_size,
+        status_filter=status,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
     return ContractListResponse(
         items=[ContractListItem.model_validate(c) for c in contracts],
         total=total,
@@ -139,8 +159,10 @@ async def get_contract_detail(
 ):
     """Get details for a single contract."""
     contract = await get_contract(db, contract_id)
-    if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+    if not contract:
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
+    if contract.user_id != current_user.id:
+        raise AppException(status_code=403, detail="You do not have access to this contract", error_code="FORBIDDEN")
     return ContractResponse.model_validate(contract)
 
 
@@ -152,10 +174,12 @@ async def delete_contract(
 ):
     """Delete a contract and all associated clauses and chat messages."""
     contract = await get_contract(db, contract_id)
-    if not contract or contract.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Contract not found")
+    if not contract:
+        raise AppException(status_code=404, detail="Contract not found", error_code="CONTRACT_NOT_FOUND")
+    if contract.user_id != current_user.id:
+        raise AppException(status_code=403, detail="You do not have access to this contract", error_code="FORBIDDEN")
     if contract.status == "processing":
-        raise HTTPException(status_code=409, detail="Cannot delete a contract that is currently being processed")
+        raise AppException(status_code=409, detail="Cannot delete a contract that is currently being processed", error_code="CONTRACT_PROCESSING")
 
     # Delete file from disk
     if contract.file_path and os.path.exists(contract.file_path):

@@ -34,8 +34,8 @@ export const authApi = {
 
 // Contracts
 export const contractsApi = {
-  list: (skip = 0, limit = 50) =>
-    api.get("/contracts/", { params: { skip, limit } }),
+  list: (page = 1, pageSize = 50) =>
+    api.get("/contracts/", { params: { page, page_size: pageSize } }),
   get: (id: string) => api.get(`/contracts/${id}`),
   upload: (file: File) => {
     const form = new FormData();
@@ -44,6 +44,7 @@ export const contractsApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  delete: (id: string) => api.delete(`/contracts/${id}`),
 };
 
 // Clauses
@@ -60,8 +61,14 @@ export const analysisApi = {
 };
 
 // Chat (SSE streaming — uses fetch for the stream, axios for history)
+export type ChatStreamEvent =
+  | { type: "context"; clause_ids: string[] }
+  | { type: "token"; content: string }
+  | { type: "error"; detail: string }
+  | { type: "done" };
+
 export const chatApi = {
-  send: async function* (contractId: string, message: string) {
+  send: async function* (contractId: string, message: string): AsyncGenerator<ChatStreamEvent> {
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("clauseguard_token")
@@ -98,7 +105,18 @@ export const chatApi = {
           if (data === "[DONE]") return;
           try {
             const parsed = JSON.parse(data);
-            if (parsed.content) yield parsed.content;
+            if (parsed.type === "context" && Array.isArray(parsed.clause_ids)) {
+              yield { type: "context", clause_ids: parsed.clause_ids as string[] };
+            } else if (parsed.type === "token" && parsed.content) {
+              yield { type: "token", content: parsed.content as string };
+            } else if (parsed.content) {
+              // Backwards compat: events without explicit type but with content
+              yield { type: "token", content: parsed.content as string };
+            } else if (parsed.type === "error") {
+              yield { type: "error", detail: (parsed.detail as string) ?? "Service error" };
+            } else if (parsed.type === "done") {
+              yield { type: "done" };
+            }
           } catch {
             // skip malformed lines
           }

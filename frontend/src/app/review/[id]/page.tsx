@@ -9,7 +9,13 @@ import {
   Download,
   ChevronRight,
   Sparkles,
+  Calendar,
+  Scale,
+  Users,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { contractsApi, clausesApi, analysisApi, chatApi } from "@/lib/api";
 import { useContractStore } from "@/stores/contract-store";
 import { usePolling } from "@/hooks/use-polling";
@@ -39,6 +45,8 @@ export default function ReviewPage({
   const [polling, setPolling] = useState(false);
   const [heatmapReady, setHeatmapReady] = useState(false);
   const [activeTab, setActiveTab] = useState<"analysis" | "chat">("analysis");
+  // Clause IDs surfaced by the AI chat as relevant context — highlights them in the heatmap
+  const [chatContextIds, setChatContextIds] = useState<Set<string>>(new Set());
   const analysisScrollRef = useRef<HTMLDivElement>(null);
   const clauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -61,7 +69,7 @@ export default function ReviewPage({
           return true; // stop
         }
       } catch {
-        return true; // stop on network error
+        return false; // transient network error — keep polling
       }
       return false; // keep polling
     },
@@ -147,6 +155,8 @@ export default function ReviewPage({
       {/* ── Body ── */}
       {polling ? (
         <ProcessingState />
+      ) : currentContract?.status === "error" ? (
+        <ErrorState onBack={() => router.push("/dashboard")} />
       ) : (
         <div className="flex flex-1 overflow-hidden">
           {/* Left — Document heatmap */}
@@ -161,6 +171,7 @@ export default function ReviewPage({
               clauses={clauses}
               selectedClause={selectedClause}
               heatmapReady={heatmapReady}
+              chatContextIds={chatContextIds}
               onClauseClick={handleClauseClick}
             />
           </div>
@@ -172,6 +183,7 @@ export default function ReviewPage({
           >
             {activeTab === "analysis" ? (
               <AnalysisPanel
+                contract={currentContract}
                 clause={selectedClause}
                 summary={analysisSummary}
                 clauses={clauses}
@@ -179,7 +191,10 @@ export default function ReviewPage({
                 clauseRefs={clauseRefs}
               />
             ) : (
-              <ChatPanel contractId={id} />
+              <ChatPanel
+                contractId={id}
+                onContextClauses={(ids) => setChatContextIds(new Set(ids))}
+              />
             )}
           </div>
         </div>
@@ -223,8 +238,8 @@ function ReviewHeader({
             ((e.currentTarget as HTMLElement).style.background = "transparent")
           }
         >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
+            <ArrowLeft className="h-4 w-4" />
+          </button>
 
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
@@ -255,9 +270,9 @@ function ReviewHeader({
             />
             {contract.risk_level.toUpperCase()} ·{" "}
             {formatRiskPercent(contract.overall_risk_score)}
-          </span>
-        )}
-      </div>
+            </span>
+          )}
+        </div>
 
       <div className="flex items-center gap-1">
         {(["analysis", "chat"] as const).map((tab) => (
@@ -377,16 +392,60 @@ function ProcessingState() {
   );
 }
 
+// ─── Error state ─────────────────────────────────────────────────────────────
+function ErrorState({ onBack }: { onBack: () => void }) {
+  return (
+    <div
+      className="flex flex-1 items-center justify-center"
+      style={{ background: "var(--bg-primary)" }}
+    >
+      <div className="text-center max-w-sm px-6">
+        <div
+          className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl mb-5"
+          style={{ background: "rgba(239,68,68,0.12)" }}
+        >
+          <AlertTriangle className="h-7 w-7" style={{ color: "var(--risk-critical)" }} />
+        </div>
+        <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+          Analysis failed
+        </h3>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+          Something went wrong while processing this contract. This may be due to an unsupported file format, corrupted content, or a temporary service issue.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={onBack}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+            style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}
+          >
+            Back to Dashboard
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white"
+            style={{ background: "var(--accent-primary)" }}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
+          </div>
+        </div>
+  );
+}
+
 // ─── Document panel with cascading heatmap ────────────────────────────────────
 function DocumentPanel({
   clauses,
   selectedClause,
   heatmapReady,
+  chatContextIds,
   onClauseClick,
 }: {
   clauses: Clause[];
   selectedClause: Clause | null;
   heatmapReady: boolean;
+  chatContextIds: Set<string>;
   onClauseClick: (c: Clause) => void;
 }) {
   if (clauses.length === 0) {
@@ -395,7 +454,7 @@ function DocumentPanel({
         <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
           No clauses available for this contract.
         </p>
-      </div>
+                  </div>
     );
   }
 
@@ -407,11 +466,12 @@ function DocumentPanel({
           clause={clause}
           index={index}
           isSelected={selectedClause?.id === clause.id}
+          isChatContext={chatContextIds.has(clause.id)}
           heatmapReady={heatmapReady}
           onClick={() => onClauseClick(clause)}
         />
-      ))}
-    </div>
+                ))}
+              </div>
   );
 }
 
@@ -419,23 +479,36 @@ function ClauseBlock({
   clause,
   index,
   isSelected,
+  isChatContext,
   heatmapReady,
   onClick,
 }: {
   clause: Clause;
   index: number;
   isSelected: boolean;
+  isChatContext: boolean;
   heatmapReady: boolean;
   onClick: () => void;
 }) {
-  const [visible, setVisible] = useState(!heatmapReady);
+  const [visible, setVisible] = useState(heatmapReady);
+  const [pulse, setPulse] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     if (heatmapReady) {
-      const timer = setTimeout(() => setVisible(true), index * 40);
+      const timer = setTimeout(() => {
+        setVisible(true);
+        // Only pulse critical and high-risk clauses once, after they appear
+        if (clause.risk_level === "critical" || clause.risk_level === "high") {
+          setTimeout(() => {
+            setPulse(true);
+            setTimeout(() => setPulse(false), 700);
+          }, 200);
+        }
+      }, index * 40);
       return () => clearTimeout(timer);
     }
-  }, [heatmapReady, index]);
+  }, [heatmapReady, index, clause.risk_level]);
 
   const riskLevel = clause.risk_level?.toLowerCase();
   const borderColor = riskHexColor(riskLevel);
@@ -443,23 +516,52 @@ function ClauseBlock({
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
-        "cursor-pointer rounded-lg border-l-[3px] px-3 py-2.5 text-sm leading-relaxed transition-all duration-300",
-        isSelected ? "ring-1" : "hover:brightness-110"
+        "relative cursor-pointer rounded-lg border-l-[3px] px-3 py-2.5 text-sm leading-relaxed transition-all duration-300",
+        isSelected ? "ring-1" : ""
       )}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateX(0)" : "translateX(-4px)",
-        transition: "opacity 0.3s ease, transform 0.3s ease, background 0.2s",
+        transition: "opacity 0.3s ease, transform 0.3s ease, background 0.3s, box-shadow 0.3s",
         borderLeftColor: visible ? borderColor : "transparent",
         background: visible
           ? isSelected
-            ? `${borderColor}20`
-            : `${borderColor}10`
+            ? `${borderColor}22`
+            : isChatContext
+            ? `${borderColor}18`
+            : hovered
+            ? `${borderColor}14`
+            : `${borderColor}0a`
           : "transparent",
-        boxShadow: isSelected ? `0 0 0 1px ${borderColor}50` : "none",
+        boxShadow: pulse
+          ? `0 0 0 2px ${borderColor}60, 0 0 16px ${borderColor}40`
+          : isSelected
+          ? `0 0 0 1px ${borderColor}50`
+          : isChatContext
+          ? `0 0 0 1px #3B82F660, inset 0 0 0 1px #3B82F620`
+          : "none",
+        outline: isChatContext ? "none" : undefined,
       }}
     >
+      {/* Hover tooltip with risk badge */}
+      {hovered && !isSelected && (
+        <div
+          className="absolute right-2 top-2 rounded-full border px-2 py-0.5 text-xs font-semibold"
+          style={{
+            color: borderColor,
+            background: `${borderColor}15`,
+            borderColor: `${borderColor}40`,
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          {clause.risk_level?.toUpperCase()} · {formatRiskPercent(clause.risk_score)}
+        </div>
+      )}
+
       {clause.section_heading && (
         <p
           className="mb-1 text-xs font-semibold uppercase tracking-widest"
@@ -473,7 +575,7 @@ function ClauseBlock({
         style={{
           color: "var(--text-primary)",
           fontFamily: "Georgia, Charter, 'Times New Roman', serif",
-          fontSize: "14px",
+          fontSize: "14.5px",
         }}
       >
         {clause.clause_text}
@@ -484,12 +586,14 @@ function ClauseBlock({
 
 // ─── Analysis panel ───────────────────────────────────────────────────────────
 function AnalysisPanel({
+  contract,
   clause,
   summary,
   clauses,
   scrollRef,
   clauseRefs,
 }: {
+  contract: Contract | null;
   clause: Clause | null;
   summary: ContractAnalysisSummary | null;
   clauses: Clause[];
@@ -497,61 +601,165 @@ function AnalysisPanel({
   clauseRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }) {
   return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-5">
-      {/* Overall risk gauge */}
-      {summary && !clause && <RiskGauge summary={summary} />}
+    <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+      {/* Overall risk gauge — always visible at the top */}
+      {summary && <RiskGauge summary={summary} />}
 
-      {/* Selected clause detail */}
+      {/* Contract metadata — parties, governing law, dates */}
+      {contract && <ContractMetaCard contract={contract} />}
+
+      {/* Selected clause detail or top risks + executive summary */}
       {clause ? (
         <ClauseDetail clause={clause} clauseRefs={clauseRefs} />
       ) : (
-        <ClauseList clauses={clauses} clauseRefs={clauseRefs} />
+        <>
+          {contract?.summary && (
+            <div
+              className="rounded-xl border p-4"
+              style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-tertiary)" }}>
+                Executive Summary
+              </p>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                {contract.summary}
+              </p>
+            </div>
+          )}
+          <ClauseList clauses={clauses} clauseRefs={clauseRefs} />
+        </>
       )}
     </div>
   );
 }
 
 function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
-  const score = summary.overall_risk_score ?? 0;
-  const pct = Math.round(score * 100);
+  const targetPct = Math.round((summary.overall_risk_score ?? 0) * 100);
   const level = summary.risk_level ?? "low";
+  const [displayPct, setDisplayPct] = useState(0);
+  const [barWidth, setBarWidth] = useState(0);
+
+  // Animated counter — counts from 0 to the final score over ~1.2s
+  useEffect(() => {
+    if (targetPct === 0) return;
+    let frame = 0;
+    const totalFrames = 60; // ~1s at 60fps
+    const raf = () => {
+      frame++;
+      const progress = Math.min(frame / totalFrames, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayPct(Math.round(eased * targetPct));
+      setBarWidth(eased * targetPct);
+      if (progress < 1) requestAnimationFrame(raf);
+    };
+    const id = requestAnimationFrame(raf);
+    return () => cancelAnimationFrame(id);
+  }, [targetPct]);
 
   return (
     <div
       className="rounded-xl border p-4 space-y-3"
       style={{
         background: "var(--bg-secondary)",
-        borderColor: "var(--border-primary)",
+        borderColor: `${riskHexColor(level)}30`,
       }}
     >
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-          Overall Risk
+          Overall Risk Score
         </span>
         <span
-          className="text-2xl font-bold"
+          className="text-3xl font-bold tabular-nums"
           style={{ color: riskHexColor(level) }}
         >
-          {pct}%
+          {displayPct}%
         </span>
       </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+      <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
         <div
-          className="h-full rounded-full transition-all duration-1000"
-          style={{ width: `${pct}%`, background: riskHexColor(level) }}
+          className="h-full rounded-full"
+          style={{
+            width: `${barWidth}%`,
+            background: `linear-gradient(90deg, ${riskHexColor(level)}aa, ${riskHexColor(level)})`,
+            transition: "none",
+          }}
         />
       </div>
       <div className="grid grid-cols-4 gap-2 pt-1">
         {(["critical", "high", "medium", "low"] as const).map((lvl) => (
           <div key={lvl} className="text-center">
-            <p className="text-lg font-bold" style={{ color: riskHexColor(lvl) }}>
+            <p className="text-xl font-bold tabular-nums" style={{ color: riskHexColor(lvl) }}>
               {summary.risk_distribution[lvl]}
             </p>
-            <p className="text-xs capitalize" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-xs capitalize mt-0.5" style={{ color: "var(--text-tertiary)" }}>
               {lvl}
             </p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ContractMetaCard({ contract }: { contract: Contract }) {
+  const parties = contract.parties && typeof contract.parties === "object"
+    ? (contract.parties as { names?: string[] }).names ?? []
+    : [];
+
+  const rows: { icon: React.ReactNode; label: string; value: string | null }[] = [
+    {
+      icon: <Users className="h-3.5 w-3.5" />,
+      label: "Parties",
+      value: parties.length > 0 ? parties.join(" / ") : null,
+    },
+    {
+      icon: <Scale className="h-3.5 w-3.5" />,
+      label: "Governing Law",
+      value: contract.governing_law ?? null,
+    },
+    {
+      icon: <Calendar className="h-3.5 w-3.5" />,
+      label: "Effective",
+      value: contract.effective_date ?? null,
+    },
+    {
+      icon: <Calendar className="h-3.5 w-3.5" />,
+      label: "Expires",
+      value: contract.expiration_date ?? null,
+    },
+  ].filter((r) => r.value);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div
+      className="rounded-xl border p-4"
+      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-tertiary)" }}>
+        Contract Details
+      </p>
+      <div className="space-y-2">
+        {rows.map(({ icon, label, value }) => (
+          <div key={label} className="flex items-start gap-2.5">
+            <span className="mt-0.5 shrink-0" style={{ color: "var(--text-tertiary)" }}>{icon}</span>
+            <div className="min-w-0">
+              <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}: </span>
+              <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{value}</span>
+            </div>
+          </div>
+        ))}
+        {contract.contract_type && (
+          <div className="mt-2 pt-2" style={{ borderTop: "1px solid var(--border-primary)" }}>
+            <span
+              className="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+              style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}
+            >
+              {contract.contract_type}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -569,7 +777,7 @@ function ClauseDetail({
     { speed: 12 }
   );
 
-  return (
+    return (
     <div
       ref={(el) => { clauseRefs.current[clause.id] = el; }}
       className="space-y-4"
@@ -599,44 +807,50 @@ function ClauseDetail({
           </span>
           <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
             {formatRiskPercent(clause.risk_score)} risk score
-          </span>
-          {clause.clause_type && (
+              </span>
+              {clause.clause_type && (
             <span
               className="ml-auto rounded-lg px-2 py-0.5 text-xs"
               style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
             >
-              {clause.clause_type}
-            </span>
-          )}
-        </div>
+                  {clause.clause_type}
+                </span>
+              )}
+            </div>
         {clause.section_heading && (
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>
             {clause.section_heading}
           </p>
         )}
+        {/* Clause text excerpt */}
+        <blockquote
+          className="mt-2 border-l-2 pl-3 font-serif text-xs leading-relaxed line-clamp-4"
+          style={{ borderColor: `${riskHexColor(clause.risk_level)}50`, color: "var(--text-tertiary)" }}
+        >
+          {clause.clause_text}
+        </blockquote>
       </div>
 
-      {/* Explanation — typewriter */}
-      {clause.explanation && (
+      {/* Explanation — typewriter with markdown */}
+            {clause.explanation && (
         <div
           className="rounded-xl border p-4"
           style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
         >
-          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--text-tertiary)" }}>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--text-tertiary)" }}>
             Analysis
           </p>
-          <p
+          <div
             className={cn(
-              "text-sm leading-relaxed",
+              "cg-prose text-sm",
               !isDone && "typewriter-cursor",
               isDone && "typewriter-cursor-done"
             )}
-            style={{ color: "var(--text-primary)" }}
           >
-            {displayedExplanation}
-          </p>
-        </div>
-      )}
+            <ReactMarkdown>{displayedExplanation}</ReactMarkdown>
+                </div>
+              </div>
+            )}
 
       {/* Suggestion */}
       {clause.suggestion && (
@@ -658,7 +872,7 @@ function ClauseDetail({
           </p>
         </div>
       )}
-    </div>
+      </div>
   );
 }
 
@@ -683,14 +897,14 @@ function ClauseList({
   }
 
   return (
-    <div>
+        <div>
       <p
         className="text-xs font-semibold uppercase tracking-wider mb-3"
         style={{ color: "var(--text-tertiary)" }}
       >
         Top Risk Findings
       </p>
-      <div className="space-y-2">
+          <div className="space-y-2">
         {topRisks.map((c) => (
           <div
             key={c.id}
@@ -714,19 +928,33 @@ function ClauseList({
               </span>
               <span className="text-xs ml-auto" style={{ color: "var(--text-tertiary)" }}>
                 {c.clause_type}
-              </span>
-            </div>
+                  </span>
+                </div>
             <p
               className="text-xs leading-relaxed line-clamp-3"
               style={{ color: "var(--text-secondary)" }}
             >
-              {c.explanation}
+              {c.explanation ? stripMd(c.explanation) : c.clause_text?.slice(0, 160)}
             </p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
     </div>
   );
+}
+
+/** Strip common markdown syntax for plain-text snippet previews. */
+function stripMd(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/#{1,6}\s+/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[-*+]\s+/gm, "")
+    .replace(/\n{2,}/g, " ")
+    .replace(/\n/g, " ")
+    .trim();
 }
 
 // ─── Chat panel ────────────────────────────────────────────────────────────────
@@ -743,12 +971,38 @@ interface ChatMsg {
   streaming?: boolean;
 }
 
-function ChatPanel({ contractId }: { contractId: string }) {
+function ChatPanel({
+  contractId,
+  onContextClauses,
+}: {
+  contractId: string;
+  onContextClauses?: (ids: string[]) => void;
+}) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [heatmapPulse, setHeatmapPulse] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load existing chat history on mount
+  useEffect(() => {
+    chatApi.history(contractId)
+      .then((res) => {
+        // Backend returns { messages: [...], contract_id } — unwrap the array
+        const raw: { role: "user" | "assistant"; content: string }[] =
+          Array.isArray(res.data) ? res.data : (res.data?.messages ?? []);
+        const history: ChatMsg[] = raw.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+        setMessages(history);
+      })
+      .catch(() => { /* no history or error — start fresh */ })
+      .finally(() => setHistoryLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contractId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -769,17 +1023,35 @@ function ChatPanel({ contractId }: { contractId: string }) {
 
     try {
       let fullContent = "";
-      for await (const chunk of chatApi.send(contractId, msg)) {
-        fullContent += chunk;
+      for await (const event of chatApi.send(contractId, msg)) {
+        if (event.type === "context") {
+          // Surface clause IDs to the document heatmap and show brief pulse indicator
+          onContextClauses?.(event.clause_ids);
+          if (event.clause_ids.length > 0) {
+            setHeatmapPulse(true);
+            setTimeout(() => setHeatmapPulse(false), 2500);
+          }
+        } else if (event.type === "error") {
+          // Backend reported an error mid-stream
+          fullContent = `I encountered an error: ${event.detail}. Please try again.`;
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1] = { role: "assistant", content: fullContent, streaming: false };
+            return updated;
+          });
+          break;
+        } else if (event.type === "token") {
+          fullContent += event.content;
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = {
-            role: "assistant",
-            content: fullContent,
-            streaming: true,
-          };
+            updated[updated.length - 1] = {
+              role: "assistant",
+              content: fullContent,
+              streaming: true,
+            };
           return updated;
         });
+        }
       }
       // Mark done
       setMessages((prev) => {
@@ -811,7 +1083,14 @@ function ChatPanel({ contractId }: { contractId: string }) {
     <div className="flex h-full flex-col">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
-        {messages.length === 0 ? (
+        {historyLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div
+              className="h-6 w-6 animate-spin rounded-full border-2 border-t-transparent"
+              style={{ borderColor: "var(--accent-primary)", borderTopColor: "transparent" }}
+            />
+          </div>
+        ) : messages.length === 0 ? (
           <EmptyChat onQuestion={(q) => sendMessage(q)} />
         ) : (
           <>
@@ -822,6 +1101,17 @@ function ChatPanel({ contractId }: { contractId: string }) {
           </>
         )}
       </div>
+
+      {/* Heatmap sync indicator */}
+      {heatmapPulse && (
+        <div
+          className="mx-4 mb-2 flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs"
+          style={{ background: "rgba(59,130,246,0.1)", color: "var(--accent-primary)", border: "1px solid rgba(59,130,246,0.25)" }}
+        >
+          <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "var(--accent-primary)" }} />
+          Heatmap updated — relevant clauses highlighted
+        </div>
+      )}
 
       {/* Input */}
       <div
@@ -836,24 +1126,24 @@ function ChatPanel({ contractId }: { contractId: string }) {
           }}
           onFocus={() => {}}
         >
-          <input
+        <input
             ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
               }
             }}
-            placeholder="Ask about this contract..."
+          placeholder="Ask about this contract..."
             className="flex-1 bg-transparent text-sm outline-none"
             style={{ color: "var(--text-primary)" }}
             disabled={streaming}
-          />
-          <button
+        />
+        <button
             onClick={() => sendMessage()}
-            disabled={streaming || !input.trim()}
+          disabled={streaming || !input.trim()}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-all disabled:opacity-40"
             style={{
               background: input.trim() && !streaming ? "var(--accent-primary)" : "var(--bg-tertiary)",
@@ -904,7 +1194,7 @@ function EmptyChat({ onQuestion }: { onQuestion: (q: string) => void }) {
           >
             {q}
             <ChevronRight className="h-3 w-3 shrink-0 ml-2 opacity-50" />
-          </button>
+        </button>
         ))}
       </div>
     </div>
@@ -928,14 +1218,19 @@ function ChatBubble({ message }: { message: ChatMsg }) {
         }}
       >
         {message.content ? (
-          <span
-            className={cn(
-              message.streaming && "typewriter-cursor",
-              !message.streaming && "typewriter-cursor-done"
-            )}
-          >
-            {message.content}
-          </span>
+          isUser ? (
+            <span>{message.content}</span>
+          ) : (
+            <div
+              className={cn(
+                "cg-prose",
+                message.streaming && "typewriter-cursor",
+                !message.streaming && "typewriter-cursor-done"
+              )}
+            >
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          )
         ) : (
           <span className="flex items-center gap-1">
             <span

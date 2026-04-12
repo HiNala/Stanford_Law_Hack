@@ -4,9 +4,12 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
+
+from app.exceptions import AppException
 
 from app.database import engine, Base, async_session_factory
 # Import all models so SQLAlchemy registers them before create_all
@@ -34,6 +37,20 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# ── Structured error handler (MISSION-04 §1.3) ─────────────────────────────
+@app.exception_handler(AppException)
+async def app_exception_handler(_request: Request, exc: AppException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail,
+            "status_code": exc.status_code,
+            "error_code": exc.error_code,
+            "errors": exc.errors,
+        },
+    )
+
 
 # CORS — allow frontend to communicate with backend
 app.add_middleware(

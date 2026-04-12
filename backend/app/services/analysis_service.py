@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.clause import Clause
 from app.models.contract import Contract
-from app.services.ai_service import get_json_completion, get_completion
+from app.services.ai_service import get_json_completion
 
 logger = logging.getLogger(__name__)
 

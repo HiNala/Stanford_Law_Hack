@@ -52,6 +52,19 @@ async def trigger_analysis(
             except Exception as e:
                 logger.error(f"Re-analysis failed for {cid}: {e}")
                 await session.rollback()
+                # Mark contract as error so it doesn't stay stuck in processing
+                try:
+                    from sqlalchemy import update as sa_update
+                    from app.models.contract import Contract as ContractModel
+                    async with async_session_factory() as err_session:
+                        await err_session.execute(
+                            sa_update(ContractModel)
+                            .where(ContractModel.id == cid)
+                            .values(status="error")
+                        )
+                        await err_session.commit()
+                except Exception as inner_e:
+                    logger.error(f"Failed to set error status for {cid}: {inner_e}")
 
     background_tasks.add_task(_reanalyze, contract_id)
 

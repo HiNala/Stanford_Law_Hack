@@ -1,0 +1,138 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into as of January 15, 2025 ("Effective Date"), by and between:
+
+ACME CORPORATION, a Delaware corporation with its principal place of business at 500 Technology Drive, Palo Alto, California 94304 ("Client"); and
+
+TECHSERVICES LLC, a California limited liability company with its principal place of business at 1200 Innovation Way, San Jose, California 95110 ("Service Provider").
+
+RECITALS
+
+WHEREAS, Client desires to engage Service Provider to perform certain technology consulting, software development, and related professional services; and
+
+WHEREAS, Service Provider desires to perform such services for Client, subject to the terms and conditions of this Agreement;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, the parties agree as follows:
+
+ARTICLE 1. SERVICES
+
+1.1 Scope of Services. Service Provider shall perform the technology consulting, software development, data engineering, and related professional services as may be mutually agreed upon by the parties from time to time in written Statements of Work ("SOWs"). Each SOW shall be incorporated into and governed by this Agreement.
+
+1.2 Service Standards. Service Provider shall perform all services in a professional and workmanlike manner, consistent with applicable industry standards and in accordance with the specifications set forth in each SOW. Service Provider shall assign only qualified personnel to perform services under this Agreement.
+
+1.3 Project Management. Service Provider shall designate a project manager for each engagement who shall be the primary point of contact for Client. Service Provider shall not reassign the project manager without providing at least seven (7) days' prior written notice to Client.
+
+ARTICLE 2. COMPENSATION AND PAYMENT
+
+2.1 Fees. Client shall pay Service Provider the fees set forth in each applicable SOW. Unless otherwise specified in an SOW, fees shall be invoiced monthly in arrears.
+
+2.2 Payment Terms. All invoices are due and payable within thirty (30) days of the invoice date. Client shall pay interest on all late payments at the rate of one and one-half percent (1.5%) per month, or the maximum rate permitted by applicable law, whichever is less.
+
+2.3 Expenses. Client shall reimburse Service Provider for all reasonable and documented out-of-pocket expenses incurred in connection with the performance of services, provided that such expenses over $500 per item require prior written approval from Client.
+
+2.4 Fee Increases. Client acknowledges and agrees that Service Provider may increase its rates and fees at any time and without prior notice to Client. Any rate increases shall take effect immediately upon notification to Client, whether by invoice, email, or other written communication, and shall apply retroactively to any work in progress.
+
+2.5 Disputed Invoices. If Client disputes any invoice, Client must notify Service Provider in writing within five (5) days of receipt of the disputed invoice. Failure to dispute an invoice within this period shall constitute Client's unconditional acceptance of the invoice and all amounts stated therein.
+
+ARTICLE 3. TERM AND TERMINATION
+
+3.1 Term. This Agreement shall commence on the Effective Date and shall continue for a period of three (3) years, unless earlier terminated as provided herein. Thereafter, this Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least seven (7) calendar days prior to the end of the then-current term.
+
+3.2 Termination for Convenience. Either party may terminate this Agreement for any reason upon fifteen (15) days' prior written notice to the other party. Upon such termination, Client shall pay Service Provider all fees for work performed through the termination date, plus a termination fee equal to one hundred percent (100%) of the fees that would have been payable for the remainder of the then-current SOW term.
+
+3.3 Termination for Cause. Either party may terminate this Agreement immediately upon written notice if the other party materially breaches this Agreement and fails to cure such breach within five (5) days after receiving written notice of the breach.
+
+3.4 Change of Control. In the event of a Change of Control of Service Provider, Client may, at Client's sole discretion, terminate this Agreement immediately and without penalty upon written notice to Service Provider. "Change of Control" means any transaction or series of transactions resulting in any person or entity acquiring beneficial ownership of more than fifty percent (50%) of the voting securities of Service Provider, or any merger, acquisition, or sale of all or substantially all of the assets of Service Provider. For the avoidance of doubt, this right shall not be mutual — Service Provider shall have no right to terminate upon a Change of Control of Client.
+
+3.5 Effect of Termination. Upon termination of this Agreement for any reason, all amounts owed to Service Provider shall be immediately due and payable. Service Provider's obligations to return or destroy Client data shall survive for one (1) year following termination.
+
+ARTICLE 4. INTELLECTUAL PROPERTY
+
+4.1 Assignment of Work Product. All work product, deliverables, inventions, discoveries, improvements, software, code, documentation, and other materials created, conceived, or developed by Service Provider (alone or with others) in connection with this Agreement, whether or not patentable or copyrightable ("Work Product"), are the sole and exclusive property of Service Provider. Service Provider hereby grants Client a limited, non-exclusive, non-transferable, revocable license to use the Work Product solely for Client's internal business purposes during the term of this Agreement.
+
+4.2 Background IP. Each party shall retain all rights in its respective Background IP (defined as IP owned or licensed prior to this Agreement). Nothing in this Agreement shall be construed as a transfer of any Background IP.
+
+4.3 License Termination. The license granted in Section 4.1 shall automatically terminate upon the expiration or termination of this Agreement for any reason, after which Client shall immediately cease all use of the Work Product and shall certify in writing its destruction of all copies.
+
+4.4 Service Provider IP Rights. Client acknowledges that Service Provider may use information and know-how gained from performing services for Client in performing services for other clients, provided that Service Provider does not directly disclose Client's Confidential Information. Client grants Service Provider a perpetual, irrevocable, royalty-free license to use and incorporate into Service Provider's service offerings any feedback, suggestions, or improvements provided by Client.
+
+ARTICLE 5. CONFIDENTIALITY
+
+5.1 Confidential Information. Each party acknowledges that it may receive confidential or proprietary information of the other party ("Confidential Information"), including without limitation technical data, trade secrets, business plans, customer information, financial information, and product roadmaps.
+
+5.2 Obligations. Each party agrees to hold the other party's Confidential Information in strict confidence and to use such Confidential Information solely in connection with this Agreement. Each party shall not disclose any Confidential Information to any third party without the prior written consent of the disclosing party.
+
+5.3 Term of Confidentiality. The obligations of confidentiality set forth herein shall survive the expiration or termination of this Agreement and shall continue in perpetuity without time limitation.
+
+5.4 Return of Information. Upon termination of this Agreement or upon request by the disclosing party, the receiving party shall promptly return or certify the destruction of all Confidential Information; provided, however, that Service Provider may retain copies of Confidential Information in its archival and backup systems indefinitely, notwithstanding any such request.
+
+ARTICLE 6. INDEMNIFICATION
+
+6.1 Client Indemnification. Client shall indemnify, defend, and hold harmless Service Provider and its affiliates, officers, directors, employees, agents, successors, and assigns (collectively, "Service Provider Indemnitees") from and against any and all claims, damages, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to: (a) Client's breach of any representation, warranty, or obligation under this Agreement; (b) Client's use of any Work Product; (c) any claim that Client's data, content, or materials infringes any third-party intellectual property rights; (d) any negligence or willful misconduct by Client; or (e) any claim brought by any third party against Service Provider arising from Client's actions or omissions. Client's indemnification obligations shall not be subject to any monetary cap or limitation.
+
+6.2 Service Provider Indemnification. Service Provider shall indemnify Client solely for direct claims of willful misconduct by Service Provider. Service Provider's total indemnification liability shall not exceed One Thousand Dollars ($1,000).
+
+6.3 Indemnification Procedure. The party seeking indemnification must provide prompt written notice of any claim to the indemnifying party. The indemnifying party shall have the right to control the defense and settlement of any indemnified claim.
+
+ARTICLE 7. LIMITATION OF LIABILITY
+
+7.1 Exclusion of Consequential Damages. NEITHER PARTY SHALL BE LIABLE TO THE OTHER FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, INCLUDING LOSS OF PROFITS, REVENUE, OR DATA.
+
+7.2 Cap on Liability. CLIENT'S AGGREGATE LIABILITY TO SERVICE PROVIDER FOR ANY CLAIMS ARISING OUT OF OR RELATED TO THIS AGREEMENT SHALL BE UNLIMITED AND NOT SUBJECT TO ANY CAP. SERVICE PROVIDER'S AGGREGATE LIABILITY TO CLIENT SHALL NOT EXCEED THE FEES PAID BY CLIENT IN THE THIRTY (30) DAYS PRECEDING THE CLAIM.
+
+ARTICLE 8. NON-COMPETE AND NON-SOLICITATION
+
+8.1 Non-Compete. During the term of this Agreement and for a period of thirty-six (36) months following its termination or expiration, Service Provider and its principals, employees, and contractors shall not, directly or indirectly, engage in, own, manage, operate, control, be employed by, or participate in any business that competes with Client's business in any state within the United States of America or in any country where Client conducts business.
+
+8.2 Non-Solicitation of Employees. During the term of this Agreement and for a period of twenty-four (24) months following its termination, Service Provider shall not directly or indirectly solicit, hire, or engage any employee or contractor of Client who was involved in the services.
+
+8.3 Non-Solicitation of Clients. During the term of this Agreement and for a period of twenty-four (24) months following its termination, Service Provider shall not solicit or accept business from any of Client's customers or prospective customers with whom Service Provider had contact during the term of this Agreement.
+
+ARTICLE 9. DATA PRIVACY
+
+9.1 Data Processing. In the course of performing services, Service Provider may process personal data on behalf of Client. Client grants Service Provider a broad license to process, store, analyze, use, and share such personal data for any purpose reasonably related to Service Provider's business operations, including improving its own products and services, building internal datasets, and training artificial intelligence models.
+
+9.2 Data Security. Service Provider shall implement reasonable security measures to protect Client data, but makes no warranties regarding the security of such data and shall not be liable for any unauthorized access, breach, or loss of Client data.
+
+9.3 Data Retention. Service Provider may retain Client data indefinitely following the termination of this Agreement.
+
+ARTICLE 10. REPRESENTATIONS AND WARRANTIES
+
+10.1 Mutual Representations. Each party represents and warrants that: (a) it has the power and authority to enter into this Agreement; (b) the execution and performance of this Agreement does not violate any other agreement to which it is a party; and (c) it shall comply with all applicable laws and regulations.
+
+10.2 Disclaimer. EXCEPT AS EXPRESSLY SET FORTH IN SECTION 10.1, SERVICE PROVIDER MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. ALL SERVICES ARE PROVIDED "AS IS."
+
+ARTICLE 11. ASSIGNMENT
+
+11.1 Assignment by Service Provider. Service Provider may assign this Agreement, in whole or in part, at any time without Client's prior consent, including in connection with a merger, acquisition, or sale of assets.
+
+11.2 Assignment by Client. Client may not assign this Agreement, or any rights or obligations hereunder, without the prior written consent of Service Provider, which may be withheld for any reason or no reason. Any purported assignment without such consent shall be void.
+
+ARTICLE 12. DISPUTE RESOLUTION
+
+12.1 Governing Law. This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to conflicts of law principles.
+
+12.2 Mandatory Arbitration. Any dispute, controversy, or claim arising out of or relating to this Agreement shall be finally resolved by binding arbitration in Wilmington, Delaware, administered by the American Arbitration Association under its Commercial Arbitration Rules. Each party shall bear its own costs and fees. The arbitration proceedings shall be confidential.
+
+12.3 Class Action Waiver. Service Provider and Client each waive any right to participate in a class action lawsuit or class-wide arbitration against the other party.
+
+ARTICLE 13. GENERAL PROVISIONS
+
+13.1 Entire Agreement. This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior agreements, understandings, negotiations, and representations.
+
+13.2 Amendment. This Agreement may be amended only by a written instrument signed by both parties; provided, however, that Service Provider may update its standard terms, rate schedules, and service policies at any time by posting updated terms on its website, and such updates shall be binding on Client upon posting.
+
+13.3 Severability. If any provision of this Agreement is held invalid or unenforceable, it shall be modified to the minimum extent necessary to make it enforceable, and the remaining provisions shall remain in full force.
+
+13.4 Waiver. Failure to enforce any right under this Agreement shall not constitute a waiver of such right.
+
+13.5 Notices. All notices must be in writing and delivered to the addresses set forth above, or such other addresses as may be designated in writing. Notices shall be effective upon delivery; provided, however, that email notice from Service Provider to Client shall be effective immediately upon sending.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+ACME CORPORATION                                    TECHSERVICES LLC
+
+By: ___________________________                    By: ___________________________
+Name: Sarah Chen                                   Name: Marcus Rodriguez
+Title: Chief Executive Officer                     Title: Managing Partner
+Date: January 15, 2025                             Date: January 15, 2025

@@ -36,8 +36,11 @@ export interface Contract {
 }
 
 export interface ContractListResponse {
-  contracts: Contract[];
+  items: Contract[];
   total: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
 }
 
 export interface Clause {

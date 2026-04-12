@@ -1,0 +1,89 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement ("Agreement") is entered into as of March 1, 2025 ("Effective Date"), by and between:
+
+INNOVATETECH SOLUTIONS, INC., a California corporation ("Party A"); and
+
+MERIDIAN CAPITAL GROUP, LLC, a New York limited liability company ("Party B").
+
+RECITALS
+
+The parties desire to explore a potential business relationship and, in connection therewith, may disclose to each other certain proprietary and confidential information. The parties wish to protect such information from unauthorized disclosure.
+
+NOW, THEREFORE, in consideration of the mutual covenants contained herein, the parties agree as follows:
+
+ARTICLE 1. DEFINITION OF CONFIDENTIAL INFORMATION
+
+1.1 "Confidential Information" means any information or data disclosed by either party to the other, either directly or indirectly, in writing, orally, or by inspection of tangible objects, including without limitation: technical data, trade secrets, research and development information, product plans, products, services, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, financial information, marketing plans, and business plans.
+
+1.2 Confidential Information does not include any information that: (a) is or becomes publicly known through no act or omission of the receiving party; (b) was in the receiving party's lawful possession prior to the disclosure, as evidenced by written records predating the disclosure; (c) is lawfully disclosed to the receiving party by a third party without restriction on disclosure; or (d) is independently developed by the receiving party without use of or reference to the disclosing party's Confidential Information.
+
+ARTICLE 2. OBLIGATIONS
+
+2.1 Confidentiality. Each party agrees to hold the Confidential Information of the other party in strict confidence. Each party agrees to use the Confidential Information solely for the purpose of evaluating a potential business relationship between the parties ("Purpose") and for no other purpose.
+
+2.2 Restricted Disclosure. Each party agrees not to disclose the Confidential Information to any third party without the prior written consent of the other party, except as permitted in Section 2.3 below.
+
+2.3 Permitted Disclosures. Each party may disclose Confidential Information to its employees, officers, directors, advisors, and contractors (collectively, "Representatives") who have a need to know such information for the Purpose and who are bound by confidentiality obligations at least as protective as those set forth herein. Each party shall be responsible for any breach of this Agreement by its Representatives.
+
+2.4 Standard of Care. Each party shall protect the Confidential Information of the other party using the same degree of care that it uses to protect its own confidential information of similar sensitivity, but no less than reasonable care.
+
+ARTICLE 3. TERM
+
+3.1 Term. This Agreement shall commence on the Effective Date and continue for a period of two (2) years, unless earlier terminated by either party upon thirty (30) days' written notice to the other party.
+
+3.2 Survival. The obligations of confidentiality shall survive termination of this Agreement for a period of three (3) years from the date of disclosure of the applicable Confidential Information, or until such information enters the public domain through no fault of the receiving party, whichever occurs first.
+
+ARTICLE 4. RETURN OR DESTRUCTION
+
+4.1 Upon the written request of the disclosing party or upon termination of this Agreement, the receiving party shall promptly return or certify the destruction of all Confidential Information, including all copies and derivations thereof. The receiving party may, however, retain one (1) archival copy solely for the purpose of documenting its legal obligations hereunder.
+
+ARTICLE 5. LEGAL REQUIREMENTS
+
+5.1 If the receiving party is compelled by law, regulation, or court order to disclose Confidential Information, it shall provide prompt prior written notice to the disclosing party to permit the disclosing party to seek a protective order or other appropriate relief. The receiving party shall disclose only that portion of Confidential Information that is legally required and shall cooperate with the disclosing party in seeking confidential treatment.
+
+ARTICLE 6. NO LICENSE
+
+6.1 Nothing in this Agreement grants either party any rights in the other party's Confidential Information except the limited right to use it for the Purpose as set forth herein. All Confidential Information remains the sole property of the disclosing party.
+
+ARTICLE 7. NO WARRANTY
+
+7.1 ALL CONFIDENTIAL INFORMATION IS PROVIDED "AS IS." NEITHER PARTY MAKES ANY WARRANTY, EXPRESS OR IMPLIED, AS TO THE ACCURACY, COMPLETENESS, OR FITNESS FOR A PARTICULAR PURPOSE OF THE CONFIDENTIAL INFORMATION.
+
+ARTICLE 8. REMEDIES
+
+8.1 Each party acknowledges that a breach of this Agreement would cause irreparable harm to the disclosing party for which monetary damages would be an inadequate remedy. Accordingly, the disclosing party shall be entitled to seek equitable relief, including injunction, without the requirement of posting a bond.
+
+8.2 Limitation of Liability. NEITHER PARTY SHALL BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR RELATING TO THIS AGREEMENT, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. EACH PARTY'S AGGREGATE LIABILITY FOR DIRECT DAMAGES SHALL NOT EXCEED TEN THOUSAND DOLLARS ($10,000).
+
+ARTICLE 9. GENERAL PROVISIONS
+
+9.1 Governing Law. This Agreement shall be governed by and construed in accordance with the laws of the State of California, without regard to its conflict of laws provisions.
+
+9.2 Dispute Resolution. Any dispute arising out of or relating to this Agreement shall first be submitted to non-binding mediation before a mutually agreed mediator. If not resolved by mediation within thirty (30) days, either party may pursue litigation in the state or federal courts located in San Francisco, California, to which the parties consent to exclusive jurisdiction.
+
+9.3 Entire Agreement. This Agreement constitutes the entire agreement between the parties with respect to the subject matter hereof and supersedes all prior discussions, negotiations, and agreements.
+
+9.4 Amendment. This Agreement may be amended only by a written instrument signed by authorized representatives of both parties.
+
+9.5 Notices. Notices shall be in writing and delivered by email with written confirmation of receipt, or by certified mail, return receipt requested, to the addresses set forth on the signature page below.
+
+9.6 Counterparts. This Agreement may be executed in counterparts, each of which shall be deemed an original, and all of which together shall constitute one agreement. Electronic signatures shall be deemed valid.
+
+9.7 Waiver. No waiver of any provision of this Agreement shall be effective unless made in writing and signed by the waiving party.
+
+9.8 Severability. If any provision of this Agreement is held invalid or unenforceable, the remaining provisions shall remain in full force and effect.
+
+9.9 Assignment. Neither party may assign this Agreement without the prior written consent of the other party, except that either party may assign this Agreement to an affiliate or in connection with a merger, acquisition, or sale of substantially all of its assets, provided that the assignee agrees in writing to be bound by the terms of this Agreement.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+INNOVATETECH SOLUTIONS, INC.                      MERIDIAN CAPITAL GROUP, LLC
+
+By: ___________________________                   By: ___________________________
+Name: Jennifer Park                               Name: David Thornton
+Title: Chief Executive Officer                    Title: Managing Director
+Address: 2100 University Ave                      Address: 767 Fifth Avenue
+         Berkeley, CA 94704                                New York, NY 10153
+Email: jpark@innovatetech.io                      Email: dthorn@meridiancapital.com
+Date: March 1, 2025                               Date: March 1, 2025

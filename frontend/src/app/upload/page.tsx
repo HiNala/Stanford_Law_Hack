@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import {
@@ -80,7 +80,23 @@ export default function UploadPage() {
 
   const successCount = files.filter((f) => f.status === "success").length;
   const pendingCount = files.filter((f) => f.status === "pending").length;
+  const errorCount = files.filter((f) => f.status === "error").length;
   const successFiles = files.filter((f) => f.status === "success" && f.contractId);
+
+  // Auto-redirect to review page when exactly one file finishes uploading successfully
+  useEffect(() => {
+    if (
+      successFiles.length === 1 &&
+      pendingCount === 0 &&
+      errorCount === 0 &&
+      !uploading
+    ) {
+      const timer = setTimeout(() => {
+        router.push(`/review/${successFiles[0].contractId}`);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [successFiles, pendingCount, errorCount, uploading, router]);
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-primary)" }}>
@@ -176,6 +192,11 @@ export default function UploadPage() {
               <p className="text-sm" style={{ color: "var(--text-tertiary)" }}>
                 {successCount > 0 && `${successCount} uploaded`}
                 {pendingCount > 0 && ` · ${pendingCount} pending`}
+                {errorCount > 0 && (
+                  <span style={{ color: "var(--risk-critical)" }}>
+                    {` · ${errorCount} failed`}
+                  </span>
+                )}
               </p>
               <div className="flex gap-3">
                 {successCount > 0 && (

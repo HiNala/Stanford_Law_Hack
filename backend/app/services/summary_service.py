@@ -89,8 +89,8 @@ async def generate_summary_report(
             risk_summary[level] += 1
 
         heading = clause.section_heading or clause.clause_type or "Unknown Section"
-        score_str = f"{clause.risk_score:.2f}" if clause.risk_score else "N/A"
-        explanation = clause.explanation or clause.clause_text[:200]
+        score_str = f"{clause.risk_score:.2f}" if clause.risk_score is not None else "N/A"
+        explanation = clause.explanation or (clause.clause_text[:200] if clause.clause_text else "No text available.")
         suggestion = clause.suggestion or "Request revision."
 
         entry = (
@@ -118,7 +118,7 @@ Parties: {parties_str}
 Governing Law: {contract.governing_law or "Not specified"}
 Effective Date: {contract.effective_date or "Not specified"}
 Expiration Date: {contract.expiration_date or "Not specified"}
-Overall Risk Score: {contract.overall_risk_score or "N/A"} / 1.00
+Overall Risk Score: {contract.overall_risk_score if contract.overall_risk_score is not None else "N/A"} / 1.00
 Risk Level: {(contract.risk_level or "N/A").upper()}
 
 RISK DISTRIBUTION

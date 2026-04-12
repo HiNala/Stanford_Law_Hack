@@ -1,20 +1,29 @@
-"use client";
+/**
+ * useTypewriter — animates text character-by-character to create a
+ * streaming/self-typing effect. Replays whenever `text` changes.
+ *
+ * Returns:
+ *   displayed  — the portion of text revealed so far
+ *   isDone     — true once the full text is revealed
+ */
 
 import { useState, useEffect, useRef } from "react";
 
-interface UseTypewriterOptions {
+interface TypewriterOptions {
+  /** Characters per animation frame. Default: 8 */
   speed?: number;
-  startDelay?: number;
-  onComplete?: () => void;
+  /** Delay (ms) before starting to type. Default: 0 */
+  delay?: number;
 }
 
 export function useTypewriter(
   text: string,
-  { speed = 15, startDelay = 0, onComplete }: UseTypewriterOptions = {}
-) {
+  options: TypewriterOptions = {}
+): { displayed: string; isDone: boolean } {
+  const { speed = 8, delay = 0 } = options;
   const [displayed, setDisplayed] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const rafRef = useRef<number | null>(null);
   const indexRef = useRef(0);
 
   useEffect(() => {
@@ -22,35 +31,36 @@ export function useTypewriter(
     setIsDone(false);
     indexRef.current = 0;
 
-    if (!text) return;
+    if (!text) {
+      setIsDone(true);
+      return;
+    }
 
-    const startTimeout = setTimeout(() => {
-      setIsTyping(true);
+    let cancelled = false;
 
-      const interval = setInterval(() => {
-        if (indexRef.current < text.length) {
-          setDisplayed(text.slice(0, indexRef.current + 1));
-          indexRef.current++;
-        } else {
-          clearInterval(interval);
-          setIsTyping(false);
-          setIsDone(true);
-          onComplete?.();
-        }
-      }, speed);
+    const tick = () => {
+      if (cancelled) return;
+      const next = Math.min(indexRef.current + speed, text.length);
+      indexRef.current = next;
+      setDisplayed(text.slice(0, next));
+      if (next < text.length) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        setIsDone(true);
+      }
+    };
 
-      return () => clearInterval(interval);
-    }, startDelay);
+    const timer = delay > 0 ? setTimeout(() => { rafRef.current = requestAnimationFrame(tick); }, delay) : null;
+    if (delay <= 0) {
+      rafRef.current = requestAnimationFrame(tick);
+    }
 
-    return () => clearTimeout(startTimeout);
-  }, [text, speed, startDelay]);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [text, speed, delay]);
 
-  const skipToEnd = () => {
-    setDisplayed(text);
-    setIsTyping(false);
-    setIsDone(true);
-    indexRef.current = text.length;
-  };
-
-  return { displayed, isTyping, isDone, skipToEnd };
+  return { displayed, isDone };
 }

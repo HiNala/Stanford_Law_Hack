@@ -52,9 +52,11 @@ export default function Header() {
         )}
         <button
           onClick={handleLogout}
+          aria-label="Log out"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
         >
           <LogOut className="h-4 w-4" />
+          <span>Log out</span>
         </button>
       </div>
     </header>
