@@ -444,12 +444,14 @@ function DocumentPanel({
   heatmapReady,
   chatContextIds,
   onClauseClick,
+  documentClauseRefs,
 }: {
   clauses: Clause[];
   selectedClause: Clause | null;
   heatmapReady: boolean;
   chatContextIds: Set<string>;
   onClauseClick: (c: Clause) => void;
+  documentClauseRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }) {
   if (clauses.length === 0) {
     return (
@@ -472,6 +474,9 @@ function DocumentPanel({
           isChatContext={chatContextIds.has(clause.id)}
           heatmapReady={heatmapReady}
           onClick={() => onClauseClick(clause)}
+          registerRef={(el) => {
+            if (documentClauseRefs) documentClauseRefs.current[clause.id] = el;
+          }}
         />
                 ))}
               </div>
@@ -485,6 +490,7 @@ function ClauseBlock({
   isChatContext,
   heatmapReady,
   onClick,
+  registerRef,
 }: {
   clause: Clause;
   index: number;
@@ -492,6 +498,7 @@ function ClauseBlock({
   isChatContext: boolean;
   heatmapReady: boolean;
   onClick: () => void;
+  registerRef?: (el: HTMLDivElement | null) => void;
 }) {
   const [visible, setVisible] = useState(heatmapReady);
   const [pulse, setPulse] = useState(false);
@@ -518,6 +525,7 @@ function ClauseBlock({
 
   return (
     <div
+      ref={registerRef}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
