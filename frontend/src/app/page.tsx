@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 const DEMO_EMAIL = "demo@clauseguard.ai";
-const DEMO_PASSWORD = "demo1234";
+const DEMO_PASSWORD = "hackathon2026";
 
 export default function LoginPage() {
   const router = useRouter();

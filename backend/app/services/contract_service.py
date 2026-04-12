@@ -14,6 +14,7 @@ from app.services.parsing_service import extract_text
 from app.services.chunking_service import chunk_contract_text
 from app.services.embedding_service import embed_clauses
 from app.services.analysis_service import analyze_all_clauses, extract_contract_metadata
+from app.utils.text_processing import clean_text
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,7 @@ async def process_contract(db: AsyncSession, contract_id: uuid.UUID) -> Contract
         # Step 1: Extract text
         logger.info(f"Extracting text from {contract.file_path}")
         raw_text = extract_text(contract.file_path, contract.file_type)
+        raw_text = clean_text(raw_text)
         contract.raw_text = raw_text
         await db.flush()
 

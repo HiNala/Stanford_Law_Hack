@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, RefreshCw, Copy, AlertTriangle, TrendingUp, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, TrendingUp } from "lucide-react";
 import { contractsApi, analysisApi, clausesApi } from "@/lib/api";
 import { riskHexColor, formatRiskPercent } from "@/lib/utils";
 import type { Contract, ContractAnalysisSummary } from "@/types";
@@ -225,20 +225,7 @@ export default function SummaryPage({
             className="rounded-2xl border p-8"
             style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
           >
-            <div
-              className="prose prose-sm max-w-none"
-              style={{
-                "--tw-prose-body": "var(--text-primary)",
-                "--tw-prose-headings": "var(--text-primary)",
-                "--tw-prose-links": "var(--accent-primary)",
-                "--tw-prose-bold": "var(--text-primary)",
-                "--tw-prose-counters": "var(--text-secondary)",
-                "--tw-prose-bullets": "var(--text-secondary)",
-                "--tw-prose-hr": "var(--border-primary)",
-                "--tw-prose-quotes": "var(--text-secondary)",
-                "--tw-prose-code": "var(--text-primary)",
-              } as React.CSSProperties}
-            >
+            <div className="cg-prose">
               <ReactMarkdown>{report}</ReactMarkdown>
             </div>
           </div>
