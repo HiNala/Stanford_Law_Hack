@@ -144,14 +144,30 @@ export default function DashboardPage() {
               )}
             </p>
           </div>
-          <button
-            onClick={() => router.push("/upload")}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "var(--accent-primary)" }}
-          >
-            <Plus className="h-4 w-4" />
-            Upload Contract
-          </button>
+          <div className="flex items-center gap-2">
+            {contracts.filter(c => c.status === "analyzed").length >= 2 && (
+              <button
+                onClick={() => router.push("/portfolio-report")}
+                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all hover:opacity-90"
+                style={{
+                  borderColor: "var(--accent-primary)",
+                  color: "var(--accent-primary)",
+                  background: "rgba(59,130,246,0.06)",
+                }}
+              >
+                <BarChart3 className="h-4 w-4" />
+                Portfolio Report
+              </button>
+            )}
+            <button
+              onClick={() => router.push("/upload")}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              <Plus className="h-4 w-4" />
+              Upload Contract
+            </button>
+          </div>
         </div>
 
         {/* Portfolio stats bar */}

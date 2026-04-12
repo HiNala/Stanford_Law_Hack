@@ -292,12 +292,12 @@ async def seed():  # noqa: C901
         ]
 
         def _enrich(clauses_list):
-            """Add metadata_ with confidence score to each clause dict."""
+            """Add metadata_ with confidence score, preserving any existing legal_grounding."""
             for c in clauses_list:
                 score = c.get("risk_score", 0.5)
-                # Higher-risk clauses with clear language get higher confidence
                 conf = 0.92 if score >= 0.7 else 0.88 if score >= 0.4 else 0.95
-                c["metadata_"] = {"confidence": conf}
+                existing = c.get("metadata_") or {}
+                c["metadata_"] = {**existing, "confidence": existing.get("confidence", conf)}
 
         _enrich(nda_clauses)
         if need_nda:
@@ -434,6 +434,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.78,
                 "risk_level": "high",
                 "risk_category": "liability",
+                "metadata_": {
+                    "confidence": 0.90,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "U.C.C. § 2-719(3)",
+                                "summary": "Limitation of consequential damages is enforceable unless unconscionable. A cap grossly disproportionate to actual likely damages — such as $1,000 on a six-figure contract — may be found unconscionable by courts applying the UCC standard.",
+                                "source_url": None,
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "TechCo's liability is capped at 3 months of fees **or $1,000** — whichever "
                     "is greater. For an enterprise contract with annual fees potentially in the "
@@ -472,6 +488,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.84,
                 "risk_level": "high",
                 "risk_category": "termination",
+                "metadata_": {
+                    "confidence": 0.92,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "Cal. Bus. & Prof. Code §§ 17600–17606 (Automatic Renewal Law)",
+                                "summary": "California requires automatic renewal terms to be presented clearly and conspicuously before purchase, with an easy cancellation mechanism. A 15-day window on an annual contract may fail the 'clear and conspicuous' standard, potentially voiding the auto-renewal.",
+                                "source_url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=17600&lawCode=BPC",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "Two compounding risks. First: a **15-day non-renewal window** on an "
                     "annual subscription is dangerously short. If your team misses the window, "
@@ -762,6 +794,22 @@ async def seed():  # noqa: C901
                 "risk_score": 0.88,
                 "risk_level": "critical",
                 "risk_category": "ip_assignment",
+                "metadata_": {
+                    "confidence": 0.93,
+                    "legal_grounding": {
+                        "source": "trustfoundry_cached",
+                        "verified": True,
+                        "citations": [
+                            {
+                                "citation": "17 U.S.C. § 101 (Work Made for Hire)",
+                                "summary": "Under federal copyright law, work-for-hire vests ownership in the commissioning party only when the work falls within nine enumerated categories and is made pursuant to a written agreement. A perpetual royalty-free license-back effectively nullifies the ownership grant, creating a de facto joint ownership arrangement without the protections of formal joint ownership.",
+                                "source_url": "https://www.copyright.gov/title17/92chap1.html#101",
+                                "verified": True,
+                            },
+                        ],
+                        "provider": "TrustFoundry",
+                    },
+                },
                 "explanation": (
                     "This clause creates a false sense of ownership. It nominally vests IP "
                     "in Meridian, but then immediately grants GlobalSupply a **perpetual, "
