@@ -1,6 +1,9 @@
-"""Dashboard statistics routes."""
+"""Dashboard statistics and portfolio analytics routes."""
 
-from fastapi import APIRouter, Depends
+import uuid
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +12,7 @@ from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.models.contract import Contract
 from app.models.clause import Clause
+from app.services.pattern_service import detect_cross_document_patterns
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
@@ -83,3 +87,24 @@ async def get_dashboard_stats(
         "highest_risk_contract": highest_risk_contract,
         "risk_distribution": risk_distribution,
     }
+
+
+@router.get("/patterns")
+async def get_portfolio_patterns(
+    contract_ids: Optional[str] = Query(None, description="Comma-separated contract UUIDs to scope analysis"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Detect cross-document patterns across the user's contract portfolio.
+
+    Returns clause type distribution, risk hotspots, governing law breakdown,
+    outlier contracts, aggregate stats, and natural-language insights.
+    """
+    parsed_ids = None
+    if contract_ids:
+        try:
+            parsed_ids = [uuid.UUID(cid.strip()) for cid in contract_ids.split(",") if cid.strip()]
+        except ValueError:
+            parsed_ids = None
+
+    return await detect_cross_document_patterns(db, current_user.id, parsed_ids)

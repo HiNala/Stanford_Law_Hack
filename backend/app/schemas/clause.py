@@ -21,6 +21,7 @@ class ClauseResponse(BaseModel):
     suggestion: str | None
     start_char: int | None
     end_char: int | None
+    metadata_: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

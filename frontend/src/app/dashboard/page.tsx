@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight } from "lucide-react";
+import { Plus, FileText, Search, AlertCircle, Clock, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb } from "lucide-react";
 import { contractsApi, statsApi, searchApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
@@ -31,6 +31,8 @@ export default function DashboardPage() {
   const [semanticResults, setSemanticResults] = useState<SearchResult[]>([]);
   const [semanticLoading, setSemanticLoading] = useState(false);
   const [semanticSearched, setSemanticSearched] = useState(false);
+  const [portfolioInsights, setPortfolioInsights] = useState<string[]>([]);
+  const [riskHotspots, setRiskHotspots] = useState<{clause_type: string; count: number; avg_risk_score: number; critical_count: number}[]>([]);
 
   useEffect(() => {
     hydrate();
@@ -59,6 +61,12 @@ export default function DashboardPage() {
       ]);
       if (contractsRes.status === "fulfilled") setContracts(contractsRes.value.data.items ?? []);
       if (statsRes.status === "fulfilled") setPortfolioStats(statsRes.value.data);
+      // Load cross-document patterns
+      try {
+        const patternsRes = await statsApi.patterns();
+        setPortfolioInsights(patternsRes.data.insights ?? []);
+        setRiskHotspots(patternsRes.data.risk_hotspots ?? []);
+      } catch { /* patterns are non-critical */ }
     } catch {
       // silently fail on refresh
     } finally {
@@ -205,6 +213,42 @@ export default function DashboardPage() {
                 </p>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Portfolio Intelligence Insights */}
+        {portfolioInsights.length > 0 && (
+          <div
+            className="rounded-xl border p-4 mb-6"
+            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Portfolio Intelligence</h3>
+            </div>
+            <div className="space-y-1.5">
+              {portfolioInsights.map((insight, i) => (
+                <p key={i} className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                  <span style={{ color: "var(--accent-primary)" }}>→</span> {insight}
+                </p>
+              ))}
+            </div>
+            {riskHotspots.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-primary)" }}>
+                {riskHotspots.slice(0, 5).map((h) => (
+                  <span
+                    key={h.clause_type}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
+                    style={{
+                      background: h.avg_risk_score >= 0.7 ? "rgba(239,68,68,0.12)" : h.avg_risk_score >= 0.4 ? "rgba(245,158,11,0.12)" : "rgba(34,197,94,0.12)",
+                      color: h.avg_risk_score >= 0.7 ? "var(--risk-critical)" : h.avg_risk_score >= 0.4 ? "var(--risk-high)" : "var(--risk-low)",
+                    }}
+                  >
+                    {h.clause_type.replace(/_/g, " ")} ({h.count})
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -385,7 +429,7 @@ export default function DashboardPage() {
               <div className="mt-4">
                 {semanticResults.length === 0 ? (
                   <p className="text-sm py-6 text-center" style={{ color: "var(--text-tertiary)" }}>
-                    No relevant clauses found. Try a different query.
+                    No matching clauses found — try a broader term like &ldquo;indemnification&rdquo; or &ldquo;termination&rdquo;.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -416,6 +460,9 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
   const [visible, setVisible] = useState(false);
   const [barReady, setBarReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const parties = contract.parties
+    ? ((contract.parties as { names?: string[] }).names ?? [])
+    : [];
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -519,6 +566,13 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
       >
         {contract.title || contract.original_filename}
       </h3>
+
+      {/* Parties */}
+      {parties.length > 0 && (
+        <p className="mt-0.5 text-xs truncate" style={{ color: "var(--text-tertiary)" }} title={parties.join(" · ")}>
+          {parties.slice(0, 2).join(" · ")}
+        </p>
+      )}
 
       {/* Type + size */}
       <p className="mt-1 text-xs" style={{ color: "var(--text-tertiary)" }}>

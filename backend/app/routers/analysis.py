@@ -108,34 +108,56 @@ async def get_contract_summary(
 
     clauses = await get_contract_clauses(db, contract_id)
 
-    # Build risk distribution
+    # Build risk distribution and separate findings by severity
     risk_dist = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-    key_findings = []
+    critical_findings = []
+    material_findings = []
+    clause_types_seen = set()
+
     for c in clauses:
         level = c.risk_level or "low"
         risk_dist[level] = risk_dist.get(level, 0) + 1
-        if level in ("high", "critical"):
-            key_findings.append({
-                "finding": c.explanation or c.clause_text[:120],
-                "risk_level": level,
-                "clause_id": str(c.id),
-                "recommendation": c.suggestion,
-            })
+        if c.clause_type:
+            clause_types_seen.add(c.clause_type)
 
-    key_findings.sort(key=lambda x: 0 if x["risk_level"] == "critical" else 1)
+        finding = {
+            "finding": c.explanation or c.clause_text[:200],
+            "risk_level": level,
+            "clause_id": str(c.id),
+            "section": c.section_heading or c.clause_type or "Unknown",
+            "recommendation": c.suggestion,
+            "confidence": c.metadata_.get("confidence") if c.metadata_ else None,
+        }
+        if level == "critical":
+            critical_findings.append(finding)
+        elif level == "high":
+            material_findings.append(finding)
 
-    # Build recommended actions from suggestions
+    # Detect missing standard provisions
+    standard_provisions = {
+        "indemnification", "limitation_of_liability", "confidentiality",
+        "governing_law", "dispute_resolution", "termination_convenience",
+        "data_privacy", "force_majeure", "insurance", "warranty",
+    }
+    missing_provisions = sorted(standard_provisions - clause_types_seen)
+
+    # Build recommended actions from suggestions (critical first)
+    all_findings = critical_findings + material_findings
     recommended_actions = [
-        f.get("recommendation") for f in key_findings if f.get("recommendation")
-    ][:6]
+        f.get("recommendation") for f in all_findings if f.get("recommendation")
+    ][:8]
 
     return {
         "contract_id": str(contract_id),
         "title": contract.title or contract.original_filename,
         "executive_summary": contract.summary or "Summary not yet generated. Use the /report endpoint to generate one.",
-        "key_findings": key_findings[:10],
+        "critical_findings": critical_findings,
+        "material_findings": material_findings,
+        "key_findings": (critical_findings + material_findings)[:10],
         "risk_distribution": risk_dist,
+        "missing_provisions": missing_provisions,
         "recommended_actions": recommended_actions,
+        "clause_types": sorted(clause_types_seen),
     }
 
 

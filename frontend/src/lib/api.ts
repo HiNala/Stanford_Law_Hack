@@ -133,9 +133,13 @@ export const searchApi = {
     api.post("/search/", { query, contract_id: contractId, top_k: topK }),
 };
 
-// Portfolio stats
+// Portfolio stats & analytics
 export const statsApi = {
   get: () => api.get("/stats/"),
+  patterns: (contractIds?: string[]) =>
+    api.get("/stats/patterns", {
+      params: contractIds?.length ? { contract_ids: contractIds.join(",") } : {},
+    }),
 };
 
 export default api;

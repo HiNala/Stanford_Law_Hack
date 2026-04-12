@@ -1,0 +1,97 @@
+EXECUTIVE EMPLOYMENT AGREEMENT
+
+This Executive Employment Agreement ("Agreement") is entered into as of March 15, 2026 ("Effective Date"), by and between Pinnacle Dynamics, Inc., a Delaware corporation with its principal offices at 200 Innovation Drive, Austin, Texas 78701 ("Company"), and Jordan M. Whitfield ("Executive").
+
+RECITALS
+
+WHEREAS, the Company desires to employ Executive as its Vice President of Engineering, and Executive desires to accept such employment, subject to the terms and conditions set forth herein;
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:
+
+ARTICLE 1 — POSITION AND DUTIES
+
+1.1 Position. The Company hereby employs Executive as Vice President of Engineering, reporting directly to the Chief Technology Officer. Executive shall perform such duties and responsibilities as are customarily associated with such position and as may be reasonably assigned by the Company from time to time.
+
+1.2 Full-Time Employment. Executive shall devote substantially all of Executive's business time, attention, skill, and efforts to the faithful performance of Executive's duties hereunder. Executive shall not engage in any other business activity, whether or not for profit, without the prior written consent of the Company, except for passive personal investments and charitable activities that do not interfere with Executive's duties.
+
+ARTICLE 2 — COMPENSATION AND BENEFITS
+
+2.1 Base Salary. The Company shall pay Executive an annual base salary of Two Hundred Forty Thousand Dollars ($240,000), payable in accordance with the Company's standard payroll practices, less applicable withholdings. The Board of Directors shall review Executive's base salary annually and may increase (but not decrease) such salary in its discretion.
+
+2.2 Annual Bonus. Executive shall be eligible for an annual performance bonus of up to forty percent (40%) of Base Salary, based on achievement of performance objectives established by the Board in its sole discretion. Bonus payments, if any, shall be made no later than March 15 of the calendar year following the performance year.
+
+2.3 Equity Grant. Subject to approval by the Board, Executive shall receive an initial equity grant of 50,000 stock options vesting over four (4) years with a one-year cliff, pursuant to the terms of the Company's 2025 Equity Incentive Plan and a separate Stock Option Agreement.
+
+2.4 Benefits. Executive shall be eligible to participate in all benefit plans generally available to senior executives, including health insurance, dental, vision, 401(k) with company match, and paid time off in accordance with Company policy.
+
+ARTICLE 3 — TERM AND TERMINATION
+
+3.1 At-Will Employment. Executive's employment is at-will. Either party may terminate this Agreement at any time, with or without Cause, upon thirty (30) days' written notice to the other party.
+
+3.2 Termination by Company for Cause. The Company may terminate Executive's employment immediately for Cause. "Cause" means: (a) material breach of this Agreement; (b) conviction of, or plea of guilty or no contest to, a felony; (c) gross negligence or willful misconduct in the performance of duties; (d) fraud, embezzlement, or material dishonesty; or (e) continued failure to perform duties after written notice and a 15-day cure period.
+
+3.3 Termination Without Cause or for Good Reason. If the Company terminates Executive without Cause, or if Executive resigns for Good Reason (as defined below), and subject to Executive's execution of a general release of claims, the Company shall provide: (a) twelve (12) months of continued base salary; (b) a pro-rated annual bonus for the year of termination; (c) twelve (12) months of COBRA premium payments; and (d) acceleration of six (6) months of unvested equity awards.
+
+3.4 Good Reason. "Good Reason" means: (a) a material diminution in Executive's title, authority, or responsibilities; (b) a reduction in base salary of more than 10%; (c) a relocation of Executive's principal workplace by more than 50 miles; or (d) a material breach of this Agreement by the Company; in each case that remains uncured 30 days after written notice from Executive.
+
+3.5 Change of Control. In the event of a Change of Control (defined as the acquisition of more than 50% of the Company's outstanding voting securities by a third party, or the sale of all or substantially all of the Company's assets), and if Executive's employment is terminated without Cause or Executive resigns for Good Reason within twelve (12) months following the Change of Control, then in addition to the severance benefits in Section 3.3, one hundred percent (100%) of Executive's unvested equity awards shall immediately vest.
+
+ARTICLE 4 — CONFIDENTIAL INFORMATION
+
+4.1 Confidential Information. Executive acknowledges that during employment, Executive will have access to and become acquainted with Confidential Information. "Confidential Information" means any and all non-public information relating to the Company's business, including but not limited to: trade secrets, source code, algorithms, customer lists, pricing, financial data, business plans, product roadmaps, and technical documentation.
+
+4.2 Non-Disclosure. Executive shall not, during or after employment, disclose any Confidential Information to any person or entity, or use any Confidential Information for any purpose other than the performance of Executive's duties, without the prior written consent of the Company. This obligation shall survive termination of employment indefinitely with respect to trade secrets and for a period of three (3) years with respect to other Confidential Information.
+
+4.3 Return of Materials. Upon termination of employment for any reason, Executive shall immediately return to the Company all documents, materials, equipment, and property containing or relating to Confidential Information.
+
+ARTICLE 5 — INTELLECTUAL PROPERTY
+
+5.1 Work Product Assignment. Executive agrees that all inventions, discoveries, improvements, works of authorship, software, designs, and other intellectual property conceived, created, or reduced to practice by Executive during the term of employment, whether or not during working hours, that relate to the Company's current or planned business activities ("Work Product") shall be the sole and exclusive property of the Company. Executive hereby irrevocably assigns to the Company all right, title, and interest in and to all Work Product.
+
+5.2 Prior Inventions. Executive has listed on Exhibit A all inventions, if any, that Executive owns or has an interest in as of the Effective Date ("Prior Inventions"). Executive shall not incorporate any Prior Invention into any Work Product without the Company's prior written consent, and if so incorporated, Executive hereby grants the Company a perpetual, royalty-free, worldwide license to use such Prior Invention as part of or in connection with the Work Product.
+
+5.3 Cooperation. Executive agrees to cooperate with the Company in obtaining and enforcing intellectual property rights in the Work Product, including executing any necessary documents, at the Company's expense.
+
+ARTICLE 6 — RESTRICTIVE COVENANTS
+
+6.1 Non-Competition. During Executive's employment and for a period of twelve (12) months following the termination of employment for any reason, Executive shall not, directly or indirectly, engage in, be employed by, consult for, or have any ownership interest in any business that competes with the Company's business within the State of Texas. For purposes of this Section, "competes" means any business engaged in the development, marketing, or sale of enterprise software for supply chain optimization or industrial automation.
+
+6.2 Non-Solicitation of Employees. During Executive's employment and for a period of eighteen (18) months following termination, Executive shall not, directly or indirectly, solicit, recruit, or induce any employee of the Company to leave the Company's employment or to accept employment with any competitor.
+
+6.3 Non-Solicitation of Customers. During Executive's employment and for a period of twelve (12) months following termination, Executive shall not, directly or indirectly, solicit or attempt to solicit any customer or prospective customer of the Company with whom Executive had material contact during the last twelve (12) months of employment for the purpose of providing competing products or services.
+
+6.4 Reasonableness. Executive acknowledges that the restrictions in this Article 6 are reasonable in scope, duration, and geographic area and are necessary to protect the Company's legitimate business interests, including its Confidential Information, goodwill, and customer relationships.
+
+ARTICLE 7 — GENERAL PROVISIONS
+
+7.1 Governing Law. This Agreement shall be governed by and construed in accordance with the laws of the State of Texas, without regard to its conflict of law provisions.
+
+7.2 Dispute Resolution. Any dispute arising out of or relating to this Agreement shall be resolved by binding arbitration in Austin, Texas, administered by the American Arbitration Association under its Employment Arbitration Rules. The arbitrator shall have the authority to award any remedy that would be available in court. Each party shall bear its own attorneys' fees unless the arbitrator determines that one party's claims were frivolous.
+
+7.3 Entire Agreement. This Agreement constitutes the entire agreement between the parties and supersedes all prior agreements, understandings, and representations, whether written or oral.
+
+7.4 Amendment. This Agreement may not be amended or modified except by a written instrument signed by both parties.
+
+7.5 Severability. If any provision of this Agreement is held to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.
+
+7.6 Notices. All notices under this Agreement shall be in writing and shall be deemed given when delivered personally, sent by overnight courier, or sent by certified mail, return receipt requested, to the addresses set forth above or to such other address as either party may designate in writing.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+PINNACLE DYNAMICS, INC.
+
+By: ___________________________
+Name: Sarah Chen
+Title: Chief Technology Officer
+Date: March 15, 2026
+
+EXECUTIVE
+
+___________________________
+Jordan M. Whitfield
+Date: March 15, 2026
+
+
+EXHIBIT A — PRIOR INVENTIONS
+
+None.

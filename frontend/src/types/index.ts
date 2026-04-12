@@ -59,6 +59,12 @@ export interface Clause {
   suggestion: string | null;
   start_char: number | null;
   end_char: number | null;
+  metadata_: {
+    confidence?: number;
+    market_comparison?: string | null;
+    impact_if_triggered?: string | null;
+    clause_type_detail?: string | null;
+  } | null;
   created_at: string;
 }
 

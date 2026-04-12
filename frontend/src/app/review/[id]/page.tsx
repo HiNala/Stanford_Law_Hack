@@ -827,12 +827,21 @@ function ClauseDetail({
           <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
             {formatRiskPercent(clause.risk_score)} risk score
               </span>
+              {clause.metadata_?.confidence != null && (
+            <span
+              className="rounded-lg px-2 py-0.5 text-xs"
+              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
+              title="AI confidence in this assessment"
+            >
+                  {Math.round(clause.metadata_.confidence * 100)}% confidence
+                </span>
+              )}
               {clause.clause_type && (
             <span
               className="ml-auto rounded-lg px-2 py-0.5 text-xs"
               style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
             >
-                  {clause.clause_type}
+                  {clause.clause_type.replace(/_/g, " ")}
                 </span>
               )}
             </div>
@@ -960,7 +969,7 @@ function ClauseList({
                 {c.risk_level}
               </span>
               <span className="text-xs ml-auto" style={{ color: "var(--text-tertiary)" }}>
-                {c.clause_type}
+                {c.clause_type?.replace(/_/g, " ")}
               </span>
               {onClauseClick && (
                 <ChevronRight className="h-3 w-3 shrink-0" style={{ color: "var(--text-tertiary)" }} />

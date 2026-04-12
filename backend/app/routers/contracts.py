@@ -206,7 +206,7 @@ async def delete_contract(
             logger.warning(f"Could not delete file: {contract.file_path}")
 
     await db.delete(contract)
-    await db.flush()
+    await db.commit()
     return {"detail": "Contract deleted successfully"}
 
 

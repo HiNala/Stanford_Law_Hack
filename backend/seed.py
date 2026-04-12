@@ -67,17 +67,19 @@ async def seed():  # noqa: C901
         NDA_TITLE = "Mutual Non-Disclosure Agreement — Acme Technologies"
         SAAS_TITLE = "Master SaaS Agreement — TechCo LLC"
         MSA_TITLE = "Vendor Master Services Agreement — GlobalSupply Partners"
+        EMP_TITLE = "Executive Employment Agreement — Pinnacle Dynamics"
 
         need_nda = NDA_TITLE not in existing_titles
         need_saas = SAAS_TITLE not in existing_titles
         need_msa = MSA_TITLE not in existing_titles
+        need_emp = EMP_TITLE not in existing_titles
 
-        if not need_nda and not need_saas and not need_msa:
-            print("• All 3 demo contracts already seeded. Skipping.")
+        if not need_nda and not need_saas and not need_msa and not need_emp:
+            print("• All 4 demo contracts already seeded. Skipping.")
             await db.commit()
             return
 
-        missing = [t for t, v in [(NDA_TITLE, need_nda), (SAAS_TITLE, need_saas), (MSA_TITLE, need_msa)] if v]
+        missing = [t for t, v in [(NDA_TITLE, need_nda), (SAAS_TITLE, need_saas), (MSA_TITLE, need_msa), (EMP_TITLE, need_emp)] if v]
         print(f"• Adding {len(missing)} missing contract(s): {', '.join(missing)}")
 
         # ── Contract 1: Mutual NDA ─────────────────────────────────────────────
@@ -267,6 +269,15 @@ async def seed():  # noqa: C901
             },
         ]
 
+        def _enrich(clauses_list):
+            """Add metadata_ with confidence score to each clause dict."""
+            for c in clauses_list:
+                score = c.get("risk_score", 0.5)
+                # Higher-risk clauses with clear language get higher confidence
+                conf = 0.92 if score >= 0.7 else 0.88 if score >= 0.4 else 0.95
+                c["metadata_"] = {"confidence": conf}
+
+        _enrich(nda_clauses)
         if need_nda:
             for c in nda_clauses:
                 db.add(Clause(contract_id=nda.id, **c))
@@ -491,6 +502,7 @@ async def seed():  # noqa: C901
             },
         ]
 
+        _enrich(saas_clauses)
         if need_saas:
             for c in saas_clauses:
                 db.add(Clause(contract_id=saas.id, **c))
@@ -754,13 +766,207 @@ async def seed():  # noqa: C901
             },
         ]
 
+        _enrich(msa_clauses)
         if need_msa:
             for c in msa_clauses:
                 db.add(Clause(contract_id=msa.id, **c))
 
+        # ── Contract 4: Executive Employment Agreement — LOW risk (green contrast) ──
+        emp = Contract(
+            user_id=user.id,
+            filename="demo_employment_pinnacle.txt",
+            original_filename="Executive Employment Agreement — Pinnacle Dynamics.txt",
+            file_path="/app/uploads/demo_employment_pinnacle.txt",
+            file_type="txt",
+            file_size_bytes=9200,
+            title="Executive Employment Agreement — Pinnacle Dynamics",
+            parties={"names": ["Pinnacle Dynamics, Inc.", "Jordan M. Whitfield"]},
+            effective_date=date(2026, 3, 15),
+            expiration_date=None,
+            governing_law="Texas",
+            contract_type="Employment",
+            overall_risk_score=0.32,
+            risk_level="low",
+            status="analyzed",
+            summary=(
+                "This Executive Employment Agreement is generally well-structured and largely "
+                "market-standard for a VP-level hire at a growth-stage technology company. "
+                "Severance protections (12 months base + pro-rated bonus + COBRA) are within "
+                "normal range. The change-of-control double-trigger acceleration is favorable "
+                "to Executive. Two provisions warrant review but are not deal-blockers: the "
+                "non-compete in Section 6.1 is narrowly scoped to Texas and 12 months, which "
+                "is enforceable under the Texas Business & Commerce Code; however, the IP "
+                "assignment in Section 5.1 includes work created \"whether or not during "
+                "working hours,\" which could sweep in personal side projects. Recommend "
+                "adding a carve-out for unrelated personal inventions."
+            ),
+        )
+        if need_emp:
+            db.add(emp)
+            await db.flush()
+
+        emp_clauses = [
+            {
+                "clause_index": 0,
+                "section_heading": "Section 3.3 — Severance",
+                "clause_text": (
+                    "If the Company terminates Executive without Cause, or if Executive resigns "
+                    "for Good Reason, and subject to Executive's execution of a general release "
+                    "of claims, the Company shall provide: (a) twelve (12) months of continued "
+                    "base salary; (b) a pro-rated annual bonus for the year of termination; "
+                    "(c) twelve (12) months of COBRA premium payments; and (d) acceleration of "
+                    "six (6) months of unvested equity awards."
+                ),
+                "clause_type": "termination_convenience",
+                "risk_score": 0.15,
+                "risk_level": "low",
+                "risk_category": "termination",
+                "explanation": (
+                    "Standard severance package for a VP-level executive. The 12-month base "
+                    "salary continuation, pro-rated bonus, COBRA coverage, and partial equity "
+                    "acceleration are all within market norms for Series B+ technology companies.\n\n"
+                    "**Market context:** Market standard for VP-level severance is 6-12 months "
+                    "of base salary. The 12-month package here is at the upper end of the range, "
+                    "which is favorable to Executive. The release of claims requirement is "
+                    "standard and expected."
+                ),
+                "suggestion": None,
+            },
+            {
+                "clause_index": 1,
+                "section_heading": "Section 3.5 — Change of Control",
+                "clause_text": (
+                    "In the event of a Change of Control, and if Executive's employment is "
+                    "terminated without Cause or Executive resigns for Good Reason within twelve "
+                    "(12) months following the Change of Control, then in addition to the "
+                    "severance benefits in Section 3.3, one hundred percent (100%) of "
+                    "Executive's unvested equity awards shall immediately vest."
+                ),
+                "clause_type": "change_of_control",
+                "risk_score": 0.20,
+                "risk_level": "low",
+                "risk_category": "change_of_control",
+                "explanation": (
+                    "Double-trigger change-of-control protection: both a CIC event AND a "
+                    "qualifying termination within 12 months are required to trigger "
+                    "acceleration. This is the market-standard structure and avoids the "
+                    "golden-parachute issues of single-trigger acceleration.\n\n"
+                    "**Market context:** Double-trigger CIC acceleration is the norm for "
+                    "executive agreements at venture-backed companies. The 12-month window "
+                    "is standard. This clause is well-drafted and protective without being "
+                    "excessive."
+                ),
+                "suggestion": None,
+            },
+            {
+                "clause_index": 2,
+                "section_heading": "Section 5.1 — IP Assignment",
+                "clause_text": (
+                    "Executive agrees that all inventions, discoveries, improvements, works of "
+                    "authorship, software, designs, and other intellectual property conceived, "
+                    "created, or reduced to practice by Executive during the term of employment, "
+                    "whether or not during working hours, that relate to the Company's current "
+                    "or planned business activities shall be the sole and exclusive property of "
+                    "the Company. Executive hereby irrevocably assigns to the Company all right, "
+                    "title, and interest in and to all Work Product."
+                ),
+                "clause_type": "ip_ownership",
+                "risk_score": 0.55,
+                "risk_level": "medium",
+                "risk_category": "ip_assignment",
+                "explanation": (
+                    "The IP assignment scope is broad — it covers work created \"whether or not "
+                    "during working hours\" as long as it relates to the Company's \"current or "
+                    "planned\" business activities. The \"planned\" qualifier is expansive and "
+                    "could sweep in personal side projects if the Company later claims the "
+                    "project area was on its roadmap.\n\n"
+                    "**Market context:** Standard employment IP assignments in tech cover work "
+                    "created \"in the scope of employment\" or \"using company resources.\" The "
+                    "\"whether or not during working hours\" extension is common in California "
+                    "and Texas but should be paired with a clear carve-out for unrelated "
+                    "personal inventions.\n\n"
+                    "**If triggered:** Executive could lose ownership of a personal project if "
+                    "the Company argues it relates to any \"planned\" business activity, even "
+                    "if the project was developed entirely on personal time."
+                ),
+                "suggestion": (
+                    "Add a carve-out: \"Notwithstanding the foregoing, Work Product shall not "
+                    "include any invention that (a) was developed entirely on Executive's own "
+                    "time, (b) without use of any Company resources, and (c) does not relate "
+                    "to the Company's current (not planned) business activities or reasonably "
+                    "anticipated research.\" This aligns with California Labor Code §2870 and "
+                    "Texas common law on employee inventions."
+                ),
+            },
+            {
+                "clause_index": 3,
+                "section_heading": "Section 6.1 — Non-Compete",
+                "clause_text": (
+                    "During Executive's employment and for a period of twelve (12) months "
+                    "following the termination of employment for any reason, Executive shall "
+                    "not, directly or indirectly, engage in, be employed by, consult for, or "
+                    "have any ownership interest in any business that competes with the "
+                    "Company's business within the State of Texas."
+                ),
+                "clause_type": "non_compete",
+                "risk_score": 0.42,
+                "risk_level": "medium",
+                "risk_category": "non_compete",
+                "explanation": (
+                    "This non-compete is narrowly drafted: 12-month duration, limited to Texas, "
+                    "and scoped to a specific industry (supply chain optimization/industrial "
+                    "automation). Under the Texas Business & Commerce Code §15.50, non-competes "
+                    "are enforceable if ancillary to an otherwise enforceable agreement and "
+                    "reasonable in scope.\n\n"
+                    "**Market context:** 12 months and a single-state restriction is at the "
+                    "low end of executive non-competes, which typically run 12-24 months. "
+                    "The narrow industry definition is favorable to Executive — it does not "
+                    "prevent working in general technology roles.\n\n"
+                    "**If triggered:** Executive would be restricted from working in supply "
+                    "chain optimization or industrial automation companies in Texas for 12 "
+                    "months post-departure. This is enforceable given the narrow scope."
+                ),
+                "suggestion": (
+                    "Consider adding: \"The non-competition restriction shall not apply if "
+                    "Executive's employment is terminated by the Company without Cause.\" This "
+                    "is increasingly standard in executive agreements and prevents the Company "
+                    "from firing Executive and simultaneously restricting future employment."
+                ),
+            },
+            {
+                "clause_index": 4,
+                "section_heading": "Section 6.2 — Non-Solicitation",
+                "clause_text": (
+                    "During Executive's employment and for a period of eighteen (18) months "
+                    "following termination, Executive shall not, directly or indirectly, "
+                    "solicit, recruit, or induce any employee of the Company to leave the "
+                    "Company's employment or to accept employment with any competitor."
+                ),
+                "clause_type": "non_solicitation",
+                "risk_score": 0.30,
+                "risk_level": "low",
+                "risk_category": "non_solicitation",
+                "explanation": (
+                    "Standard employee non-solicitation provision. The 18-month duration is "
+                    "slightly above the 12-month norm but generally enforceable. The restriction "
+                    "is limited to active solicitation — it does not prevent employees from "
+                    "voluntarily applying to Executive's new employer.\n\n"
+                    "**Market context:** 12-18 months is standard for executive non-solicitation. "
+                    "This clause does not include a customer non-solicitation (handled separately "
+                    "in Section 6.3), which is appropriate separation."
+                ),
+                "suggestion": None,
+            },
+        ]
+
+        _enrich(emp_clauses)
+        if need_emp:
+            for c in emp_clauses:
+                db.add(Clause(contract_id=emp.id, **c))
+
         await db.commit()
-        total_clauses = len(nda_clauses) + len(saas_clauses) + len(msa_clauses)
-        print(f"✓ Seeded 3 demo contracts with {total_clauses} pre-analyzed clauses.")
+        total_clauses = len(nda_clauses) + len(saas_clauses) + len(msa_clauses) + len(emp_clauses)
+        print(f"✓ Seeded 4 demo contracts with {total_clauses} pre-analyzed clauses.")
         print(f"\nDemo credentials:")
         print(f"  Email:    {DEMO_EMAIL}")
         print(f"  Password: {DEMO_PASSWORD}")

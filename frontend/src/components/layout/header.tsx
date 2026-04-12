@@ -58,7 +58,9 @@ export default function Header() {
 
       <div className="ml-auto flex items-center gap-3">
         {user && (
-          <span className="text-xs text-(--text-tertiary)">{user.email}</span>
+          <span className="text-xs text-(--text-tertiary)">
+            {user.full_name || user.email}
+          </span>
         )}
         <button
           onClick={handleLogout}

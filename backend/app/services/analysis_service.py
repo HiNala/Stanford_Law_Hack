@@ -139,6 +139,14 @@ async def analyze_all_clauses(
 
         clause.explanation = "\n\n".join(p for p in rich_parts if p)
         clause.suggestion = analysis.get("suggestion")
+
+        # Store confidence and enriched analysis metadata in JSONB
+        clause.metadata_ = {
+            "confidence": analysis.get("confidence", 0.5),
+            "market_comparison": market or None,
+            "impact_if_triggered": impact or None,
+            "clause_type_detail": analysis.get("clause_type_detail"),
+        }
         analyzed += 1
 
     await db.flush()

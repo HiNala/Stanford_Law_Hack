@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield } from "lucide-react";
+import { Shield, Flame, MessageSquare, Search } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import Button from "@/components/ui/button";
@@ -132,6 +132,27 @@ export default function LoginPage() {
             <p className="mt-2 text-center text-xs" style={{ color: "var(--text-tertiary)" }}>
               Instant access · no sign-up needed
             </p>
+            {/* Feature chips */}
+            <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+              {[
+                { icon: <Flame className="h-3 w-3" />, label: "Risk Heatmaps" },
+                { icon: <MessageSquare className="h-3 w-3" />, label: "AI Clause Chat" },
+                { icon: <Search className="h-3 w-3" />, label: "Semantic Search" },
+              ].map(({ icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border"
+                  style={{
+                    background: "var(--bg-tertiary)",
+                    borderColor: "var(--border-primary)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {icon}
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Divider */}
