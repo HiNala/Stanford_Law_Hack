@@ -531,31 +531,30 @@ function ClauseBlock({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        "relative cursor-pointer rounded-lg border-l-[3px] px-3 py-2.5 text-sm leading-relaxed transition-all duration-300",
+        "relative cursor-pointer rounded-md px-3 py-2.5 text-sm leading-relaxed transition-all duration-300",
         isSelected ? "ring-1" : ""
       )}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateX(0)" : "translateX(-4px)",
         transition: "opacity 0.3s ease, transform 0.3s ease, background 0.3s, box-shadow 0.3s",
-        borderLeftColor: visible ? borderColor : "transparent",
         background: visible
           ? isSelected
-            ? `${borderColor}22`
+            ? `${borderColor}1a`
             : isChatContext
-            ? `${borderColor}18`
+            ? `${borderColor}12`
             : hovered
-            ? `${borderColor}14`
-            : `${borderColor}0a`
+            ? `${borderColor}0f`
+            : `${borderColor}07`
           : "transparent",
         animation: pulse
           ? `risk-pulse-${riskLevel === "critical" ? "critical" : riskLevel === "high" ? "high" : "medium"} 700ms ease-out`
           : "none",
         boxShadow: isSelected
-          ? `0 0 0 1px ${borderColor}50`
+          ? `inset 0 0 0 1px ${borderColor}40`
           : isChatContext
-          ? `0 0 0 1px #3B82F660, inset 0 0 0 1px #3B82F620`
-          : "none",
+          ? `inset 0 0 0 1px #3B82F640`
+          : `inset 0 0 0 1px ${borderColor}18`,
         outline: isChatContext ? "none" : undefined,
       }}
     >

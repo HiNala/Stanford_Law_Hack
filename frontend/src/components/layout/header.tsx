@@ -27,15 +27,7 @@ export default function Header() {
     >
       <Link href="/dashboard" className="flex items-center gap-2 mr-8">
         <Shield className="h-5 w-5" style={{ color: "var(--accent-primary)" }} />
-        <span
-          className="font-semibold"
-          style={{
-            background: "linear-gradient(90deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
-        >
+        <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
           ClauseGuard
         </span>
       </Link>

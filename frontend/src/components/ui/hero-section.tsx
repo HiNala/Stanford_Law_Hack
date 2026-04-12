@@ -42,15 +42,8 @@ export default function HeroSection() {
       className="relative w-full overflow-hidden"
       style={{ background: "var(--bg-primary)" }}
     >
-      {/* Ambient glow blobs */}
-      <div
-        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[700px] rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(ellipse, #3B82F6 0%, transparent 70%)" }}
-      />
-      <div
-        className="pointer-events-none absolute top-80 -right-32 h-[350px] w-[350px] rounded-full opacity-10 blur-3xl"
-        style={{ background: "radial-gradient(ellipse, #8B5CF6 0%, transparent 70%)" }}
-      />
+      {/* Subtle top border highlight only — no glow blobs */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-px" style={{ background: "var(--border-primary)" }} />
 
       {/* ── Navbar ── */}
       <nav
@@ -65,15 +58,7 @@ export default function HeroSection() {
           >
             <Shield className="h-4 w-4 text-white" />
           </div>
-          <span
-            className="text-lg font-bold"
-            style={{
-              background: "linear-gradient(90deg, var(--text-primary) 0%, var(--accent-primary) 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
+          <span className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
             ClauseGuard
           </span>
         </Link>
@@ -113,7 +98,7 @@ export default function HeroSection() {
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-85"
             style={{ background: "var(--accent-primary)" }}
           >
             Try for Free
@@ -168,7 +153,7 @@ export default function HeroSection() {
       )}
 
       {/* ── Hero body ── */}
-      <div className="relative z-10 flex flex-col items-center px-6 pt-24 pb-32 text-center">
+      <div className="relative z-10 flex flex-col items-start px-6 pt-24 pb-32 md:px-12 lg:px-20 max-w-6xl mx-auto">
         {/* Announcement pill */}
         <a
           href="#features"
@@ -187,19 +172,9 @@ export default function HeroSection() {
         </a>
 
         {/* Headline */}
-        <h1 className="max-w-4xl text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-          <span style={{ color: "var(--text-primary)" }}>See risk before</span>
-          <br />
-          <span
-            style={{
-              background: "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            it sees you.
-          </span>
+        <h1 className="font-display max-w-4xl text-5xl leading-tight md:text-7xl" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+          See risk before<br />
+          <em style={{ color: "var(--accent-primary)", fontStyle: "italic" }}>it sees you.</em>
         </h1>
 
         {/* Sub-headline */}
@@ -211,21 +186,18 @@ export default function HeroSection() {
         </p>
 
         {/* CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center gap-4">
+        <div className="mt-10 flex flex-col sm:flex-row items-start gap-4">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
-            style={{
-              background: "linear-gradient(135deg, var(--accent-primary) 0%, #6366F1 100%)",
-              boxShadow: "0 0 30px rgba(59,130,246,0.35)",
-            }}
+            className="inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-85"
+            style={{ background: "var(--accent-primary)" }}
           >
             <Shield className="h-4 w-4" />
             Analyze a Contract Free
           </Link>
           <a
             href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-full border px-8 py-3.5 text-base font-medium transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border px-7 py-3.5 text-base font-medium transition-colors"
             style={{
               borderColor: "var(--border-secondary)",
               color: "var(--text-secondary)",
@@ -240,12 +212,11 @@ export default function HeroSection() {
             }}
           >
             See how it works
-            <span>↓</span>
           </a>
         </div>
 
         {/* Trust bar */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
+        <div className="mt-12 flex flex-wrap items-center gap-6">
           {[
             "No credit card required",
             "PDF, DOCX, TXT supported",
