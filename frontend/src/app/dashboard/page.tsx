@@ -479,13 +479,20 @@ export default function DashboardPage() {
   );
 }
 
-function ContractCard({ contract, cardIndex: _cardIndex, onClick, onDelete }: { contract: Contract; cardIndex: number; onClick: () => void; onDelete: () => void }) {
+function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Contract; cardIndex: number; onClick: () => void; onDelete: () => void }) {
   const riskScore = contract.overall_risk_score ?? 0;
   const riskPct = Math.round(riskScore * 100);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const parties = contract.parties
     ? ((contract.parties as { names?: string[] }).names ?? [])
     : [];
+
+  // Staggered entrance animation
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), cardIndex * 60);
+    return () => clearTimeout(t);
+  }, [cardIndex]);
 
   // Auto-cancel confirm state after 3s if user doesn't act
   useEffect(() => {
@@ -508,7 +515,9 @@ function ContractCard({ contract, cardIndex: _cardIndex, onClick, onDelete }: { 
         borderColor: contract.status === "analyzed" && contract.risk_level
           ? `${riskColor}35`
           : contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
-        transition: "border-color 0.15s, box-shadow 0.15s",
+        transition: "border-color 0.15s, box-shadow 0.15s, opacity 0.4s ease, transform 0.4s ease",
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? "translateY(0)" : "translateY(10px)",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -602,29 +611,38 @@ function ContractCard({ contract, cardIndex: _cardIndex, onClick, onDelete }: { 
         {contract.status === "analyzed" && contract.risk_level ? (
           <div className="mt-auto pt-4">
             <div className="flex items-end justify-between mb-2">
-              <div>
-                <span
-                  className="text-3xl font-black tabular-nums leading-none"
-                  style={{ color: riskColor }}
-                >
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-black tabular-nums leading-none" style={{ color: riskColor }}>
                   {riskPct}
                 </span>
-                <span className="text-sm font-medium ml-0.5" style={{ color: riskColor, opacity: 0.7 }}>%</span>
+                <span className="text-sm font-medium" style={{ color: riskColor, opacity: 0.7 }}>%</span>
               </div>
-              <span
-                className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                style={{ color: riskColor, background: `${riskColor}15` }}
-              >
-                {contract.risk_level}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span
+                  className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-md"
+                  style={{ color: riskColor, background: `${riskColor}15` }}
+                >
+                  {contract.risk_level}
+                </span>
+                {contract.risk_distribution && (
+                  <span className="text-[9px]" style={{ color: "var(--text-tertiary)" }}>
+                    {contract.risk_distribution.critical > 0 && (
+                      <span style={{ color: "#EF4444" }}>{contract.risk_distribution.critical}c </span>
+                    )}
+                    {contract.risk_distribution.high > 0 && (
+                      <span style={{ color: "#F97316" }}>{contract.risk_distribution.high}h </span>
+                    )}
+                    {contract.risk_distribution.medium > 0 && (
+                      <span style={{ color: "#EAB308" }}>{contract.risk_distribution.medium}m</span>
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
               <div
                 className="h-full rounded-full"
-                style={{
-                  width: `${riskPct}%`,
-                  background: `linear-gradient(90deg, ${riskColor}90, ${riskColor})`,
-                }}
+                style={{ width: `${riskPct}%`, background: `linear-gradient(90deg, ${riskColor}90, ${riskColor})` }}
               />
             </div>
           </div>

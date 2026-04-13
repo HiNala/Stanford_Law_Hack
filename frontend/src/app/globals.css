@@ -268,6 +268,20 @@ html, body {
 /* ─── Smooth scroll for panels ─── */
 .scroll-smooth { scroll-behavior: smooth; }
 
+/* ─── Print styles for report page ─── */
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  header, .print\:hidden { display: none !important; }
+  main { padding: 0 !important; max-width: 100% !important; }
+  .cg-prose { color: #111 !important; }
+  .cg-prose h1, .cg-prose h2, .cg-prose h3 { color: #111 !important; }
+  .cg-prose p, .cg-prose li { color: #333 !important; }
+  .cg-prose h2 { border-bottom-color: #ddd !important; }
+  .cg-prose blockquote { border-left-color: #1560FC !important; color: #555 !important; }
+  a { color: #1560FC !important; }
+  @page { margin: 1.5cm 2cm; }
+}
+
 /* ─── Contract counter-loader animation ─── */
 /*
   3 × 5 grid of square pixels. Each pixel slides horizontally to reshape

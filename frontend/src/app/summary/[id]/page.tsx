@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, RefreshCw, Copy, Download, TrendingUp } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, Download, TrendingUp, Printer } from "lucide-react";
 import { contractsApi, analysisApi, clausesApi } from "@/lib/api";
 import { riskHexColor, formatRiskPercent } from "@/lib/utils";
 import type { Contract, ContractAnalysisSummary } from "@/types";
@@ -36,10 +36,12 @@ export default function SummaryPage({
       ]);
       setContract(contractRes.data);
       if (summaryRes) setSummary(summaryRes.data);
-      // Use the stored summary as the initial report if no full report has been generated yet.
-      // Seeded contracts have a pre-written executive summary in contract.summary.
-      // The Regenerate button lets users produce a full AI memo on demand.
-      if (contractRes.data.summary) setReport(contractRes.data.summary);
+      if (contractRes.data.summary) {
+        setReport(contractRes.data.summary);
+      } else {
+        // Auto-generate a full report if no summary exists yet
+        generateReport();
+      }
     } catch {
       router.push("/dashboard");
     } finally {
@@ -129,47 +131,55 @@ export default function SummaryPage({
               </p>
             </div>
           </div>
-          {report && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={downloadMarkdown}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-                style={{
-                  background: "var(--accent-primary)",
-                  color: "#fff",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLElement).style.background = "var(--accent-hover)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLElement).style.background = "var(--accent-primary)")
-                }
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download Report
-              </button>
-              <button
-                onClick={copyMarkdown}
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
-                style={{
-                  borderColor: "var(--border-secondary)",
-                  color: copied ? "var(--risk-low)" : "var(--text-secondary)",
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {copied ? "Copied!" : "Copy Markdown"}
-              </button>
-              <button
-                onClick={generateReport}
-                disabled={generating}
-                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-                style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
-                {generating ? "Generating..." : hasFullReport ? "Regenerate" : "Generate Full Report"}
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {generating && (
+              <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--accent-primary)" }}>
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                Generating…
+              </span>
+            )}
+            {report && (
+              <>
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors print:hidden"
+                  style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print / PDF
+                </button>
+                <button
+                  onClick={downloadMarkdown}
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors print:hidden"
+                  style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Markdown
+                </button>
+                <button
+                  onClick={copyMarkdown}
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors print:hidden"
+                  style={{ borderColor: "var(--border-secondary)", color: copied ? "var(--risk-low)" : "var(--text-secondary)" }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+                <button
+                  onClick={generateReport}
+                  disabled={generating}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-50 print:hidden"
+                  style={{ background: "var(--accent-primary)" }}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${generating ? "animate-spin" : ""}`} />
+                  {hasFullReport ? "Regenerate" : "Full AI Report"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -205,44 +215,78 @@ export default function SummaryPage({
           </div>
         )}
 
-        {/* Report content or CTA */}
-        {!report ? (
+        {/* Report content or generating state */}
+        {generating && !report ? (
           <div
-            className="flex flex-col items-center justify-center py-20"
-            style={{ borderTop: "1px solid var(--border-primary)", borderBottom: "1px solid var(--border-primary)" }}
+            className="flex flex-col items-center justify-center py-20 rounded-2xl border"
+            style={{ borderColor: "var(--border-primary)", background: "var(--bg-secondary)" }}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5" style={{ color: "var(--text-tertiary)" }} />
-              <h3 className="text-lg font-semibold font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-                Generate due diligence report
-              </h3>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex gap-1">
+                {[0, 150, 300].map((d) => (
+                  <span key={d} className="h-2 w-2 rounded-full animate-bounce" style={{ background: "var(--accent-primary)", animationDelay: `${d}ms` }} />
+                ))}
+              </div>
             </div>
+            <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Generating full AI report…</p>
+            <p className="text-xs text-center max-w-xs" style={{ color: "var(--text-tertiary)" }}>
+              Synthesizing all clause findings into a professional due-diligence memo.
+            </p>
+          </div>
+        ) : !report ? (
+          <div
+            className="flex flex-col items-center justify-center py-20 rounded-2xl border"
+            style={{ borderColor: "var(--border-primary)", background: "var(--bg-secondary)" }}
+          >
+            <TrendingUp className="h-8 w-8 mb-3" style={{ color: "var(--text-tertiary)" }} />
+            <h3 className="text-base font-semibold mb-2" style={{ color: "var(--text-primary)" }}>
+              Generate your due diligence report
+            </h3>
             <p className="text-sm mb-6 text-center max-w-xs" style={{ color: "var(--text-tertiary)" }}>
-              AI will synthesize all findings into a professional memo with critical findings and recommended actions.
+              AI synthesizes all findings into a professional memo with recommended negotiation language.
             </p>
             <button
               onClick={generateReport}
               disabled={generating}
-              className="rounded-lg px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               style={{ background: "var(--accent-primary)" }}
             >
-              {generating ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Generating...
-                </span>
-              ) : (
-                "Generate Report"
-              )}
+              <RefreshCw className="h-4 w-4" />
+              Generate Report
             </button>
           </div>
         ) : (
           <div
-            className="rounded-2xl border p-8 sm:p-10"
+            className="rounded-2xl border overflow-hidden print:border-none print:rounded-none print:shadow-none"
             style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
           >
-            <div className="cg-prose max-w-none">
-              <ReactMarkdown>{report}</ReactMarkdown>
+            {/* Report header — visible in print too */}
+            <div
+              className="px-8 py-5 border-b print:border-b-2 print:border-gray-200"
+              style={{ borderColor: "var(--border-primary)" }}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-tertiary)" }}>
+                    Due Diligence Report · ClauseGuard
+                  </p>
+                  <h2 className="text-base font-bold" style={{ color: "var(--text-primary)" }}>
+                    {contract?.title || contract?.original_filename}
+                  </h2>
+                </div>
+                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                  {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                </p>
+              </div>
+            </div>
+            <div className="p-8 sm:p-10">
+              <div className="cg-prose max-w-none">
+                <ReactMarkdown>{report}</ReactMarkdown>
+              </div>
+            </div>
+            <div className="px-8 py-4 border-t text-xs flex items-center justify-between" style={{ borderColor: "var(--border-primary)", color: "var(--text-tertiary)" }}>
+              <span>Generated by ClauseGuard · AI-Powered Contract Intelligence</span>
+              <span className="print:hidden">{hasFullReport ? "Full AI Report" : "Executive Summary"}</span>
             </div>
           </div>
         )}

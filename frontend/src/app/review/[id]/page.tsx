@@ -1275,87 +1275,115 @@ function ClauseDetail({
 }) {
   const { displayed: displayedExplanation, isDone } = useTypewriter(
     clause.explanation ?? "",
-    { speed: 3 }
+    { speed: 4 }
   );
 
-    return (
+  const riskColor = riskHexColor(clause.risk_level);
+  const riskPct = Math.round((clause.risk_score ?? 0) * 100);
+  const isCriticalOrHigh = clause.risk_level === "critical" || clause.risk_level === "high";
+
+  return (
     <div
       ref={(el) => { clauseRefs.current[clause.id] = el; }}
-      className="space-y-4"
+      className="space-y-3"
     >
-      {/* Risk header */}
+      {/* ── Risk header card ── */}
       <div
-        className="rounded-xl border p-4"
-        style={{
-          background: "var(--bg-secondary)",
-          borderColor: `${riskHexColor(clause.risk_level)}40`,
-        }}
+        className="rounded-2xl overflow-hidden"
+        style={{ border: `1px solid ${riskColor}35` }}
       >
-        <div className="flex items-center gap-3 mb-3">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide"
+        {/* Colored top strip */}
+        <div
+          className="h-1 w-full"
+          style={{ background: `linear-gradient(90deg, ${riskColor}, ${riskColor}40)` }}
+        />
+        <div className="p-4" style={{ background: "var(--bg-secondary)" }}>
+          {/* Type + level row */}
+          <div className="flex items-center gap-2 flex-wrap mb-3">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide"
+              style={{ color: riskColor, background: `${riskColor}12`, borderColor: `${riskColor}35` }}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ background: riskColor }} />
+              {clause.risk_level ?? "unknown"} risk
+            </span>
+            {clause.clause_type && (
+              <span
+                className="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}
+              >
+                {clause.clause_type.replace(/_/g, " ")}
+              </span>
+            )}
+            {clause.metadata_?.confidence != null && (
+              <span className="ml-auto text-xs" style={{ color: "var(--text-tertiary)" }} title="AI confidence">
+                {Math.round(clause.metadata_.confidence * 100)}% confidence
+              </span>
+            )}
+          </div>
+
+          {/* Score + animated bar */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-4xl font-black tabular-nums leading-none" style={{ color: riskColor }}>
+              {riskPct}
+              <span className="text-lg font-bold" style={{ opacity: 0.6 }}>%</span>
+            </span>
+            <div className="flex-1">
+              <div className="flex justify-between mb-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Risk Score
+                </span>
+                {isCriticalOrHigh && (
+                  <span className="text-[10px] font-bold" style={{ color: riskColor }}>
+                    {clause.risk_level === "critical" ? "⚠ Deal blocker" : "⚡ Negotiate before signing"}
+                  </span>
+                )}
+              </div>
+              <MiniRiskBar score={clause.risk_score} level={clause.risk_level} />
+            </div>
+          </div>
+
+          {/* Clause text excerpt */}
+          {clause.section_heading && (
+            <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-tertiary)" }}>
+              {clause.section_heading}
+            </p>
+          )}
+          <blockquote
+            className="border-l-2 pl-3 text-xs leading-relaxed"
             style={{
-              color: riskHexColor(clause.risk_level),
-              background: `${riskHexColor(clause.risk_level)}15`,
-              borderColor: `${riskHexColor(clause.risk_level)}40`,
+              borderColor: `${riskColor}55`,
+              color: "var(--text-tertiary)",
+              fontFamily: "Georgia, Charter, 'Times New Roman', serif",
+              lineHeight: 1.7,
             }}
           >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: riskHexColor(clause.risk_level) }}
-            />
-            {clause.risk_level ?? "unknown"}
-          </span>
-          <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
-            {formatRiskPercent(clause.risk_score)} risk score
-              </span>
-              {clause.metadata_?.confidence != null && (
-            <span
-              className="rounded-lg px-2 py-0.5 text-xs"
-              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
-              title="AI confidence in this assessment"
-            >
-                  {Math.round(clause.metadata_.confidence * 100)}% confidence
-                </span>
-              )}
-              {clause.clause_type && (
-            <span
-              className="ml-auto rounded-lg px-2 py-0.5 text-xs capitalize"
-              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
-            >
-                  {clause.clause_type.replace(/_/g, " ")}
-                </span>
-              )}
-            </div>
-        {/* Mini risk bar — visual context for the score number */}
-        <MiniRiskBar score={clause.risk_score} level={clause.risk_level} />
-        {clause.section_heading && (
-          <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-tertiary)" }}>
-            {clause.section_heading}
-          </p>
-        )}
-        {/* Clause text excerpt */}
-        <blockquote
-          className="mt-3 border-l-2 pl-3 text-xs leading-relaxed line-clamp-5"
-          style={{
-            borderColor: `${riskHexColor(clause.risk_level)}50`,
-            color: "var(--text-tertiary)",
-            fontFamily: "Georgia, Charter, 'Times New Roman', serif",
-          }}
-        >
-          {clause.clause_text}
-        </blockquote>
+            {clause.clause_text?.slice(0, 280)}{(clause.clause_text?.length ?? 0) > 280 ? "…" : ""}
+          </blockquote>
+        </div>
       </div>
 
-      {/* Explanation — typewriter with markdown */}
-            {clause.explanation && (
+      {/* ── AI Analysis — typewriter reveal ── */}
+      {clause.explanation && (
         <div
-          className="rounded-xl border p-4"
+          className="rounded-2xl border p-4"
           style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
         >
-          <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--text-tertiary)" }}>
-            Analysis
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full shrink-0" style={{ background: "var(--accent-subtle)", border: "1px solid rgba(21,96,252,0.2)" }}>
+              <Sparkles className="h-3 w-3" style={{ color: "var(--accent-primary)" }} />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>
+              AI Analysis
+            </p>
+            {!isDone && (
+              <div className="ml-auto flex items-center gap-1">
+                {[0, 100, 200].map((d) => (
+                  <span key={d} className="h-1 w-1 rounded-full animate-bounce" style={{ background: "var(--accent-primary)", animationDelay: `${d}ms` }} />
+                ))}
+              </div>
+            )}
+          </div>
           <div
             className={cn(
               "cg-prose text-sm",
@@ -1364,50 +1392,44 @@ function ClauseDetail({
             )}
           >
             <ReactMarkdown>{displayedExplanation}</ReactMarkdown>
-                </div>
-              </div>
-            )}
+          </div>
+        </div>
+      )}
 
-      {/* TrustFoundry legal grounding */}
+      {/* ── TrustFoundry legal grounding ── */}
       {clause.metadata_?.legal_grounding?.verified && (clause.metadata_.legal_grounding.citations?.length ?? 0) > 0 && (
         <div
-          className="rounded-xl border p-4 space-y-2.5"
-          style={{
-            background: "var(--accent-subtle)",
-            borderColor: "rgba(21,96,252,0.18)",
-          }}
+          className="rounded-2xl border p-4 space-y-3"
+          style={{ background: "rgba(21,96,252,0.05)", borderColor: "rgba(21,96,252,0.20)" }}
         >
-          <div className="flex items-center gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-              style={{
-                color: "var(--risk-low)",
-                background: "rgba(34,197,94,0.08)",
-                borderColor: "rgba(34,197,94,0.25)",
-              }}
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              Verified by TrustFoundry
-            </span>
-            <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: "rgba(21,96,252,0.15)" }}>
+                <CheckCircle2 className="h-3 w-3" style={{ color: "var(--accent-primary)" }} />
+              </div>
+              <span className="text-xs font-bold" style={{ color: "var(--accent-primary)" }}>
+                TrustFoundry Verified
+              </span>
+            </div>
+            <span className="text-[10px] rounded-full px-2 py-0.5" style={{ background: "rgba(34,197,94,0.08)", color: "var(--risk-low)" }}>
               {clause.metadata_.legal_grounding.source === "trustfoundry" ? "Live API" : "14M+ laws & cases"}
             </span>
           </div>
           {clause.metadata_.legal_grounding.citations.slice(0, 2).map((cit, i) => (
-            <div key={i} className="space-y-0.5">
-              <p className="text-xs font-semibold" style={{ color: "var(--accent-primary)" }}>
-                📜 {cit.citation}
+            <div key={i} className="rounded-xl p-3 space-y-1.5" style={{ background: "rgba(21,96,252,0.06)", border: "1px solid rgba(21,96,252,0.12)" }}>
+              <p className="text-xs font-bold" style={{ color: "var(--accent-primary)" }}>
+                {cit.citation}
               </p>
               <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-                {cit.summary.slice(0, 200)}{cit.summary.length > 200 ? "…" : ""}
+                {cit.summary.slice(0, 220)}{cit.summary.length > 220 ? "…" : ""}
               </p>
               {cit.source_url && (
                 <a
                   href={cit.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs underline"
-                  style={{ color: "var(--accent-primary)", opacity: 0.7 }}
+                  className="text-[10px] font-semibold flex items-center gap-1"
+                  style={{ color: "var(--accent-primary)" }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   View source →
@@ -1418,27 +1440,26 @@ function ClauseDetail({
         </div>
       )}
 
-      {/* Suggestion */}
+      {/* ── Suggested alternative ── */}
       {clause.suggestion && (
         <div
-          className="rounded-xl border p-4"
-          style={{
-            background: "var(--risk-low-bg)",
-            borderColor: "var(--risk-low-border)",
-          }}
+          className="rounded-2xl border p-4"
+          style={{ background: "rgba(34,197,94,0.04)", borderColor: "rgba(34,197,94,0.22)" }}
         >
-          <p className="text-xs font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5"
-            style={{ color: "var(--risk-low)" }}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Suggested Alternative
-          </p>
-          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-            {clause.suggestion}
+          <div className="flex items-center gap-2 mb-2.5">
+            <div className="flex h-5 w-5 items-center justify-center rounded-full" style={{ background: "rgba(34,197,94,0.12)" }}>
+              <Sparkles className="h-3 w-3" style={{ color: "var(--risk-low)" }} />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--risk-low)" }}>
+              Suggested Negotiation Language
+            </p>
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>
+            &ldquo;{clause.suggestion}&rdquo;
           </p>
         </div>
       )}
-      </div>
+    </div>
   );
 }
 
@@ -1805,6 +1826,7 @@ const EXAMPLE_QUESTIONS = [
 ];
 
 interface ChatMsg {
+  id: string;
   role: "user" | "assistant";
   content: string;
   streaming?: boolean;
@@ -1832,7 +1854,8 @@ function ChatPanel({
         // Backend returns { items: [...], contract_id, ... } — unwrap the array
         const raw: { role: "user" | "assistant"; content: string }[] =
           Array.isArray(res.data) ? res.data : (res.data?.items ?? res.data?.messages ?? []);
-        const history: ChatMsg[] = raw.map((m) => ({
+        const history = raw.map((m, i) => ({
+          id: `hist-${i}`,
           role: m.role,
           content: m.content,
         }));
@@ -1851,11 +1874,13 @@ function ChatPanel({
     const msg = (text ?? input).trim();
     if (!msg || streaming) return;
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: msg }]);
+    const userMsgId = `msg-${Date.now()}-u`;
+    const asstMsgId = `msg-${Date.now()}-a`;
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: msg }]);
     setStreaming(true);
 
     // Add placeholder assistant message
-    setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
+    setMessages((prev) => [...prev, { id: asstMsgId, role: "assistant", content: "", streaming: true }]);
 
     try {
       let fullContent = "";
@@ -1866,7 +1891,8 @@ function ChatPanel({
         const snapshot = fullContent;
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: "assistant", content: snapshot, streaming: true };
+          const last = updated[updated.length - 1];
+          updated[updated.length - 1] = { ...last, content: snapshot, streaming: true };
           return updated;
         });
       };
@@ -1882,7 +1908,8 @@ function ChatPanel({
           fullContent = `I encountered an error: ${event.detail}. Please try again.`;
           setMessages((prev) => {
             const updated = [...prev];
-            updated[updated.length - 1] = { role: "assistant", content: fullContent, streaming: false };
+            const last = updated[updated.length - 1];
+            updated[updated.length - 1] = { ...last, content: fullContent, streaming: false };
             return updated;
           });
           break;
@@ -1898,13 +1925,15 @@ function ChatPanel({
       // Final flush with streaming=false to remove cursor
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: fullContent, streaming: false };
+        const last = updated[updated.length - 1];
+        updated[updated.length - 1] = { ...last, content: fullContent, streaming: false };
         return updated;
       });
     } catch {
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: "I encountered an error. Please try again.", streaming: false };
+        const last = updated[updated.length - 1];
+        updated[updated.length - 1] = { ...last, content: "I encountered an error. Please try again.", streaming: false };
         return updated;
       });
     } finally {
@@ -1929,8 +1958,8 @@ function ChatPanel({
           <EmptyChat onQuestion={(q) => sendMessage(q)} />
         ) : (
           <>
-            {messages.map((msg, i) => (
-              <ChatBubble key={i} message={msg} />
+            {messages.map((msg) => (
+              <ChatBubble key={msg.id} message={msg} />
             ))}
             <div ref={bottomRef} />
           </>
