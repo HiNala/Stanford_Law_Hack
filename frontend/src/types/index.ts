@@ -93,13 +93,31 @@ export interface RiskDistribution {
   low: number;
 }
 
+export interface AnalysisFinding {
+  finding: string;
+  risk_level: string;
+  clause_id: string;
+  section: string;
+  recommendation: string | null;
+  confidence: number | null;
+}
+
 export interface ContractAnalysisSummary {
   contract_id: string;
+  title?: string;
   overall_risk_score: number | null;
   risk_level: string | null;
   risk_distribution: RiskDistribution;
-  total_clauses: number;
-  top_risks: Clause[];
+  total_clauses?: number;
+  top_risks?: Clause[];
+  // Rich analysis summary (from /analysis/{id}/summary)
+  executive_summary?: string;
+  critical_findings?: AnalysisFinding[];
+  material_findings?: AnalysisFinding[];
+  key_findings?: AnalysisFinding[];
+  missing_provisions?: string[];
+  recommended_actions?: string[];
+  clause_types?: string[];
 }
 
 export interface ChatMessage {

@@ -154,6 +154,8 @@ async def get_contract_summary(
     return {
         "contract_id": str(contract_id),
         "title": contract.title or contract.original_filename,
+        "overall_risk_score": contract.overall_risk_score or 0.0,
+        "risk_level": contract.risk_level or "low",
         "executive_summary": contract.summary or "Summary not yet generated. Use the /report endpoint to generate one.",
         "critical_findings": critical_findings,
         "material_findings": material_findings,

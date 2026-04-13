@@ -962,11 +962,9 @@ function ClauseBlock({
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateX(0)" : "translateX(-5px)",
-        transition: "opacity 0.3s ease, transform 0.3s ease",
+        transition: `opacity 0.3s ease, transform 0.3s ease${flash ? "" : ", background 0.6s ease"}`,
         borderRadius: "4px",
         background: flash ? `${riskColor}12` : "transparent",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ["--flash-transition" as any]: flash ? "none" : "background 0.5s ease",
       }}
     >
       {/* Section heading */}
