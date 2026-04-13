@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Clock, RefreshCw } from "lucide-react";
 import { contractsApi, statsApi, searchApi } from "@/lib/api";
@@ -38,19 +38,22 @@ export default function DashboardPage() {
     hydrate();
   }, [hydrate]);
 
+  // Use a ref so the interval always reads the latest contracts without being in deps
+  const contractsRef = useRef<typeof contracts>([]);
+  contractsRef.current = contracts;
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
       return;
     }
     loadAll();
-    // Poll while any contract is still in a non-terminal state
     const interval = setInterval(() => {
-      const hasPending = contracts.some(
-        (c) => c.status === "processing" || c.status === "uploaded"
+      const hasPending = contractsRef.current.some(
+        (c) => c.status === "processing" || c.status === "uploaded" || c.status === "pending"
       );
       if (hasPending) loadAll();
-    }, 5000);
+    }, 4000);
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -179,35 +182,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Acquisition scenario context — only shown when contracts are present */}
-        {contracts.length > 0 && (
+        {/* Dynamic status banner — shows only while analysis is in flight */}
+        {processingCount > 0 && (
           <div
-            className="flex items-center justify-between rounded-xl border px-5 py-3.5 mb-6"
+            className="flex items-center justify-between rounded-xl border px-5 py-3 mb-6"
             style={{
               background: "rgba(21,96,252,0.05)",
               borderColor: "rgba(21,96,252,0.18)",
             }}
           >
             <div className="flex items-center gap-3">
-              <div
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ background: "var(--accent-primary)" }}
-              />
-              <div>
-                <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                  AcquiTech Capital acquiring Meridian Holdings
-                </span>
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                  {" "}— {contracts.filter(c => c.status === "analyzed").length} of {contracts.length} contracts analyzed
-                </span>
-              </div>
+              <div className="h-2 w-2 rounded-full animate-pulse shrink-0" style={{ background: "var(--accent-primary)" }} />
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{processingCount} contract{processingCount !== 1 ? "s" : ""}</span>
+                {" "}being analyzed by AI — results appear automatically
+              </span>
             </div>
-            <span
-              className="text-xs font-semibold rounded-full px-2.5 py-1"
-              style={{ background: "rgba(239,68,68,0.1)", color: "var(--risk-critical)" }}
-            >
-              72-hour review window
-            </span>
+            <RefreshCw className="h-3.5 w-3.5 animate-spin" style={{ color: "var(--accent-primary)" }} />
           </div>
         )}
 

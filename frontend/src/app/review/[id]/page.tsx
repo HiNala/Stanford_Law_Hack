@@ -16,7 +16,12 @@ import {
   AlertTriangle,
   RefreshCw,
   Loader2,
+  Download,
+  Copy,
+  X,
+  ExternalLink,
 } from "lucide-react";
+import CounterLoader from "@/components/ui/counter-loader";
 import { Logo } from "@/components/ui/logo";
 import ReactMarkdown from "react-markdown";
 import { contractsApi, clausesApi, analysisApi, chatApi } from "@/lib/api";
@@ -49,6 +54,7 @@ export default function ReviewPage({
   const [polling, setPolling] = useState(false);
   const [heatmapReady, setHeatmapReady] = useState(false);
   const [activeTab, setActiveTab] = useState<"analysis" | "chat">("analysis");
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   // Clause IDs surfaced by the AI chat as relevant context — highlights them in the heatmap
   const [chatContextIds, setChatContextIds] = useState<Set<string>>(new Set());
   const analysisScrollRef = useRef<HTMLDivElement>(null);
@@ -252,7 +258,7 @@ export default function ReviewPage({
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onBack={() => router.push("/dashboard")}
-          onReport={() => router.push(`/summary/${id}`)}
+          onReport={() => setExportModalOpen(true)}
         />
         <div className="flex flex-1 overflow-hidden">
           {/* Document panel skeleton */}
@@ -314,8 +320,19 @@ export default function ReviewPage({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onBack={() => router.push("/dashboard")}
-        onReport={() => router.push(`/summary/${id}`)}
+        onReport={() => setExportModalOpen(true)}
       />
+      {/* ── Export modal ── */}
+      {exportModalOpen && (
+        <ExportModal
+          contractId={id}
+          contract={currentContract}
+          summary={analysisSummary}
+          clauses={clauses}
+          onClose={() => setExportModalOpen(false)}
+          onFullReport={() => { setExportModalOpen(false); router.push(`/summary/${id}`); }}
+        />
+      )}
 
       {/* ── Body ── */}
       {polling ? (
@@ -525,23 +542,7 @@ function ProcessingState({ contract }: { contract: Contract | null }) {
         style={{ background: "var(--bg-doc)", borderColor: "var(--border-primary)" }}
       >
         {/* Pixel counter grid — counts 0→9 on a 10s loop */}
-        <div className="cgproc-timer">
-          <div className="cgproc-cell cgproc-d1" />
-          <div className="cgproc-cell cgproc-d2" />
-          <div className="cgproc-cell cgproc-d3" />
-          <div className="cgproc-cell cgproc-d4" />
-          <div className="cgproc-cell cgproc-d5" />
-          <div className="cgproc-cell cgproc-d6" />
-          <div className="cgproc-cell cgproc-d7" />
-          <div className="cgproc-cell cgproc-d8" />
-          <div className="cgproc-cell cgproc-d9" />
-          <div className="cgproc-cell cgproc-d10" />
-          <div className="cgproc-cell cgproc-d11" />
-          <div className="cgproc-cell cgproc-d12" />
-          <div className="cgproc-cell cgproc-d13" />
-          <div className="cgproc-cell cgproc-d14" />
-          <div className="cgproc-cell cgproc-d15" />
-        </div>
+        <CounterLoader />
 
         {/* Label underneath the counter */}
         <div className="text-center space-y-1.5">
@@ -740,13 +741,17 @@ function DocumentPanel({
   documentClauseRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   onRetryAnalysis?: () => void;
 }) {
+  // Count risk levels for the summary bar
+  const riskCounts = useMemo(() => {
+    const c = { critical: 0, high: 0, medium: 0, low: 0 };
+    clauses.forEach((cl) => { if (cl.risk_level) c[cl.risk_level as keyof typeof c] = (c[cl.risk_level as keyof typeof c] || 0) + 1; });
+    return c;
+  }, [clauses]);
+
   if (clauses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-5" style={{ background: "var(--bg-doc)" }}>
-        <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl"
-          style={{ background: "var(--accent-subtle)", border: "1.5px solid rgba(21,96,252,0.2)" }}
-        >
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "var(--accent-subtle)", border: "1.5px solid rgba(21,96,252,0.2)" }}>
           <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--accent-primary)" }} />
         </div>
         <div>
@@ -756,11 +761,7 @@ function DocumentPanel({
           </p>
         </div>
         {onRetryAnalysis && (
-          <button
-            onClick={onRetryAnalysis}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
-            style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}
-          >
+          <button onClick={onRetryAnalysis} className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium" style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}>
             <RefreshCw className="h-3.5 w-3.5" />
             Retry
           </button>
@@ -769,64 +770,109 @@ function DocumentPanel({
     );
   }
 
+  const parties = contract?.parties && typeof contract.parties === "object"
+    ? ((contract.parties as { names?: string[] }).names ?? [])
+    : [];
+
   return (
-    <div className="min-h-full px-8 py-10" style={{ background: "var(--bg-doc)" }}>
-      {/* White paper */}
+    <div className="min-h-full" style={{ background: "var(--bg-doc)" }}>
+      {/* Sticky mini risk bar at the top of the doc panel */}
       <div
-        className="mx-auto max-w-2xl bg-white rounded-sm"
-        style={{ boxShadow: "0 4px 32px rgba(0,0,0,0.18)" }}
+        className="sticky top-0 z-10 flex items-center gap-2 px-6 py-2 text-xs border-b"
+        style={{ background: "var(--bg-doc)", borderColor: "rgba(0,0,0,0.08)" }}
       >
-        {/* Document header */}
-        <div className="px-14 pt-10 pb-6" style={{ borderBottom: "1px solid #E5E7EB" }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "#9CA3AF" }}>
-            Contract Document
-          </p>
-          <h1 className="text-lg font-bold leading-snug mb-1" style={{ fontFamily: "Georgia, serif", color: "#111" }}>
-            {contract?.title || contract?.original_filename || "Contract"}
-          </h1>
-          {contract?.effective_date && (
-            <p className="text-xs mb-3" style={{ color: "#6B7280" }}>
-              Effective: {contract.effective_date}
-            </p>
-          )}
+        <span className="font-medium mr-1 text-[10px] uppercase tracking-wider" style={{ color: "#9CA3AF" }}>Risk:</span>
+        {(["critical","high","medium","low"] as const).map((lvl) => {
+          const ct = riskCounts[lvl];
+          if (!ct) return null;
+          const colors: Record<string,string> = { critical:"#EF4444", high:"#F97316", medium:"#CA8A04", low:"#16A34A" };
+          return (
+            <span key={lvl} className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: `${colors[lvl]}18`, color: colors[lvl] }}>
+              {ct} {lvl}
+            </span>
+          );
+        })}
+        <span className="ml-auto text-[10px]" style={{ color: "#9CA3AF" }}>↑ click any highlighted clause</span>
+      </div>
 
-          {/* Risk legend */}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#9CA3AF" }}>Risk key:</span>
-            {([
-              { level: "critical", label: "Critical", color: "#EF4444", bg: "rgba(239,68,68,0.20)" },
-              { level: "high",     label: "High",     color: "#F97316", bg: "rgba(249,115,22,0.20)" },
-              { level: "medium",   label: "Medium",   color: "#CA8A04", bg: "rgba(234,179,8,0.25)" },
-              { level: "low",      label: "Low",      color: "#16A34A", bg: "rgba(34,197,94,0.12)" },
-            ] as const).map(({ level, label, color, bg }) => (
-              <span
-                key={level}
-                className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold"
-                style={{ background: bg, color }}
-              >
-                {label}
-              </span>
-            ))}
-            <span className="text-[10px]" style={{ color: "#9CA3AF" }}>· Click any highlighted text for analysis</span>
+      {/* Document paper */}
+      <div className="px-6 py-8">
+        <div className="mx-auto max-w-2xl bg-white" style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.10), 0 8px 40px rgba(0,0,0,0.12)" }}>
+
+          {/* Top margin with document metadata */}
+          <div className="px-14 pt-12 pb-8" style={{ borderBottom: "2px solid #111" }}>
+            {contract?.contract_type && (
+              <p className="text-[9px] font-bold uppercase tracking-[0.22em] mb-3" style={{ color: "#9CA3AF" }}>
+                {contract.contract_type}
+              </p>
+            )}
+            <h1 className="text-xl font-bold leading-tight mb-4" style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: "#0A0A0A", letterSpacing: "-0.01em" }}>
+              {contract?.title || contract?.original_filename || "Contract"}
+            </h1>
+            {(parties.length > 0 || contract?.effective_date || contract?.governing_law) && (
+              <div className="space-y-1.5 mb-4">
+                {parties.length > 0 && (
+                  <p className="text-xs" style={{ color: "#374151" }}>
+                    <span className="font-semibold">Parties:</span>{" "}
+                    {parties.join(" and ")}
+                  </p>
+                )}
+                {contract?.effective_date && (
+                  <p className="text-xs" style={{ color: "#374151" }}>
+                    <span className="font-semibold">Effective Date:</span>{" "}
+                    {contract.effective_date}
+                  </p>
+                )}
+                {contract?.governing_law && (
+                  <p className="text-xs" style={{ color: "#374151" }}>
+                    <span className="font-semibold">Governing Law:</span>{" "}
+                    {contract.governing_law}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* Risk legend */}
+            <div className="flex flex-wrap items-center gap-2 pt-3" style={{ borderTop: "1px solid #E5E7EB" }}>
+              <span className="text-[9px] font-bold uppercase tracking-wider mr-1" style={{ color: "#9CA3AF" }}>Highlight key:</span>
+              {([
+                { label: "Critical risk", color: "#EF4444", bg: "rgba(239,68,68,0.18)" },
+                { label: "High risk",     color: "#F97316", bg: "rgba(249,115,22,0.18)" },
+                { label: "Medium risk",   color: "#CA8A04", bg: "rgba(234,179,8,0.22)" },
+              ]).map(({ label, color, bg }) => (
+                <span key={label} className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[9px] font-semibold" style={{ background: bg, color }}>
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Clause body */}
-        <div className="px-14 py-10">
-          {clauses.map((clause, index) => (
-            <ClauseBlock
-              key={clause.id}
-              clause={clause}
-              index={index}
-              isSelected={selectedClause?.id === clause.id}
-              isChatContext={chatContextIds.has(clause.id)}
-              heatmapReady={heatmapReady}
-              onClick={() => onClauseClick(clause)}
-              registerRef={(el) => {
-                if (documentClauseRefs) documentClauseRefs.current[clause.id] = el;
-              }}
-            />
-          ))}
+          {/* Clause body */}
+          <div className="px-14 py-10">
+            {clauses.map((clause, index) => (
+              <ClauseBlock
+                key={clause.id}
+                clause={clause}
+                index={index}
+                isSelected={selectedClause?.id === clause.id}
+                isChatContext={chatContextIds.has(clause.id)}
+                heatmapReady={heatmapReady}
+                onClick={() => onClauseClick(clause)}
+                registerRef={(el) => {
+                  if (documentClauseRefs) documentClauseRefs.current[clause.id] = el;
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Document footer */}
+          <div className="px-14 py-4 flex items-center justify-between" style={{ borderTop: "1px solid #E5E7EB" }}>
+            <span className="text-[9px] uppercase tracking-wider" style={{ color: "#D1D5DB" }}>
+              Analyzed by ClauseGuard · AI-Powered Risk Review
+            </span>
+            <span className="text-[9px]" style={{ color: "#D1D5DB" }}>
+              {clauses.length} clauses reviewed
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -855,82 +901,104 @@ function ClauseBlock({
 
   useEffect(() => {
     if (heatmapReady) {
-      const timer = setTimeout(() => setVisible(true), index * 30);
+      const timer = setTimeout(() => setVisible(true), index * 25);
       return () => clearTimeout(timer);
     }
   }, [heatmapReady, index]);
 
   const riskLevel = (clause.risk_level?.toLowerCase() ?? "low") as keyof typeof HIGHLIGHT;
   const hl = HIGHLIGHT[riskLevel] ?? HIGHLIGHT.low;
-  // Low risk = no highlight (clean white), only critical/high/medium get color
   const noHighlight = riskLevel === "low" && !isSelected && !isChatContext;
   const highlightBg = noHighlight
     ? "transparent"
     : isSelected ? hl.selected : isChatContext ? hl.chat : hovered ? hl.hover : hl.idle;
   const riskColor = riskHexColor(riskLevel);
 
+  // Left-margin bar color: only visible for critical/high/medium
+  const barColor = riskLevel === "low" && !isSelected ? "transparent" : riskColor;
+
   return (
     <div
       ref={registerRef}
-      className="relative mb-1"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.35s ease" }}
+      className="relative mb-0.5"
+      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
     >
-      {/* Section heading — styled as a real document heading */}
+      {/* Section heading */}
       {clause.section_heading && (
         <h2
-          className="mt-8 mb-2 font-bold"
+          className="mt-8 mb-3 pb-1"
           style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
             fontSize: "13px",
-            color: "#1a1a1a",
-            letterSpacing: "0.01em",
-            textTransform: "none",
+            fontWeight: 700,
+            color: "#111827",
+            letterSpacing: "0.005em",
+            borderBottom: "1px solid #E5E7EB",
           }}
         >
           {clause.section_heading}
         </h2>
       )}
 
-      {/* Text paragraph — highlight is on the text itself */}
-      <div className="relative group/clause">
-        <p
-          onClick={onClick}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          className="cursor-pointer leading-[1.85]"
+      {/* Clause row: left bar + text */}
+      <div
+        className="flex group/clause cursor-pointer"
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {/* Left risk indicator bar */}
+        <div
+          className="shrink-0 w-0.5 rounded-full mr-3 self-stretch"
           style={{
-            fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: "14px",
-            color: "#111827",
-            background: highlightBg,
-            borderRadius: "2px",
-            padding: "2px 3px",
-            margin: "0 -3px",
-            transition: "background 0.18s ease",
-            outline: isSelected ? `2px solid ${riskColor}55` : "none",
-            outlineOffset: "2px",
+            background: barColor,
+            opacity: (isSelected || hovered || isChatContext) ? 1 : riskLevel === "critical" ? 0.8 : riskLevel === "high" ? 0.6 : 0.4,
+            transition: "background 0.15s, opacity 0.15s",
+            minHeight: "1.2em",
           }}
-        >
-          {clause.clause_text}
-        </p>
+        />
 
-        {/* Risk badge — floats above the paragraph when hovered/selected, doesn't disrupt text flow */}
-        {(hovered || isSelected) && riskLevel !== "low" && (
-          <div
-            className="absolute -top-7 right-0 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold pointer-events-none"
+        <div className="flex-1 relative">
+          <p
+            className="leading-[1.85] py-0.5"
             style={{
-              color: riskColor,
-              background: `${riskColor}18`,
-              borderColor: `${riskColor}50`,
-              whiteSpace: "nowrap",
-              zIndex: 20,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontSize: "13.5px",
+              color: "#111827",
+              background: highlightBg,
+              borderRadius: "2px",
+              paddingLeft: "3px",
+              paddingRight: "3px",
+              marginLeft: "-3px",
+              marginRight: "-3px",
+              transition: "background 0.15s ease",
+              outline: isSelected ? `2px solid ${riskColor}45` : "none",
+              outlineOffset: "2px",
             }}
           >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: riskColor }} />
-            {clause.risk_level?.toUpperCase()} · {formatRiskPercent(clause.risk_score)}
-          </div>
-        )}
+            {clause.clause_text}
+          </p>
+
+          {/* Floating risk badge on hover/select — right-aligned, above text */}
+          {(hovered || isSelected) && riskLevel !== "low" && (
+            <div
+              className="absolute -top-6 right-0 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold pointer-events-none"
+              style={{
+                color: riskColor,
+                background: `${riskColor}15`,
+                borderColor: `${riskColor}45`,
+                whiteSpace: "nowrap",
+                zIndex: 20,
+                boxShadow: "0 1px 6px rgba(0,0,0,0.15)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: riskColor }} />
+              {clause.risk_level?.toUpperCase()} · {formatRiskPercent(clause.risk_score)}
+              {isChatContext && " · AI context"}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1516,6 +1584,218 @@ function stripMd(text: string): string {
     .trim();
 }
 
+// ─── Export Modal ─────────────────────────────────────────────────────────────
+function ExportModal({
+  contractId,
+  contract,
+  summary,
+  clauses,
+  onClose,
+  onFullReport,
+}: {
+  contractId: string;
+  contract: Contract | null;
+  summary: ContractAnalysisSummary | null;
+  clauses: Clause[];
+  onClose: () => void;
+  onFullReport: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const buildMarkdown = () => {
+    const lines: string[] = [];
+    const title = contract?.title || contract?.original_filename || "Contract";
+    lines.push(`# Due Diligence Report: ${title}`);
+    lines.push(`**Generated:** ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`);
+    if (contract?.contract_type) lines.push(`**Type:** ${contract.contract_type}`);
+    if (contract?.governing_law) lines.push(`**Governing Law:** ${contract.governing_law}`);
+    if (contract?.effective_date) lines.push(`**Effective Date:** ${contract.effective_date}`);
+    lines.push("");
+    if (summary) {
+      const pct = Math.round((summary.overall_risk_score ?? 0) * 100);
+      lines.push(`## Overall Risk: ${pct}% (${(summary.risk_level ?? "").toUpperCase()})`);
+      lines.push("");
+      lines.push(`| Severity | Count |`);
+      lines.push(`|----------|-------|`);
+      lines.push(`| Critical | ${summary.risk_distribution.critical} |`);
+      lines.push(`| High     | ${summary.risk_distribution.high} |`);
+      lines.push(`| Medium   | ${summary.risk_distribution.medium} |`);
+      lines.push(`| Low      | ${summary.risk_distribution.low} |`);
+      lines.push("");
+    }
+    if (contract?.summary) {
+      lines.push("## Executive Summary");
+      lines.push(contract.summary);
+      lines.push("");
+    }
+    const highRisk = clauses
+      .filter((c) => c.risk_level === "critical" || c.risk_level === "high")
+      .sort((a, b) => (b.risk_score ?? 0) - (a.risk_score ?? 0));
+    if (highRisk.length > 0) {
+      lines.push("## Critical & High-Risk Findings");
+      highRisk.forEach((c, i) => {
+        lines.push(`### ${i + 1}. ${c.clause_type?.replace(/_/g, " ") ?? "Clause"} — ${(c.risk_level ?? "").toUpperCase()}`);
+        if (c.section_heading) lines.push(`**Section:** ${c.section_heading}`);
+        lines.push(`**Risk Score:** ${Math.round((c.risk_score ?? 0) * 100)}%`);
+        lines.push("");
+        lines.push(`> ${c.clause_text?.slice(0, 400)}${(c.clause_text?.length ?? 0) > 400 ? "…" : ""}`);
+        lines.push("");
+        if (c.explanation) { lines.push(`**Analysis:** ${c.explanation}`); lines.push(""); }
+        if (c.suggestion) { lines.push(`**Suggested Alternative:** ${c.suggestion}`); lines.push(""); }
+      });
+    }
+    lines.push("---");
+    lines.push("*Generated by ClauseGuard · AI-Powered Contract Intelligence*");
+    return lines.join("\n");
+  };
+
+  const downloadMarkdown = () => {
+    const md = buildMarkdown();
+    const filename = ((contract?.title || contract?.original_filename || "report")
+      .replace(/[^a-z0-9_\-.]/gi, "_").toLowerCase()) + "_clauseguard.md";
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyMarkdown = async () => {
+    try {
+      await navigator.clipboard.writeText(buildMarkdown());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  };
+
+  const printPDF = () => {
+    // Open the summary page in a new tab for print-to-PDF
+    window.open(`/summary/${contractId}`, "_blank");
+  };
+
+  const riskCounts = summary?.risk_distribution ?? { critical: 0, high: 0, medium: 0, low: 0 };
+  const riskPct = Math.round((summary?.overall_risk_score ?? 0) * 100);
+  const riskLevel = summary?.risk_level ?? "low";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border overflow-hidden"
+        style={{ background: "var(--bg-primary)", borderColor: "var(--border-primary)", boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}
+      >
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border-primary)" }}>
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Export Report</span>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors" style={{ color: "var(--text-tertiary)" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Risk summary */}
+        {summary && (
+          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--border-primary)" }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>Contract Risk Summary</span>
+              <span className="text-xl font-bold tabular-nums" style={{ color: riskHexColor(riskLevel) }}>
+                {riskPct}% <span className="text-xs font-semibold uppercase">{riskLevel}</span>
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: "var(--bg-tertiary)" }}>
+              <div className="h-full rounded-full" style={{ width: `${riskPct}%`, background: riskHexColor(riskLevel) }} />
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {(["critical","high","medium","low"] as const).map((lvl) => (
+                <div key={lvl} className="text-center rounded-lg py-2" style={{ background: "var(--bg-secondary)" }}>
+                  <p className="text-base font-bold" style={{ color: riskHexColor(lvl) }}>{riskCounts[lvl]}</p>
+                  <p className="text-[9px] capitalize mt-0.5" style={{ color: "var(--text-tertiary)" }}>{lvl}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Export options */}
+        <div className="p-5 space-y-2.5">
+          <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--text-tertiary)" }}>Export Options</p>
+
+          <button
+            onClick={downloadMarkdown}
+            className="w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all"
+            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; }}
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: "var(--accent-subtle)" }}>
+              <Download className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Download Markdown</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Formatted report with all findings — works in Notion, Obsidian, etc.</p>
+            </div>
+          </button>
+
+          <button
+            onClick={copyMarkdown}
+            className="w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all"
+            style={{ background: "var(--bg-secondary)", borderColor: copied ? "rgba(34,197,94,0.4)" : "var(--border-primary)" }}
+            onMouseEnter={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)"; }}
+            onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; }}
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: copied ? "rgba(34,197,94,0.1)" : "var(--bg-tertiary)" }}>
+              <Copy className="h-4 w-4" style={{ color: copied ? "#16A34A" : "var(--text-secondary)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: copied ? "#16A34A" : "var(--text-primary)" }}>
+                {copied ? "Copied to clipboard!" : "Copy as Markdown"}
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Paste directly into email, docs, or legal systems</p>
+            </div>
+          </button>
+
+          <button
+            onClick={printPDF}
+            className="w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all"
+            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; }}
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: "var(--bg-tertiary)" }}>
+              <ExternalLink className="h-4 w-4" style={{ color: "var(--text-secondary)" }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Open Full Report</p>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Full AI-generated memo — use browser Print → Save as PDF</p>
+            </div>
+          </button>
+
+          {!summary && (
+            <button
+              onClick={async () => { setGenerating(true); try { const { analysisApi: api } = await import("@/lib/api"); await api.report(contractId); onFullReport(); } catch { /* */ } finally { setGenerating(false); } }}
+              disabled={generating}
+              className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              {generating && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
+              {generating ? "Generating…" : "Generate Full AI Report"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Chat panel ────────────────────────────────────────────────────────────────
 const EXAMPLE_QUESTIONS = [
   "Is the indemnification mutual or one-sided?",
@@ -1575,23 +1855,30 @@ function ChatPanel({
     setStreaming(true);
 
     // Add placeholder assistant message
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: "", streaming: true },
-    ]);
+    setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
 
     try {
       let fullContent = "";
+      // Batch DOM updates: flush to state every ~40ms to avoid 1 setState per token
+      let pendingFlush = false;
+      const flushContent = () => {
+        pendingFlush = false;
+        const snapshot = fullContent;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: snapshot, streaming: true };
+          return updated;
+        });
+      };
+
       for await (const event of chatApi.send(contractId, msg)) {
         if (event.type === "context") {
-          // Surface clause IDs to the document heatmap and show brief pulse indicator
           onContextClauses?.(event.clause_ids);
           if (event.clause_ids.length > 0) {
             setHeatmapPulse(true);
             setTimeout(() => setHeatmapPulse(false), 2500);
           }
         } else if (event.type === "error") {
-          // Backend reported an error mid-stream
           fullContent = `I encountered an error: ${event.detail}. Please try again.`;
           setMessages((prev) => {
             const updated = [...prev];
@@ -1601,40 +1888,29 @@ function ChatPanel({
           break;
         } else if (event.type === "token") {
           fullContent += event.content;
-        setMessages((prev) => {
-          const updated = [...prev];
-            updated[updated.length - 1] = {
-              role: "assistant",
-              content: fullContent,
-              streaming: true,
-            };
-          return updated;
-        });
+          // Schedule a batched flush — skip if one is already pending
+          if (!pendingFlush) {
+            pendingFlush = true;
+            setTimeout(flushContent, 40);
+          }
         }
       }
-      // Mark done
+      // Final flush with streaming=false to remove cursor
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: fullContent,
-          streaming: false,
-        };
+        updated[updated.length - 1] = { role: "assistant", content: fullContent, streaming: false };
         return updated;
       });
     } catch {
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: "assistant",
-          content: "I encountered an error. Please try again.",
-          streaming: false,
-        };
+        updated[updated.length - 1] = { role: "assistant", content: "I encountered an error. Please try again.", streaming: false };
         return updated;
       });
     } finally {
       setStreaming(false);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      // Auto-focus input after response
+      setTimeout(() => inputRef.current?.focus(), 80);
     }
   };
 
@@ -1673,47 +1949,51 @@ function ChatPanel({
       )}
 
       {/* Input */}
-      <div
-        className="border-t p-4"
-        style={{ borderColor: "var(--border-primary)" }}
-      >
+      <div className="border-t p-3" style={{ borderColor: "var(--border-primary)" }}>
+        {streaming && (
+          <div className="flex items-center gap-1.5 mb-2 px-1">
+            <div className="flex gap-0.5">
+              {[0, 150, 300].map((d) => (
+                <span key={d} className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: "var(--accent-primary)", animationDelay: `${d}ms` }} />
+              ))}
+            </div>
+            <span className="text-[10px]" style={{ color: "var(--accent-primary)" }}>ClauseGuard is thinking…</span>
+          </div>
+        )}
         <div
-          className="flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors"
+          className="flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all"
           style={{
             background: "var(--bg-secondary)",
             borderColor: "var(--border-primary)",
           }}
-          onFocus={() => {}}
+          onFocusCapture={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-primary)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px rgba(21,96,252,0.10)"; }}
+          onBlurCapture={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
         >
-        <input
+          <input
             ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
             }}
-          placeholder="Ask about this contract..."
+            placeholder={streaming ? "Waiting for response…" : "Ask about this contract…"}
             className="flex-1 bg-transparent text-sm outline-none"
             style={{ color: "var(--text-primary)" }}
             disabled={streaming}
-        />
-        <button
+          />
+          <button
             onClick={() => sendMessage()}
-          disabled={streaming || !input.trim()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-all disabled:opacity-40"
-            style={{
-              background: input.trim() && !streaming ? "var(--accent-primary)" : "var(--bg-tertiary)",
-            }}
+            disabled={streaming || !input.trim()}
+            className="flex h-7 w-7 items-center justify-center rounded-lg transition-all disabled:opacity-35 shrink-0"
+            style={{ background: input.trim() && !streaming ? "var(--accent-primary)" : "var(--bg-tertiary)" }}
           >
-            <Send className="h-3.5 w-3.5 text-white" />
+            {streaming ? (
+              <div className="h-3 w-3 rounded-full border-2 animate-spin" style={{ borderColor: "var(--text-tertiary)", borderTopColor: "transparent" }} />
+            ) : (
+              <Send className="h-3.5 w-3.5" style={{ color: input.trim() ? "#fff" : "var(--text-tertiary)" }} />
+            )}
           </button>
         </div>
-        <p className="mt-1.5 text-center text-[10px]" style={{ color: "var(--text-tertiary)", opacity: 0.6 }}>
-          Press Enter to send
-        </p>
       </div>
     </div>
   );
