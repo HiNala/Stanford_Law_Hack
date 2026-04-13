@@ -11,7 +11,6 @@ import {
   Download,
   Loader2,
   Scale,
-  Sparkles,
   TrendingUp,
   Users,
   Zap,
@@ -221,7 +220,7 @@ function ActionItemCard({ item }: { item: ActionItem }) {
       {item.legal_reference && (
         <div className="ml-9 rounded-lg border p-2.5" style={{ background: "rgba(21,96,252,0.04)", borderColor: "rgba(21,96,252,0.15)" }}>
           <p className="text-xs font-semibold" style={{ color: "var(--accent-primary)" }}>
-            📜 {item.legal_reference}
+            {item.legal_reference}
           </p>
         </div>
       )}
@@ -612,7 +611,7 @@ export default function PortfolioReportPage() {
                   style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+                    <Scale className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
                     <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                       {pattern.pattern}
                     </span>

@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
 
+    # Google Gemini (fallback / primary when OpenAI quota is exhausted)
+    GEMINI_API_KEY: str = ""
+
     # Auth
     JWT_SECRET: str = "clauseguard-hackathon-secret-change-in-production"
     JWT_ALGORITHM: str = "HS256"

@@ -84,12 +84,12 @@ async def analyze_clause(clause_text: str) -> dict:
 
 
 async def analyze_all_clauses(
-    db: AsyncSession, contract_id: uuid.UUID, max_concurrent: int = 5
+    db: AsyncSession, contract_id: uuid.UUID, max_concurrent: int = 2
 ) -> int:
     """Run risk analysis on every clause in a contract with bounded concurrency.
 
-    Uses an asyncio.Semaphore to limit parallel AI calls (default 5) so we
-    stay within API rate limits while still being much faster than serial.
+    Uses an asyncio.Semaphore to limit parallel AI calls (default 2) and a
+    short stagger between requests to avoid saturating the TPM rate limit.
     Returns count of successfully analyzed clauses.
     """
     t0 = time.perf_counter()
@@ -102,17 +102,26 @@ async def analyze_all_clauses(
     logger.info(f"Analyzing {len(clauses)} clauses for contract {contract_id}")
 
     semaphore = asyncio.Semaphore(max_concurrent)
+    _request_index = 0
+    _stagger_lock = asyncio.Lock()
 
-    async def _analyze_one(clause: Clause) -> dict | None:
+    async def _analyze_one(clause: Clause, idx: int) -> dict | None:
+        nonlocal _request_index
         async with semaphore:
+            # Stagger requests: each slot waits 0.6s * position to spread load
+            async with _stagger_lock:
+                stagger = _request_index * 0.6
+                _request_index += 1
+            if stagger > 0:
+                await asyncio.sleep(min(stagger, 4.0))
             try:
                 return await analyze_clause(clause.clause_text)
             except Exception as e:
                 logger.error(f"Failed to analyze clause {clause.id}: {e}")
                 return None
 
-    # Fire all analyses concurrently (semaphore bounds parallelism)
-    results = await asyncio.gather(*[_analyze_one(c) for c in clauses])
+    # Fire all analyses (semaphore + stagger bounds parallelism and rate)
+    results = await asyncio.gather(*[_analyze_one(c, i) for i, c in enumerate(clauses)])
 
     analyzed = 0
     for clause, analysis in zip(clauses, results):

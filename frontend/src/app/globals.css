@@ -186,23 +186,6 @@ html, body {
   100% { transform: translateX(350%); }
 }
 
-/* ─── Scan reveal — heatmap loading effect ─── */
-@keyframes scan-line {
-  from { transform: translateY(-100%); opacity: 0.6; }
-  to   { transform: translateY(300%); opacity: 0; }
-}
-
-/* ─── Risk glow on card border ─── */
-@keyframes border-glow-critical {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.0), inset 3px 0 0 0 #EF4444; }
-  50%       { box-shadow: 0 0 12px 0 rgba(239,68,68,0.25), inset 3px 0 0 0 #EF4444; }
-}
-
-/* ─── Number count-up ─── */
-@keyframes count-up {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 /* ─── Subtle shimmer for loading states ─── */
 @keyframes shimmer {

@@ -15,6 +15,7 @@ import {
   Users,
   AlertTriangle,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import ReactMarkdown from "react-markdown";
@@ -744,9 +745,9 @@ function DocumentPanel({
       <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-5" style={{ background: "var(--bg-doc)" }}>
         <div
           className="flex h-14 w-14 items-center justify-center rounded-2xl"
-          style={{ background: "rgba(59,130,246,0.08)", border: "1.5px solid rgba(59,130,246,0.2)" }}
+          style={{ background: "var(--accent-subtle)", border: "1.5px solid rgba(21,96,252,0.2)" }}
         >
-          <span className="text-2xl">⏳</span>
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--accent-primary)" }} />
         </div>
         <div>
           <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Loading analysis…</p>
@@ -1060,28 +1061,8 @@ function AnalysisPanel({
 
 
 function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
-  const targetPct = Math.round((summary.overall_risk_score ?? 0) * 100);
+  const pct = Math.round((summary.overall_risk_score ?? 0) * 100);
   const level = summary.risk_level ?? "low";
-  const [displayPct, setDisplayPct] = useState(0);
-  const [barWidth, setBarWidth] = useState(0);
-
-  // Animated counter — counts from 0 to the final score over ~1.2s
-  useEffect(() => {
-    if (targetPct === 0) return;
-    let frame = 0;
-    const totalFrames = 60; // ~1s at 60fps
-    const raf = () => {
-      frame++;
-      const progress = Math.min(frame / totalFrames, 1);
-      // Ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayPct(Math.round(eased * targetPct));
-      setBarWidth(eased * targetPct);
-      if (progress < 1) requestAnimationFrame(raf);
-    };
-    const id = requestAnimationFrame(raf);
-    return () => cancelAnimationFrame(id);
-  }, [targetPct]);
 
   return (
     <div
@@ -1099,16 +1080,15 @@ function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
           className="text-3xl font-bold tabular-nums"
           style={{ color: riskHexColor(level) }}
         >
-          {displayPct}%
+          {pct}%
         </span>
       </div>
       <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
         <div
           className="h-full rounded-full"
           style={{
-            width: `${barWidth}%`,
+            width: `${pct}%`,
             background: riskHexColor(level),
-            transition: "none",
           }}
         />
       </div>
@@ -1227,7 +1207,7 @@ function ClauseDetail({
 }) {
   const { displayed: displayedExplanation, isDone } = useTypewriter(
     clause.explanation ?? "",
-    { speed: 12 }
+    { speed: 3 }
   );
 
     return (

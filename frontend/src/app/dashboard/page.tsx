@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Lightbulb, Clock, RefreshCw } from "lucide-react";
+import { Plus, FileText, Search, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Trash2, Zap, ArrowRight, Clock, RefreshCw } from "lucide-react";
 import { contractsApi, statsApi, searchApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
@@ -190,7 +190,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-center gap-3">
               <div
-                className="h-2 w-2 rounded-full animate-pulse shrink-0"
+                className="h-2 w-2 rounded-full shrink-0"
                 style={{ background: "var(--accent-primary)" }}
               />
               <div>
@@ -272,39 +272,24 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Portfolio Intelligence Insights */}
-        {portfolioInsights.length > 0 && (
-          <div
-            className="rounded-xl border p-4 mb-6"
-            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-3.5 w-3.5" style={{ color: "var(--accent-primary)" }} />
-              <h3 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Portfolio Intelligence</h3>
-            </div>
-            <div className="space-y-1.5">
-              {portfolioInsights.map((insight, i) => (
-                <p key={i} className="text-xs leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                  <span style={{ color: "var(--accent-primary)" }}>→</span> {insight}
-                </p>
-              ))}
-            </div>
-            {riskHotspots.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-primary)" }}>
-                {riskHotspots.slice(0, 5).map((h) => (
-                  <span
-                    key={h.clause_type}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
-                    style={{
-                      background: h.avg_risk_score >= 0.7 ? "rgba(239,68,68,0.12)" : h.avg_risk_score >= 0.4 ? "rgba(245,158,11,0.12)" : "rgba(34,197,94,0.12)",
-                      color: h.avg_risk_score >= 0.7 ? "var(--risk-critical)" : h.avg_risk_score >= 0.4 ? "var(--risk-high)" : "var(--risk-low)",
-                    }}
-                  >
-                    {h.clause_type.replace(/_/g, " ")} ({h.count})
-                  </span>
-                ))}
-              </div>
-            )}
+        {/* Portfolio Hotspots — compact clause-type risk signal */}
+        {riskHotspots.length > 0 && (
+          <div className="flex items-center gap-2 mb-6 flex-wrap">
+            <span className="text-xs font-medium shrink-0" style={{ color: "var(--text-tertiary)" }}>
+              Hotspot clauses:
+            </span>
+            {riskHotspots.slice(0, 6).map((h) => (
+              <span
+                key={h.clause_type}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
+                style={{
+                  background: h.avg_risk_score >= 0.7 ? "rgba(239,68,68,0.10)" : h.avg_risk_score >= 0.4 ? "rgba(245,158,11,0.10)" : "rgba(34,197,94,0.10)",
+                  color: h.avg_risk_score >= 0.7 ? "var(--risk-critical)" : h.avg_risk_score >= 0.4 ? "var(--risk-high)" : "var(--risk-low)",
+                }}
+              >
+                {h.clause_type.replace(/_/g, " ")} · {h.count}
+              </span>
+            ))}
           </div>
         )}
 
@@ -341,50 +326,20 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── In-Progress / Needs Analysis section ── */}
+        {/* ── In-Progress contracts ── */}
         {!loading && pendingContracts.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-3.5 w-3.5" style={{ color: "var(--accent-primary)" }} />
-              <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                In Progress
-              </h2>
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
-              >
-                {pendingContracts.length}
-              </span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {pendingContracts.map((contract, idx) => (
-                <ContractCard
-                  key={contract.id}
-                  contract={contract}
-                  cardIndex={idx}
-                  onClick={() => router.push(`/review/${contract.id}`)}
-                  onDelete={async () => {
-                    try { await contractsApi.delete(contract.id); await loadAll(); } catch { /* silent */ }
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Analyzed contracts section ── */}
-        {!loading && contracts.some(c => c.status === "analyzed") && (
-          <div className="flex items-center gap-2 mb-3">
-            <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "var(--risk-low)" }} />
-            <h2 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              Analyzed
-            </h2>
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}
-            >
-              {contracts.filter(c => c.status === "analyzed").length}
-            </span>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+            {pendingContracts.map((contract, idx) => (
+              <ContractCard
+                key={contract.id}
+                contract={contract}
+                cardIndex={idx}
+                onClick={() => router.push(`/review/${contract.id}`)}
+                onDelete={async () => {
+                  try { await contractsApi.delete(contract.id); await loadAll(); } catch { /* silent */ }
+                }}
+              />
+            ))}
           </div>
         )}
 
@@ -533,23 +488,13 @@ export default function DashboardPage() {
   );
 }
 
-function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Contract; cardIndex: number; onClick: () => void; onDelete: () => void }) {
+function ContractCard({ contract, cardIndex: _cardIndex, onClick, onDelete }: { contract: Contract; cardIndex: number; onClick: () => void; onDelete: () => void }) {
   const riskScore = contract.overall_risk_score ?? 0;
   const riskPct = Math.round(riskScore * 100);
-  const [visible, setVisible] = useState(false);
-  const [barReady, setBarReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const parties = contract.parties
     ? ((contract.parties as { names?: string[] }).names ?? [])
     : [];
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setVisible(true);
-      setTimeout(() => setBarReady(true), 120);
-    }, cardIndex * 60);
-    return () => clearTimeout(t);
-  }, [cardIndex]);
 
   // Auto-cancel confirm state after 3s if user doesn't act
   useEffect(() => {
@@ -561,24 +506,18 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
   const riskColor = riskHexColor(contract.risk_level ?? "low");
 
   return (
-    // div[role=button] instead of <button> to allow nested <button> for delete confirm
     <div
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      className="group flex flex-col rounded-xl border text-left transition-all duration-200 cursor-pointer overflow-hidden"
+      className="group flex flex-col rounded-xl border text-left cursor-pointer overflow-hidden"
       style={{
         background: contract.status === "error" ? "rgba(239,68,68,0.04)" : "var(--bg-secondary)",
         borderColor: contract.status === "analyzed" && contract.risk_level
           ? `${riskColor}35`
           : contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(10px)",
-        transition: "opacity 0.4s ease, transform 0.4s ease, border-color 0.2s, box-shadow 0.2s",
-        boxShadow: visible && contract.status === "analyzed" && contract.risk_level === "critical"
-          ? `0 0 0 1px ${riskColor}20, 0 4px 20px ${riskColor}10`
-          : "none",
+        transition: "border-color 0.15s, box-shadow 0.15s",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
@@ -600,15 +539,11 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
         }
       }}
     >
-      {/* Risk color accent bar across top */}
+      {/* Risk color accent line across top */}
       {contract.status === "analyzed" && contract.risk_level && (
         <div
           className="h-0.5 w-full"
-          style={{
-            background: `linear-gradient(90deg, ${riskColor}, ${riskColor}00)`,
-            opacity: barReady ? 1 : 0,
-            transition: "opacity 0.5s ease 0.2s",
-          }}
+          style={{ background: `linear-gradient(90deg, ${riskColor}, ${riskColor}00)` }}
         />
       )}
 
@@ -672,19 +607,14 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
           {contract.contract_type || contract.file_type?.toUpperCase() || "Contract"}
         </p>
 
-        {/* Risk score — dramatic display */}
+        {/* Risk score */}
         {contract.status === "analyzed" && contract.risk_level ? (
           <div className="mt-auto pt-4">
             <div className="flex items-end justify-between mb-2">
               <div>
                 <span
                   className="text-3xl font-black tabular-nums leading-none"
-                  style={{
-                    color: riskColor,
-                    opacity: barReady ? 1 : 0,
-                    transition: "opacity 0.4s ease 0.3s",
-                    animation: barReady ? "count-up 0.4s ease 0.3s both" : "none",
-                  }}
+                  style={{ color: riskColor }}
                 >
                   {riskPct}
                 </span>
@@ -692,21 +622,17 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
               </div>
               <span
                 className="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md"
-                style={{
-                  color: riskColor,
-                  background: `${riskColor}15`,
-                }}
+                style={{ color: riskColor, background: `${riskColor}15` }}
               >
                 {contract.risk_level}
               </span>
             </div>
             <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
               <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
+                className="h-full rounded-full"
                 style={{
-                  width: barReady ? `${riskPct}%` : "0%",
+                  width: `${riskPct}%`,
                   background: `linear-gradient(90deg, ${riskColor}90, ${riskColor})`,
-                  transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)",
                 }}
               />
             </div>
@@ -912,7 +838,6 @@ function StatCard({
   value,
   icon,
   accent,
-  index = 0,
 }: {
   label: string;
   value: string;
@@ -920,22 +845,10 @@ function StatCard({
   accent: string;
   index?: number;
 }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), index * 80);
-    return () => clearTimeout(t);
-  }, [index]);
-
   return (
     <div
       className="rounded-xl border p-4"
-      style={{
-        background: "var(--bg-secondary)",
-        borderColor: "var(--border-primary)",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(6px)",
-        transition: "opacity 0.35s ease, transform 0.35s ease",
-      }}
+      style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
     >
       <div className="flex items-center gap-1.5 mb-1">
         <span style={{ color: accent }}>{icon}</span>

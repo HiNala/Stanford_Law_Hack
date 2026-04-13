@@ -2,12 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Shield, Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { GooeyFilter } from "@/components/ui/gooey-filter";
-import { PixelTrail } from "@/components/ui/pixel-trail";
-import { useScreenSize } from "@/hooks/use-screen-size";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -18,7 +15,6 @@ const NAV_LINKS = [
 export default function HeroSection() {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement | null>(null);
-  const screenSize = useScreenSize();
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -44,59 +40,21 @@ export default function HeroSection() {
   }, [menuOpen]);
 
   return (
-    <section className="relative w-full overflow-hidden" style={{ background: "var(--bg-primary)" }}>
-      {/* ── Gooey SVG filter ── */}
-      <GooeyFilter id="gooey-hero-trail" strength={6} />
-
-      {/* ── Atmospheric background image ── */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src="https://images.unsplash.com/photo-1618044733300-9472054094ee?w=1600&auto=format&fit=crop&q=80"
-          alt=""
-          aria-hidden="true"
-          className="w-full h-full object-cover"
-          style={{ opacity: 0.08 }}
-        />
-        {/* Vignette gradient overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, var(--bg-primary) 100%)",
-          }}
-        />
-      </div>
-
-      {/* ── Pixel trail layer ── */}
-      <div
-        className="absolute inset-0 z-10"
-        style={{ filter: "url(#gooey-hero-trail)" }}
-      >
-        <PixelTrail
-          pixelSize={screenSize.lessThan("md") ? 20 : 28}
-          fadeDuration={600}
-          delay={0}
-          pixelClassName="bg-white/25"
-        />
-      </div>
-
-      {/* ── Subtle top border highlight ── */}
-      <div
-        className="pointer-events-none absolute top-0 left-0 right-0 h-px z-20"
-        style={{ background: "var(--border-primary)" }}
-      />
+    <section
+      className="relative w-full overflow-hidden"
+      style={{ background: "var(--bg-primary)" }}
+    >
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-px" style={{ background: "var(--border-primary)" }} />
 
       {/* ── Navbar ── */}
       <nav
-        className="relative z-30 flex items-center justify-between px-6 py-5 md:px-12 lg:px-20"
+        className="relative z-20 flex items-center justify-between px-6 py-5 md:px-12 lg:px-20"
         style={{ borderBottom: "1px solid var(--border-primary)" }}
       >
-        {/* Logo */}
         <Link href="/">
           <Logo size="md" />
         </Link>
 
-        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map(({ label, href }) => (
             <a
@@ -104,19 +62,14 @@ export default function HeroSection() {
               href={href}
               className="text-sm transition-colors"
               style={{ color: "var(--text-secondary)" }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary)")
-              }
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary)")}
             >
               {label}
             </a>
           ))}
         </div>
 
-        {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
           <Link
@@ -143,7 +96,6 @@ export default function HeroSection() {
           </Link>
         </div>
 
-        {/* Mobile: theme toggle + hamburger */}
         <div className="md:hidden flex items-center gap-1">
           <ThemeToggle />
           <button
@@ -157,158 +109,190 @@ export default function HeroSection() {
         </div>
       </nav>
 
-      {/* Mobile menu overlay */}
       {menuOpen && (
         <div
           ref={menuRef}
           className="fixed inset-0 z-50 flex flex-col p-6"
-          style={{ background: "var(--bg-primary)", backdropFilter: "blur(12px)" }}
+          style={{ background: "var(--bg-primary)" }}
         >
           <div className="flex items-center justify-between mb-10">
             <Link href="/" onClick={() => setMenuOpen(false)}>
               <Logo size="md" />
             </Link>
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg p-2"
-              style={{ color: "var(--text-secondary)" }}
-              aria-label="Close menu"
-            >
+            <button onClick={() => setMenuOpen(false)} className="rounded-lg p-2" style={{ color: "var(--text-secondary)" }} aria-label="Close menu">
               <X className="h-5 w-5" />
             </button>
           </div>
           <div className="flex flex-col gap-6">
             {NAV_LINKS.map(({ label, href }) => (
-              <a
-                key={label}
-                href={href}
-                className="text-2xl font-semibold"
-                style={{ color: "var(--text-primary)" }}
-                onClick={() => setMenuOpen(false)}
-              >
+              <a key={label} href={href} className="text-2xl font-semibold" style={{ color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>
                 {label}
               </a>
             ))}
           </div>
           <div className="mt-auto flex flex-col gap-3">
-            <Link
-              href="/login"
-              className="w-full text-center rounded-xl border py-3 text-sm font-medium"
-              style={{ borderColor: "var(--border-secondary)", color: "var(--text-primary)" }}
-              onClick={() => setMenuOpen(false)}
-            >
+            <Link href="/login" className="w-full text-center rounded-xl border py-3 text-sm font-medium" style={{ borderColor: "var(--border-secondary)", color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>
               Sign In
             </Link>
-            <Link
-              href="/login"
-              className="w-full text-center rounded-xl py-3 text-sm font-semibold text-white"
-              style={{ background: "var(--accent-primary)" }}
-              onClick={() => setMenuOpen(false)}
-            >
+            <Link href="/login" className="w-full text-center rounded-xl py-3 text-sm font-semibold text-white" style={{ background: "var(--accent-primary)" }} onClick={() => setMenuOpen(false)}>
               Try for Free
             </Link>
           </div>
         </div>
       )}
 
-      {/* ── Hero body — full-width centered ── */}
-      <div className="relative z-20 flex flex-col items-center justify-center text-center px-6 pt-28 pb-36 md:pt-36 md:pb-44 min-h-[75vh]">
+      {/* ── Hero body ── */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 items-center gap-16 px-6 pt-20 pb-28 md:px-12 lg:px-20 max-w-6xl mx-auto">
 
-        {/* Announcement pill */}
-        <a
-          href="#features"
-          className="mb-10 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors backdrop-blur-sm"
-          style={{
-            borderColor: "var(--border-secondary)",
-            background: "color-mix(in srgb, var(--bg-secondary) 70%, transparent)",
-            color: "var(--text-secondary)",
-          }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)")
-          }
-        >
-          <span
-            className="h-1.5 w-1.5 rounded-full animate-pulse"
-            style={{ background: "var(--accent-primary)" }}
-          />
-          Verified legal citations via TrustFoundry
-          <span style={{ color: "var(--accent-primary)" }}>→</span>
-        </a>
-
-        {/* Headline */}
-        <h1
-          className="font-display text-6xl leading-tight md:text-7xl lg:text-8xl max-w-4xl"
-          style={{ color: "var(--text-primary)", letterSpacing: "-0.03em" }}
-        >
-          See risk before
-          <br />
-          <em style={{ color: "var(--accent-primary)", fontStyle: "italic" }}>
-            it sees you.
-          </em>
-        </h1>
-
-        {/* Sub-headline */}
-        <p
-          className="mt-7 text-lg md:text-xl leading-relaxed max-w-xl"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          AI-powered contract analysis that colors every clause by risk, cites
-          actual statutes, and answers your questions in plain English.
-        </p>
-
-        {/* CTAs */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-85"
-            style={{ background: "var(--accent-primary)" }}
-          >
-            <Shield className="h-4 w-4" />
-            Try Demo — Free
-          </Link>
+        {/* Left — copy */}
+        <div className="flex flex-col items-start">
           <a
-            href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-lg border px-7 py-3.5 text-sm font-medium transition-colors backdrop-blur-sm"
-            style={{
-              borderColor: "var(--border-secondary)",
-              color: "var(--text-secondary)",
-              background: "color-mix(in srgb, var(--bg-secondary) 50%, transparent)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
-            }}
+            href="#features"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors"
+            style={{ borderColor: "var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)")}
           >
-            See how it works
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--accent-primary)" }} />
+            Verified legal citations via TrustFoundry
+            <span style={{ color: "var(--accent-primary)" }}>→</span>
           </a>
+
+          <h1 className="font-display text-5xl leading-tight md:text-6xl" style={{ color: "var(--text-primary)", letterSpacing: "-0.025em" }}>
+            See risk before<br />
+            <em style={{ color: "var(--accent-primary)", fontStyle: "italic" }}>it sees you.</em>
+          </h1>
+
+          <p className="mt-5 text-lg leading-relaxed" style={{ color: "var(--text-secondary)", maxWidth: "44ch" }}>
+            AI analyzes every clause in your contracts — scoring risk, surfacing verified legal citations, and answering your questions in plain English.
+          </p>
+
+          <div className="mt-9 flex flex-col sm:flex-row items-start gap-3.5">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-85"
+              style={{ background: "var(--accent-primary)" }}
+            >
+              <Shield className="h-4 w-4" />
+              Try Demo — Free
+            </Link>
+            <a
+              href="#how-it-works"
+              className="inline-flex items-center gap-2 rounded-lg border px-6 py-3 text-sm font-medium transition-colors"
+              style={{ borderColor: "var(--border-secondary)", color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              }}
+            >
+              See how it works
+            </a>
+          </div>
+
+          <div className="mt-10 flex flex-wrap items-center gap-5">
+            {["No credit card required", "PDF, DOCX, TXT supported", "Under 60 seconds"].map((t) => (
+              <div key={t} className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--risk-low)" }} />
+                <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{t}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Trust bar */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-6">
-          {[
-            "No credit card required",
-            "PDF, DOCX, TXT supported",
-            "Under 60 seconds",
-          ].map((t) => (
-            <div key={t} className="flex items-center gap-2">
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ background: "var(--risk-low)" }}
-              />
-              <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                {t}
-              </span>
-            </div>
-          ))}
-        </div>
+        {/* Right — product preview */}
+        <HeatmapPreview />
       </div>
     </section>
+  );
+}
+
+// ── Static heatmap product preview ────────────────────────────────────────────
+const PREVIEW_CLAUSES = [
+  { heading: "Section 9 — Indemnification", risk: "critical" as const, score: "97%", text: "Client shall defend and indemnify Provider from any and all claims. Provider's indemnification obligations are expressly excluded." },
+  { heading: "Section 12.3 — Change of Control", risk: "critical" as const, score: "91%", text: "Upon any Change of Control of Client, Provider may terminate upon five (5) days' written notice with immediate fee acceleration." },
+  { heading: "Section 11 — Auto-Renewal", risk: "high" as const, score: "84%", text: "Agreement renews automatically unless cancelled no later than fifteen (15) days prior to the end of the then-current term." },
+  { heading: "Section 9.2 — Liability Cap", risk: "high" as const, score: "78%", text: "Provider's total liability shall not exceed the greater of fees paid in the preceding 3 months or One Thousand Dollars ($1,000)." },
+  { heading: "Section 14 — Data Privacy", risk: "high" as const, score: "76%", text: "Provider may use aggregated Customer Data for product improvement and marketing purposes per its Privacy Policy." },
+  { heading: "Section 2 — License Grant", risk: "low" as const, score: "12%", text: "Provider grants Client a non-exclusive, non-transferable license to access the Service solely for internal business purposes." },
+];
+
+const RISK_COLORS: Record<string, string> = {
+  critical: "#EF4444",
+  high: "#F97316",
+  medium: "#EAB308",
+  low: "#22C55E",
+};
+
+function HeatmapPreview() {
+  const [selected, setSelected] = React.useState<number | null>(null);
+
+  return (
+    <div
+      className="hidden lg:flex flex-col rounded-xl border overflow-hidden"
+      style={{
+        background: "var(--bg-secondary)",
+        borderColor: "var(--border-primary)",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+        maxHeight: "480px",
+      }}
+    >
+      {/* Window chrome */}
+      <div
+        className="flex items-center justify-between px-4 py-2.5 shrink-0"
+        style={{ borderBottom: "1px solid var(--border-primary)", background: "var(--bg-primary)" }}
+      >
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#FF5F57" }} />
+          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#FFBD2E" }} />
+          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#28C840" }} />
+        </div>
+        <span className="text-xs font-medium" style={{ color: "var(--text-tertiary)" }}>GlobalSupply Vendor MSA</span>
+        <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: "rgba(239,68,68,0.12)", color: "#EF4444" }}>
+          CRITICAL · 91%
+        </span>
+      </div>
+
+      {/* Clause blocks */}
+      <div className="overflow-y-auto p-3 space-y-1.5 flex-1 legal-doc">
+        {PREVIEW_CLAUSES.map((clause, i) => {
+          const color = RISK_COLORS[clause.risk];
+          const isSelected = selected === i;
+          return (
+            <div
+              key={i}
+              onClick={() => setSelected(isSelected ? null : i)}
+              className="cursor-pointer rounded-lg px-3 py-2.5 transition-all duration-150"
+              style={{
+                borderLeft: `3px solid ${color}`,
+                background: isSelected ? `${color}18` : `${color}08`,
+                boxShadow: isSelected ? `inset 0 0 0 1px ${color}25` : "none",
+              }}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold uppercase tracking-wide" style={{ fontSize: "10px", color: "var(--text-tertiary)" }}>
+                  {clause.heading}
+                </span>
+                <span className="text-xs font-bold" style={{ color }}>{clause.score}</span>
+              </div>
+              <p style={{ fontSize: "11.5px", lineHeight: 1.6, color: "var(--text-secondary)" }}>
+                {isSelected ? clause.text : clause.text.slice(0, 90) + "…"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        className="flex items-center justify-between px-4 py-2 shrink-0 text-xs"
+        style={{ borderTop: "1px solid var(--border-primary)", color: "var(--text-tertiary)" }}
+      >
+        <span>6 clauses analyzed · 28 sec</span>
+        <span style={{ color: "var(--risk-low)" }}>✓ TrustFoundry verified</span>
+      </div>
+    </div>
   );
 }
