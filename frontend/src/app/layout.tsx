@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
@@ -23,9 +24,6 @@ export const metadata: Metadata = {
     "See risk before it sees you. Upload contracts, get instant AI-powered risk analysis with visual heatmaps and clause-level insights.",
 };
 
-// Inline script to apply theme class before first paint — prevents flash of wrong theme
-const themeScript = `(function(){try{var t=localStorage.getItem('clauseguard-theme');var d=t?JSON.parse(t):null;if(d&&d.state&&d.state.theme==='light'){document.documentElement.classList.add('light')}}catch(e){}})()`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,8 +32,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${dmSerif.variable} h-full`}>
       <head>
-        {/* Anti-FOUC: synchronously apply saved theme before React hydrates */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Anti-FOUC: run synchronously before first paint to apply saved theme */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('clauseguard-theme');var d=s?JSON.parse(s):null;if(d&&d.state&&d.state.theme==='light'){document.documentElement.classList.add('light')}}catch(e){}})()`,
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col antialiased">
         <ThemeProvider>{children}</ThemeProvider>

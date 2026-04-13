@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield, Menu, X } from "lucide-react";
+import { Zap, Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
@@ -173,7 +173,7 @@ export default function HeroSection() {
               className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-85"
               style={{ background: "var(--accent-primary)" }}
             >
-              <Shield className="h-4 w-4" />
+              <Zap className="h-4 w-4" />
               Try Demo — Free
             </Link>
             <a
