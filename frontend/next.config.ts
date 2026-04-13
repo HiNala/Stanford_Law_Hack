@@ -6,6 +6,8 @@ import type { NextConfig } from "next";
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+
   // Proxy /api/* → backend so the browser never makes cross-origin requests.
   // SSE (chat streaming) also goes through this proxy transparently.
   async rewrites() {
@@ -18,6 +20,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [],
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
   },
 };
 

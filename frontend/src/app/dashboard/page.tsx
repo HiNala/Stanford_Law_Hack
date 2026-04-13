@@ -27,11 +27,12 @@ export default function DashboardPage() {
   const [riskFilter, setRiskFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "risk">("risk");
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [semanticQuery, setSemanticQuery] = useState("");
   const [semanticResults, setSemanticResults] = useState<SearchResult[]>([]);
+  const [semanticError, setSemanticError] = useState(false);
   const [semanticLoading, setSemanticLoading] = useState(false);
   const [semanticSearched, setSemanticSearched] = useState(false);
-  const [portfolioInsights, setPortfolioInsights] = useState<string[]>([]);
   const [riskHotspots, setRiskHotspots] = useState<{clause_type: string; count: number; avg_risk_score: number; critical_count: number}[]>([]);
 
   useEffect(() => {
@@ -64,16 +65,20 @@ export default function DashboardPage() {
         contractsApi.list(),
         statsApi.get(),
       ]);
-      if (contractsRes.status === "fulfilled") setContracts(contractsRes.value.data.items ?? []);
+      if (contractsRes.status === "fulfilled") {
+        setContracts(contractsRes.value.data.items ?? []);
+        setLoadError(false);
+      } else {
+        setLoadError(true);
+      }
       if (statsRes.status === "fulfilled") setPortfolioStats(statsRes.value.data);
-      // Load cross-document patterns
+      // Load cross-document patterns (non-critical)
       try {
         const patternsRes = await statsApi.patterns();
-        setPortfolioInsights(patternsRes.data.insights ?? []);
         setRiskHotspots(patternsRes.data.risk_hotspots ?? []);
       } catch { /* patterns are non-critical */ }
     } catch {
-      // silently fail on refresh
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -84,11 +89,13 @@ export default function DashboardPage() {
     if (!q) return;
     setSemanticLoading(true);
     setSemanticSearched(true);
+    setSemanticError(false);
     try {
       const res = await searchApi.search(q);
       setSemanticResults((res.data as { results: SearchResult[] }).results ?? []);
     } catch {
       setSemanticResults([]);
+      setSemanticError(true);
     } finally {
       setSemanticLoading(false);
     }
@@ -202,6 +209,24 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Backend connectivity error banner */}
+        {loadError && !loading && (
+          <div
+            className="flex items-center gap-3 rounded-xl border px-5 py-3 mb-6"
+            style={{ background: "rgba(239,68,68,0.05)", borderColor: "rgba(239,68,68,0.2)" }}
+          >
+            <div className="h-2 w-2 rounded-full shrink-0" style={{ background: "var(--risk-critical)" }} />
+            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              <span className="font-semibold" style={{ color: "var(--risk-critical)" }}>Unable to reach the server.</span>
+              {" "}Make sure the backend is running, then{" "}
+              <button type="button" onClick={() => loadAll()} className="underline underline-offset-2" style={{ color: "var(--accent-primary)" }}>
+                retry
+              </button>
+              .
+            </span>
+          </div>
+        )}
+
         {/* Portfolio stats bar */}
         {portfolioStats && portfolioStats.total_contracts > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -209,6 +234,8 @@ export default function DashboardPage() {
               index={0}
               label="Avg Portfolio Risk"
               value={`${Math.round(portfolioStats.average_risk_score * 100)}%`}
+              numericValue={Math.round(portfolioStats.average_risk_score * 100)}
+              suffix="%"
               icon={<TrendingUp className="h-4 w-4" />}
               accent={portfolioStats.average_risk_score > 0.5 ? "var(--risk-high)" : portfolioStats.average_risk_score > 0.25 ? "var(--risk-medium)" : "var(--risk-low)"}
             />
@@ -216,6 +243,7 @@ export default function DashboardPage() {
               index={1}
               label="Critical Clauses"
               value={portfolioStats.risk_distribution.critical.toLocaleString()}
+              numericValue={portfolioStats.risk_distribution.critical}
               icon={<AlertCircle className="h-4 w-4" />}
               accent="var(--risk-critical)"
             />
@@ -223,6 +251,7 @@ export default function DashboardPage() {
               index={2}
               label="High-Risk Clauses"
               value={portfolioStats.risk_distribution.high.toLocaleString()}
+              numericValue={portfolioStats.risk_distribution.high}
               icon={<BarChart3 className="h-4 w-4" />}
               accent="var(--risk-high)"
             />
@@ -230,6 +259,8 @@ export default function DashboardPage() {
               index={3}
               label="Analyzed"
               value={`${portfolioStats.contracts_by_status["analyzed"] ?? 0} / ${portfolioStats.total_contracts}`}
+              numericValue={portfolioStats.contracts_by_status["analyzed"] ?? 0}
+              suffix={` / ${portfolioStats.total_contracts}`}
               icon={<CheckCircle2 className="h-4 w-4" />}
               accent="var(--risk-low)"
             />
@@ -452,7 +483,11 @@ export default function DashboardPage() {
             {/* Search results */}
             {semanticSearched && !semanticLoading && (
               <div className="mt-4">
-                {semanticResults.length === 0 ? (
+                {semanticError ? (
+                  <p className="text-sm py-6 text-center" style={{ color: "var(--risk-critical)" }}>
+                    Search failed — make sure the backend is running and try again.
+                  </p>
+                ) : semanticResults.length === 0 ? (
                   <p className="text-sm py-6 text-center" style={{ color: "var(--text-tertiary)" }}>
                     No matching clauses found — try a broader term like &ldquo;indemnification&rdquo; or &ldquo;termination&rdquo;.
                   </p>
@@ -484,6 +519,7 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
   const riskPct = Math.round(riskScore * 100);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const parties = contract.parties
     ? ((contract.parties as { names?: string[] }).names ?? [])
     : [];
@@ -503,13 +539,41 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
 
   const riskColor = riskHexColor(contract.risk_level ?? "low");
 
+  const handleTiltMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const { left, top, width, height } = el.getBoundingClientRect();
+    const x = (e.clientX - left) / width - 0.5;  // -0.5 → 0.5
+    const y = (e.clientY - top) / height - 0.5;
+    el.style.transform = mounted
+      ? `perspective(700px) rotateY(${x * 9}deg) rotateX(${-y * 9}deg) translateZ(6px) translateY(0px)`
+      : "none";
+    el.style.setProperty("--mx", `${(x + 0.5) * 100}%`);
+    el.style.setProperty("--my", `${(y + 0.5) * 100}%`);
+  };
+
+  const handleTiltLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.transform = mounted ? "perspective(700px) rotateY(0deg) rotateX(0deg) translateZ(0) translateY(0px)" : "none";
+    // Restore border/shadow
+    if (contract.status === "analyzed" && contract.risk_level) {
+      el.style.borderColor = `${riskColor}35`;
+      el.style.boxShadow = contract.risk_level === "critical" ? `0 0 0 1px ${riskColor}20, 0 4px 20px ${riskColor}10` : "none";
+    } else {
+      el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
+      el.style.boxShadow = "none";
+    }
+  };
+
   return (
     <div
+      ref={cardRef}
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      className="group flex flex-col rounded-xl border text-left cursor-pointer overflow-hidden"
+      className="tilt-card group flex flex-col rounded-xl border text-left cursor-pointer overflow-hidden relative"
       style={{
         background: contract.status === "error" ? "rgba(239,68,68,0.04)" : "var(--bg-secondary)",
         borderColor: contract.status === "analyzed" && contract.risk_level
@@ -517,28 +581,23 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
           : contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)",
         transition: "border-color 0.15s, box-shadow 0.15s, opacity 0.4s ease, transform 0.4s ease",
         opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateY(0)" : "translateY(10px)",
+        transform: mounted ? "perspective(700px) rotateY(0deg) rotateX(0deg) translateZ(0)" : "translateY(12px)",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
         if (contract.status === "analyzed" && contract.risk_level) {
           el.style.borderColor = `${riskColor}70`;
-          el.style.boxShadow = `0 0 0 1px ${riskColor}30, 0 8px 28px ${riskColor}15`;
+          el.style.boxShadow = `0 0 0 1px ${riskColor}30, 0 12px 32px ${riskColor}18`;
         } else {
           el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.6)" : "var(--border-secondary)";
         }
       }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        if (contract.status === "analyzed" && contract.risk_level) {
-          el.style.borderColor = `${riskColor}35`;
-          el.style.boxShadow = contract.risk_level === "critical" ? `0 0 0 1px ${riskColor}20, 0 4px 20px ${riskColor}10` : "none";
-        } else {
-          el.style.borderColor = contract.status === "error" ? "rgba(239,68,68,0.3)" : "var(--border-primary)";
-          el.style.boxShadow = "none";
-        }
-      }}
+      onMouseMove={handleTiltMove}
+      onMouseLeave={handleTiltLeave}
     >
+      {/* Shine reflection overlay */}
+      <div className="tilt-shine" />
+
       {/* Risk color accent line across top */}
       {contract.status === "analyzed" && contract.risk_level && (
         <div
@@ -893,18 +952,43 @@ function SearchResultCard({
   );
 }
 
+function useCountUp(target: number, delay = 100, duration = 700) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay);
+    return () => clearTimeout(t0);
+  }, [target, delay, duration]);
+  return val;
+}
+
 function StatCard({
   label,
   value,
   icon,
   accent,
+  numericValue,
+  suffix = "",
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   accent: string;
   index?: number;
+  numericValue?: number;
+  suffix?: string;
 }) {
+  const animated = useCountUp(numericValue ?? 0);
+  const display = numericValue !== undefined ? `${animated}${suffix}` : value;
+
   return (
     <div
       className="rounded-xl border p-4"
@@ -914,7 +998,7 @@ function StatCard({
         <span style={{ color: accent }}>{icon}</span>
         <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</p>
       </div>
-      <p className="text-xl font-bold leading-tight" style={{ color: accent }}>{value}</p>
+      <p className="text-xl font-bold leading-tight tabular-nums num-pop" style={{ color: accent }}>{display}</p>
     </div>
   );
 }

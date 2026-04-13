@@ -36,6 +36,7 @@ app = FastAPI(
     description="AI-Powered Contract Intelligence Platform",
     version="0.1.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # ── Structured error handler (MISSION-04 §1.3) ─────────────────────────────
@@ -52,13 +53,19 @@ async def app_exception_handler(_request: Request, exc: AppException):
     )
 
 
-# CORS — allow frontend to communicate with backend
+# CORS — allow any localhost port (dev uses 3000-3010 range depending on availability)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
     ],
+    allow_origin_regex=r"http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

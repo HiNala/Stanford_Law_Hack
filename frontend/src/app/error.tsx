@@ -42,7 +42,7 @@ export default function Error({
         Something went wrong
       </h1>
       <p className="text-sm mt-2 mb-8 max-w-xs text-center leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-        {error.message || "An unexpected error occurred. Our team has been notified."}
+        {error.message || "An unexpected error occurred. Please try again or return to the dashboard."}
       </p>
 
       <div className="flex items-center gap-3">

@@ -23,12 +23,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             "text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]",
             "border-[var(--border-primary)] focus:border-[var(--accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)]",
             "transition-colors duration-150",
-            error && "border-red-500 focus:border-red-500 focus:ring-red-500",
+            error && "border-[var(--risk-critical)] focus:border-[var(--risk-critical)] focus:ring-[var(--risk-critical)]",
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs" style={{ color: "var(--risk-critical)" }}>{error}</p>}
       </div>
     );
   }

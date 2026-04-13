@@ -21,6 +21,7 @@ export default function SummaryPage({
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [hasFullReport, setHasFullReport] = useState(false);
 
   useEffect(() => {
@@ -38,9 +39,12 @@ export default function SummaryPage({
       if (summaryRes) setSummary(summaryRes.data);
       if (contractRes.data.summary) {
         setReport(contractRes.data.summary);
+        setHasFullReport(true);
       } else {
         // Auto-generate a full report if no summary exists yet
-        generateReport();
+        setLoading(false);
+        await generateReport();
+        return;
       }
     } catch {
       router.push("/dashboard");
@@ -68,7 +72,8 @@ export default function SummaryPage({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard permission denied or unavailable (non-HTTPS, Firefox, etc.)
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 3000);
     }
   };
 
@@ -161,12 +166,16 @@ export default function SummaryPage({
                   Markdown
                 </button>
                 <button
+                  type="button"
                   onClick={copyMarkdown}
                   className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors print:hidden"
-                  style={{ borderColor: "var(--border-secondary)", color: copied ? "var(--risk-low)" : "var(--text-secondary)" }}
+                  style={{
+                    borderColor: "var(--border-secondary)",
+                    color: copied ? "var(--risk-low)" : copyFailed ? "var(--risk-critical)" : "var(--text-secondary)",
+                  }}
                 >
                   <Copy className="h-3.5 w-3.5" />
-                  {copied ? "Copied!" : "Copy"}
+                  {copied ? "Copied!" : copyFailed ? "Use Ctrl+C" : "Copy"}
                 </button>
                 <button
                   onClick={generateReport}

@@ -29,7 +29,7 @@ export default function NotFound() {
         404
       </h1>
       <p className="text-sm mt-2 mb-8 text-center max-w-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-        This page doesn&apos;t exist. The contract you&apos;re looking for may have been moved or deleted.
+        This page doesn&apos;t exist or the content has been moved. Head back to the dashboard to continue.
       </p>
 
       <Link

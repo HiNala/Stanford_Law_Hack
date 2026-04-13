@@ -19,7 +19,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       secondary:
         "bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] text-[var(--text-primary)] border border-[var(--border-primary)] rounded-lg",
       ghost: "hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-lg",
-      danger: "bg-red-600 hover:bg-red-700 text-white rounded-lg",
+      danger: "bg-[var(--risk-critical)] text-white rounded-lg",
     };
 
     const sizes: Record<string, string> = {

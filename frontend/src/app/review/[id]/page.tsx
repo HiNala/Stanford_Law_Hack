@@ -927,16 +927,24 @@ function ClauseBlock({
   registerRef?: (el: HTMLDivElement | null) => void;
 }) {
   const [visible, setVisible] = useState(heatmapReady);
+  const [flash, setFlash] = useState(false);
   const [hovered, setHovered] = useState(false);
+
+  const riskLevel = (clause.risk_level?.toLowerCase() ?? "low") as keyof typeof HIGHLIGHT;
 
   useEffect(() => {
     if (heatmapReady) {
-      const timer = setTimeout(() => setVisible(true), index * 25);
+      const timer = setTimeout(() => {
+        setVisible(true);
+        // Brief risk-colour flash for critical/high clauses
+        if (riskLevel === "critical" || riskLevel === "high") {
+          setFlash(true);
+          setTimeout(() => setFlash(false), 600);
+        }
+      }, index * 28);
       return () => clearTimeout(timer);
     }
-  }, [heatmapReady, index]);
-
-  const riskLevel = (clause.risk_level?.toLowerCase() ?? "low") as keyof typeof HIGHLIGHT;
+  }, [heatmapReady, index, riskLevel]);
   const hl = HIGHLIGHT[riskLevel] ?? HIGHLIGHT.low;
   const noHighlight = riskLevel === "low" && !isSelected && !isChatContext;
   const highlightBg = noHighlight
@@ -951,7 +959,15 @@ function ClauseBlock({
     <div
       ref={registerRef}
       className="relative mb-0.5"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.3s ease" }}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateX(0)" : "translateX(-5px)",
+        transition: "opacity 0.3s ease, transform 0.3s ease",
+        borderRadius: "4px",
+        background: flash ? `${riskColor}12` : "transparent",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ["--flash-transition" as any]: flash ? "none" : "background 0.5s ease",
+      }}
     >
       {/* Section heading */}
       {clause.section_heading && (
@@ -1158,55 +1174,154 @@ function AnalysisPanel({
 }
 
 
+// ─── Animated number counter ──────────────────────────────────────────────────
+function useCountUp(target: number, delay = 120, duration = 900) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+        setValue(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay);
+    return () => clearTimeout(t0);
+  }, [target, delay, duration]);
+  return value;
+}
+
 function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
   const pct = Math.round((summary.overall_risk_score ?? 0) * 100);
   const level = summary.risk_level ?? "low";
-  const [barWidth, setBarWidth] = useState(0);
+  const color = riskHexColor(level);
 
+  // Arc geometry — 180° semicircle, centre (60, 62), R = 50
+  const R = 50;
+  const cx = 60, cy = 62;
+  const arcLen = Math.PI * R; // ≈ 157.08
+
+  const [fillPct, setFillPct] = useState(0);
   useEffect(() => {
-    const t = setTimeout(() => setBarWidth(pct), 120);
+    const t = setTimeout(() => setFillPct(pct), 150);
     return () => clearTimeout(t);
   }, [pct]);
+  const dashOffset = arcLen - (fillPct / 100) * arcLen;
+
+  const displayPct = useCountUp(pct, 150);
+
+  // Tick mark positions (0, 25, 50, 75, 100%)
+  const ticks = [0, 25, 50, 75, 100].map((tick) => {
+    const angle = Math.PI * (1 - tick / 100); // 180° → 0°
+    return {
+      tick,
+      x: cx + (R + 10) * Math.cos(angle),
+      y: cy - (R + 10) * Math.sin(angle),
+      active: tick <= fillPct,
+    };
+  });
+
+  const gradId = `rg-grad-${level}`;
 
   return (
     <div
-      className="rounded-xl border p-4 space-y-3"
-      style={{
-        background: "var(--bg-secondary)",
-        borderColor: `${riskHexColor(level)}30`,
-      }}
+      className="rounded-xl border p-4 gauge-appear"
+      style={{ background: "var(--bg-secondary)", borderColor: `${color}30` }}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
           Overall Risk Score
         </span>
-        <span className="text-3xl font-bold tabular-nums" style={{ color: riskHexColor(level) }}>
-          {pct}%
+        <span
+          className="text-[10px] font-bold uppercase tracking-wide rounded-full px-2.5 py-0.5 badge-pop"
+          style={{ background: `${color}15`, color }}
+        >
+          {level}
         </span>
       </div>
-      <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--bg-tertiary)" }}>
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${barWidth}%`,
-            background: riskHexColor(level),
-            transition: "width 0.9s cubic-bezier(0.4,0,0.2,1)",
-          }}
-        />
+
+      {/* ── SVG arc gauge ── */}
+      <div className="relative mx-auto" style={{ maxWidth: "180px" }}>
+        <svg viewBox="0 0 120 72" width="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            {/* Gradient sweeps from a lighter tint to the full risk color */}
+            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22C55E" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#EAB308" stopOpacity="0.9" />
+              <stop offset="100%" stopColor={color} />
+            </linearGradient>
+          </defs>
+
+          {/* Track — muted background arc */}
+          <path
+            d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+            fill="none"
+            stroke="var(--bg-tertiary)"
+            strokeWidth="7"
+            strokeLinecap="round"
+          />
+
+          {/* Fill arc — animated via dashoffset */}
+          <path
+            d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+            fill="none"
+            stroke={`url(#${gradId})`}
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={`${arcLen}`}
+            strokeDashoffset={dashOffset}
+            style={{ transition: "stroke-dashoffset 0.95s cubic-bezier(0.4,0,0.2,1)" }}
+          />
+
+          {/* Needle tip — small circle at fill end */}
+          {fillPct > 2 && (() => {
+            const angle = Math.PI * (1 - fillPct / 100);
+            const nx = cx + R * Math.cos(angle);
+            const ny = cy - R * Math.sin(angle);
+            return (
+              <circle cx={nx} cy={ny} r="4" fill={color}
+                style={{ filter: `drop-shadow(0 0 4px ${color}80)`, transition: "cx 0.95s cubic-bezier(0.4,0,0.2,1), cy 0.95s cubic-bezier(0.4,0,0.2,1)" }}
+              />
+            );
+          })()}
+
+          {/* Tick marks */}
+          {ticks.map(({ tick, x, y, active }) => (
+            <circle
+              key={tick}
+              cx={x} cy={y} r="2"
+              fill={active ? color : "var(--border-secondary)"}
+              style={{ transition: "fill 0.6s ease" }}
+            />
+          ))}
+        </svg>
+
+        {/* Score in center below arc */}
+        <div className="absolute flex flex-col items-center" style={{ bottom: "4px", left: 0, right: 0 }}>
+          <span className="text-4xl font-black tabular-nums leading-none num-pop" style={{ color }}>
+            {displayPct}<span className="text-lg font-bold" style={{ opacity: 0.6 }}>%</span>
+          </span>
+        </div>
       </div>
-      <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-        {level === "critical" && "This contract has critical provisions requiring immediate attention before signing."}
-        {level === "high" && "Significant risks identified. Key provisions should be negotiated before execution."}
-        {level === "medium" && "Moderate risk profile. Several provisions warrant review and possible negotiation."}
-        {level === "low" && "Low risk profile. Standard provisions — proceed with normal due diligence."}
+
+      {/* Description */}
+      <p className="text-[11px] text-center leading-relaxed mt-1" style={{ color: "var(--text-tertiary)" }}>
+        {level === "critical" && "Critical provisions — do not sign on current terms."}
+        {level === "high" && "Significant risks — negotiate before execution."}
+        {level === "medium" && "Moderate risk — several provisions warrant review."}
+        {level === "low" && "Low risk — proceed with standard due diligence."}
       </p>
-      <div className="grid grid-cols-4 gap-2 pt-1">
+
+      {/* Distribution row */}
+      <div className="grid grid-cols-4 gap-1.5 pt-3 mt-2" style={{ borderTop: "1px solid var(--border-primary)" }}>
         {(["critical", "high", "medium", "low"] as const).map((lvl) => (
-          <div key={lvl} className="text-center">
-            <p className="text-xl font-bold tabular-nums" style={{ color: riskHexColor(lvl) }}>
+          <div key={lvl} className="text-center rounded-lg py-1.5" style={{ background: `${riskHexColor(lvl)}08` }}>
+            <p className="text-lg font-black tabular-nums" style={{ color: riskHexColor(lvl) }}>
               {summary.risk_distribution[lvl]}
             </p>
-            <p className="text-xs capitalize mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+            <p className="text-[9px] mt-0.5 font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>
               {lvl}
             </p>
           </div>
@@ -2175,7 +2290,7 @@ function ChatBubble({ message }: { message: ChatMsg }) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("flex msg-enter", isUser ? "justify-end" : "justify-start")}>
       <div
         className={cn(
           "max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed",

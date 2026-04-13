@@ -268,6 +268,72 @@ html, body {
 /* ─── Smooth scroll for panels ─── */
 .scroll-smooth { scroll-behavior: smooth; }
 
+/* ─── Chat message spring entrance ─── */
+@keyframes msg-enter {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.msg-enter {
+  animation: msg-enter 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+/* ─── Gauge first-appear ─── */
+@keyframes gauge-appear {
+  from { opacity: 0; transform: scale(0.93) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.gauge-appear { animation: gauge-appear 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+
+/* ─── Number count-up pop ─── */
+@keyframes num-pop {
+  0%   { transform: scale(0.75); opacity: 0; }
+  65%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.num-pop { animation: num-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* ─── Risk badge scale-in ─── */
+@keyframes badge-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  70%  { transform: scale(1.12); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.badge-pop { animation: badge-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+/* ─── Clause scan reveal: single column sweep ─── */
+@keyframes clause-reveal {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Tilt card shine — follow pointer via CSS vars ─── */
+.tilt-card {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  will-change: transform;
+}
+.tilt-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255,255,255,0.07) 0%,
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tilt-card:hover .tilt-shine { opacity: 1; }
+
+/* ─── Logo scan ring rotation ─── */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* ─── Print styles for report page ─── */
 @media print {
   body { background: #fff !important; color: #111 !important; }

@@ -14,15 +14,15 @@ const FEATURES = [
     icon: <Zap className="h-5 w-5" />,
     title: "Instant Risk Heatmaps",
     description:
-      "Every clause color-coded by severity. Critical provisions flash red immediately — you see what matters in seconds, not hours.",
-    accent: "var(--risk-critical)",
+      "Every clause color-coded by severity. Critical provisions flag red immediately — you see what matters in seconds, not hours.",
+    accent: "#EF4444",
   },
   {
     icon: <MessageSquare className="h-5 w-5" />,
     title: "Chat With Your Contract",
     description:
       "Ask plain-English questions. Our AI has read every clause and streams answers with specific evidence cited from the document.",
-    accent: "var(--accent-primary)",
+    accent: "#1560FC",
   },
   {
     icon: <Search className="h-5 w-5" />,
@@ -36,21 +36,21 @@ const FEATURES = [
     title: "Verified Legal Citations",
     description:
       "Risky clauses are matched against 14M+ US laws and cases via TrustFoundry. Every finding grounded in real statute.",
-    accent: "var(--risk-low)",
+    accent: "#22C55E",
   },
   {
     icon: <BarChart3 className="h-5 w-5" />,
     title: "Portfolio Intelligence",
     description:
       "Cross-document pattern detection surfaces systemic risks across your entire contract portfolio — not just individual files.",
-    accent: "var(--risk-high)",
+    accent: "#F97316",
   },
   {
     icon: <BookOpen className="h-5 w-5" />,
     title: "Due Diligence Reports",
     description:
       "One click generates a professional PDF-ready memo with critical findings, market benchmarks, and recommended negotiation language.",
-    accent: "var(--risk-medium)",
+    accent: "#EAB308",
   },
 ];
 
@@ -85,19 +85,19 @@ const TESTIMONIALS = [
     initials: "SC",
     accent: "#1560FC",
   },
-    {
+  {
     quote: "The semantic search across our SaaS portfolio found 12 non-standard auto-renewal clauses we had no idea existed.",
     name: "Marcus Webb",
     title: "General Counsel, Series B Startup",
     initials: "MW",
-    accent: "#0EA5E9",
+    accent: "#0C2860",
   },
   {
-    quote: "The verified legal citations next to each flagged clause is what separates this from every other contract tool I've tried.",
+    quote: "The verified legal citations next to each flagged clause are what separates this from every other contract tool I've tried.",
     name: "Priya Nair",
     title: "Legal Operations Lead",
     initials: "PN",
-    accent: "#22C55E",
+    accent: "#16A34A",
   },
 ];
 
@@ -134,7 +134,7 @@ export default function HomePage() {
                   borderRight: i % 2 === 0 ? "1px solid var(--border-primary)" : undefined,
                   borderBottom: i < 4 ? "1px solid var(--border-primary)" : undefined,
                 }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = `${accent}07`)}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = `${accent}12`)}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
               >
                 {/* Icon inline with content — no stacked tile */}
@@ -232,6 +232,9 @@ export default function HomePage() {
             <h2 className="font-display text-3xl md:text-4xl" style={{ color: "var(--text-primary)" }}>
               Trusted by legal teams moving fast.
             </h2>
+            <p className="text-xs mt-3" style={{ color: "var(--text-tertiary)", opacity: 0.6 }}>
+              Illustrative feedback based on common use cases.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-px md:grid-cols-3" style={{ border: "1px solid var(--border-primary)" }}>
             {TESTIMONIALS.map(({ quote, name, title, initials, accent }) => (
@@ -409,12 +412,16 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <div className="flex items-center gap-6">
-            {["Privacy", "Terms", "Security"].map((l) => (
-              <a key={l} href="#" className="text-xs transition-colors" style={{ color: "var(--text-tertiary)" }}
+            {[
+              { label: "Privacy", href: "#features" },
+              { label: "Terms", href: "#how-it-works" },
+              { label: "Security", href: "#features" },
+            ].map(({ label, href }) => (
+              <a key={label} href={href} title="Coming soon" className="text-xs transition-colors" style={{ color: "var(--text-tertiary)" }}
                 onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)")}
               >
-                {l}
+                {label}
               </a>
             ))}
           </div>

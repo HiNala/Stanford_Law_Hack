@@ -223,7 +223,7 @@ export default function HeroSection() {
           </div>
 
           <div className="mt-10 flex flex-wrap items-center gap-5">
-            {["No credit card required", "PDF, DOCX, TXT supported", "Under 60 seconds"].map((t) => (
+            {["No credit card required", "PDF, DOCX, TXT supported", "Under 30 seconds"].map((t) => (
               <div key={t} className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--risk-low)" }} />
                 <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{t}</span>

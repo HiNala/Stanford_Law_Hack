@@ -14,7 +14,7 @@ This story hits every investor and judge present: M&A due diligence is a $50B/ye
 ## Before You Demo — Setup Checklist
 
 - [ ] `docker compose up` is running — verify `http://localhost:3000` loads
-- [ ] Click "Try Demo Login" — confirm 4 contracts appear on the dashboard
+- [ ] Click "View Live Demo" — confirm 4 contracts appear on the dashboard
 - [ ] `cloud_ai_services_agreement.txt` is on your Desktop or Downloads folder (this is your live upload)
 - [ ] Browser is Chrome, zoom at 100%, incognito mode (clean session, no extensions)
 - [ ] Presenter mode: laptop connected to display, maximize browser window
@@ -33,7 +33,7 @@ This story hits every investor and judge present: M&A due diligence is a $50B/ye
 **What you say:**
 > "Meridian Holdings is being acquired. Their counsel just uploaded four contracts to ClauseGuard — let me show you what our AI found in the time it took to pour coffee."
 
-**Action:** Click "Try Demo Login"
+**Action:** Click "View Live Demo"
 
 **What you say as the dashboard loads:**
 > "ClauseGuard connects to TrustFoundry's legal database — 14 million US laws and cases — so every finding is backed by an actual statute, not an AI hallucination."
@@ -118,7 +118,7 @@ This story hits every investor and judge present: M&A due diligence is a $50B/ye
 **Drag and drop `cloud_ai_services_agreement.txt`**
 
 **While it processes (60-90 seconds), narrate:**
-> "Our pipeline extracts the text, chunks it into semantic sections, generates embeddings, runs GPT-4o risk analysis on every clause, then cross-references against TrustFoundry's legal database for verified citations. All of that happening right now."
+> "Our pipeline extracts the text, chunks it into semantic sections, generates embeddings, runs AI risk analysis on every clause, then cross-references against TrustFoundry's legal database for verified citations. All of that happening right now."
 
 **When it appears as "Analyzed" — click it**
 

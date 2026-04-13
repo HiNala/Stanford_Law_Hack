@@ -19,9 +19,26 @@ const dmSerif = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "ClauseGuard — AI-Powered Contract Intelligence",
+  title: {
+    default: "ClauseGuard — AI-Powered Contract Intelligence",
+    template: "%s — ClauseGuard",
+  },
   description:
     "See risk before it sees you. Upload contracts, get instant AI-powered risk analysis with visual heatmaps and clause-level insights.",
+  applicationName: "ClauseGuard",
+  openGraph: {
+    type: "website",
+    siteName: "ClauseGuard",
+    title: "ClauseGuard — AI-Powered Contract Intelligence",
+    description:
+      "See risk before it sees you. Upload contracts, get instant AI-powered risk analysis with visual heatmaps and clause-level insights.",
+  },
+  twitter: {
+    card: "summary",
+    title: "ClauseGuard — AI-Powered Contract Intelligence",
+    description:
+      "See risk before it sees you. Upload contracts, get instant AI-powered risk analysis with visual heatmaps and clause-level insights.",
+  },
 };
 
 export default function RootLayout({

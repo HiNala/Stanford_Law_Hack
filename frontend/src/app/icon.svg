@@ -1,0 +1,17 @@
+<svg width="32" height="32" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background pill -->
+  <rect width="44" height="44" rx="10" fill="#0A0F1E"/>
+  <!-- Outer "C" arc -->
+  <path d="M22 4C12.059 4 4 12.059 4 22C4 31.941 12.059 40 22 40C27.636 40 32.665 37.472 36.069 33.453" stroke="#1560FC" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <!-- Inner ring -->
+  <path d="M22 11C15.925 11 11 15.925 11 22C11 28.075 15.925 33 22 33C25.381 33 28.41 31.534 30.527 29.19" stroke="#0F4DD6" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Center dot -->
+  <circle cx="22" cy="22" r="2.5" fill="#1560FC"/>
+  <!-- Crosshair lines -->
+  <line x1="22" y1="17" x2="22" y2="19.5" stroke="#1560FC" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="22" y1="24.5" x2="22" y2="27" stroke="#1560FC" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="17" y1="22" x2="19.5" y2="22" stroke="#1560FC" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="24.5" y1="22" x2="27" y2="22" stroke="#1560FC" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Top-right accent -->
+  <path d="M33 10L38 8L36 13" stroke="#5B8FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
