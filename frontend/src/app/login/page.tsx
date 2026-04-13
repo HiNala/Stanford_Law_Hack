@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Flame, MessageSquare, Search } from "lucide-react";
+import { Flame, MessageSquare, Search } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import Button from "@/components/ui/button";
@@ -93,18 +94,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         {/* Brand */}
         <div className="text-center">
-          <div
-            className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
-            style={{ background: "var(--accent-primary)" }}
-          >
-            <Shield className="h-7 w-7 text-white" />
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" />
           </div>
-          <h1
-            className="mt-5 text-3xl font-display"
-            style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}
-          >
-            ClauseGuard
-          </h1>
           <p className="mt-1.5 text-sm" style={{ color: "var(--text-tertiary)" }}>
             See risk before it sees you.
           </p>

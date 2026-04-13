@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
+import { AlertTriangle, RefreshCw, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 export default function Error({
   error,
@@ -30,17 +31,8 @@ export default function Error({
         <AlertTriangle className="h-7 w-7" style={{ color: "var(--risk-critical)" }} />
       </div>
 
-      {/* Logo */}
-      <div className="flex items-center gap-2 mb-2">
-        <div
-          className="flex h-5 w-5 items-center justify-center rounded-md"
-          style={{ background: "var(--accent-primary)" }}
-        >
-          <Shield className="h-3 w-3 text-white" />
-        </div>
-        <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--text-tertiary)" }}>
-          CLAUSEGUARD
-        </span>
+      <div className="mb-2">
+        <Logo size="sm" />
       </div>
 
       <h1

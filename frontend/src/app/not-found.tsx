@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, ArrowLeft, FileSearch } from "lucide-react";
+import { ArrowLeft, FileSearch } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 export default function NotFound() {
   return (
@@ -17,17 +18,8 @@ export default function NotFound() {
         <FileSearch className="h-7 w-7" style={{ color: "var(--text-tertiary)" }} />
       </div>
 
-      {/* Brand */}
-      <div className="flex items-center gap-2 mb-2">
-        <div
-          className="flex h-5 w-5 items-center justify-center rounded-md"
-          style={{ background: "var(--accent-primary)" }}
-        >
-          <Shield className="h-3 w-3 text-white" />
-        </div>
-        <span className="text-xs font-semibold tracking-wide" style={{ color: "var(--text-tertiary)" }}>
-          CLAUSEGUARD
-        </span>
+      <div className="mb-2">
+        <Logo size="sm" />
       </div>
 
       <h1

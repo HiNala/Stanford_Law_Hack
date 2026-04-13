@@ -418,7 +418,7 @@ class TrustFoundryService:
         if not self._enabled:
             return self._cached_context(clause_type, governing_law)
 
-        # Confirm live availability once (lazy)
+        # Confirm live availability once (lazy — only re-probe if explicitly reset)
         if self._live_available is None:
             self._live_available = await self._probe_api()
 
@@ -429,20 +429,31 @@ class TrustFoundryService:
                     return {"source": "trustfoundry", "verified": True, "citations": citations}
                 # Empty live result → fall through to cache
             except httpx.HTTPStatusError as exc:
-                if exc.response.status_code == 429:
-                    # Rate limited — don't disable permanently, just use cache this round
-                    logger.warning("TrustFoundry rate limited (429) — using cache for this call")
-                elif exc.response.status_code == 402:
-                    logger.warning("TrustFoundry insufficient credits (402) — using cache")
+                status = exc.response.status_code
+                if status == 429:
+                    # Rate limited — respect Retry-After if present, use cache this round only
+                    retry_after = exc.response.headers.get("Retry-After")
+                    logger.warning(
+                        "TrustFoundry rate limited (429) — using cache (Retry-After: %s)",
+                        retry_after or "not specified",
+                    )
+                    # Do NOT set _live_available = False; try live again next call
+                elif status == 402:
+                    logger.warning("TrustFoundry insufficient credits (402) — disabling live calls")
                     self._live_available = False
-                elif exc.response.status_code == 401:
+                elif status == 401:
                     logger.warning("TrustFoundry API key rejected (401) — disabling live calls")
                     self._live_available = False
                 else:
-                    logger.warning("TrustFoundry HTTP error %s — using cache", exc.response.status_code)
+                    # Other HTTP errors (5xx server error, etc.) are transient — keep trying live
+                    logger.warning("TrustFoundry HTTP %s — using cache this round", status)
+            except (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+                # Transient network errors — use cache this round but keep live_available=True
+                # so the next contract attempt still hits the live API
+                logger.warning("TrustFoundry transient network error: %s — using cache this round", exc)
             except Exception as exc:
-                logger.warning("TrustFoundry live call failed: %s", exc)
-                self._live_available = False
+                # Unknown error — log it but only disable after repeated failures
+                logger.warning("TrustFoundry unexpected error: %s — using cache this round", exc)
 
         return self._cached_context(clause_type, governing_law)
 

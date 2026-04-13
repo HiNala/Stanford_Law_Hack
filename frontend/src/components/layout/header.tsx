@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Upload, LogOut, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Upload, LogOut, BarChart3 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useContractStore } from "@/stores/contract-store";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Logo } from "@/components/ui/logo";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,16 +31,8 @@ export default function Header() {
       className="h-14 border-b flex items-center px-6 shrink-0"
       style={{ borderColor: "var(--border-primary)", background: "var(--bg-primary)" }}
     >
-      <Link href="/dashboard" className="flex items-center gap-2 mr-8">
-        <div
-          className="flex h-6 w-6 items-center justify-center rounded-md"
-          style={{ background: "var(--accent-primary)" }}
-        >
-          <Shield className="h-3.5 w-3.5 text-white" />
-        </div>
-        <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
-          ClauseGuard
-        </span>
+      <Link href="/dashboard" className="mr-8">
+        <Logo size="sm" />
       </Link>
 
       <nav className="flex items-center gap-1">

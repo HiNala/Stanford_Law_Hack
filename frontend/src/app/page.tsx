@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import {
-  Shield, Zap, MessageSquare, Search, BarChart3,
+  Zap, MessageSquare, Search, BarChart3,
   CheckCircle2, ArrowRight, Scale, BookOpen,
 } from "lucide-react";
 import HeroSection from "@/components/ui/hero-section";
+import { Logo } from "@/components/ui/logo";
 
 // ─── Feature data ────────────────────────────────────────────────────────────
 const FEATURES = [
@@ -378,7 +379,6 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white transition-opacity hover:opacity-85"
               style={{ background: "var(--accent-primary)" }}
             >
-              <Shield className="h-4 w-4" />
               Analyze a Contract Free
             </Link>
             <a
@@ -407,15 +407,7 @@ export default function HomePage() {
         style={{ borderTop: "1px solid var(--border-primary)" }}
       >
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg"
-              style={{ background: "var(--accent-primary)" }}
-            >
-              <Shield className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>ClauseGuard</span>
-          </div>
+          <Logo size="sm" />
           <div className="flex items-center gap-6">
             {["Privacy", "Terms", "Security"].map((l) => (
               <a key={l} href="#" className="text-xs transition-colors" style={{ color: "var(--text-tertiary)" }}

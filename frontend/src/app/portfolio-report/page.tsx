@@ -11,7 +11,6 @@ import {
   Download,
   Loader2,
   Scale,
-  Shield,
   Sparkles,
   TrendingUp,
   Users,
@@ -459,7 +458,7 @@ export default function PortfolioReportPage() {
         >
           <div className="flex flex-wrap items-center gap-3 mb-5">
             <h2 className="text-base font-semibold font-display flex items-center gap-2" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-              <Shield className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+              <TrendingUp className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
               Risk Overview
             </h2>
             <RiskBadge level={risk_overview.overall_risk_level} />

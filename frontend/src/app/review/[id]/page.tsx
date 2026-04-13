@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, use, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Shield,
   Send,
   FileText,
   ChevronRight,
@@ -17,6 +16,7 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import ReactMarkdown from "react-markdown";
 import { contractsApi, clausesApi, analysisApi, chatApi } from "@/lib/api";
 import { useContractStore } from "@/stores/contract-store";
@@ -176,6 +176,18 @@ export default function ReviewPage({
     }
   };
 
+  // Auto-retry once if the contract is analyzed but clauses somehow came back empty
+  useEffect(() => {
+    if (loading || polling) return;
+    if (currentContract?.status !== "analyzed") return;
+    if (clauses.length > 0) return;
+    const t = setTimeout(() => {
+      loadAnalysis();
+    }, 1500);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, polling, currentContract?.status]);
+
   const loadAnalysis = async () => {
     // Fetch clauses and summary independently — a summary failure must not block clause display
     const [clauseResult, summaryResult] = await Promise.allSettled([
@@ -185,13 +197,29 @@ export default function ReviewPage({
 
     if (clauseResult.status === "fulfilled") {
       const data = clauseResult.value.data;
-      const items = Array.isArray(data?.clauses)
+      const items: Clause[] = Array.isArray(data?.clauses)
         ? data.clauses
         : Array.isArray(data)
         ? data
         : [];
       setClauses(items);
       setTimeout(() => setHeatmapReady(true), 100);
+
+      // Auto-select the highest-risk clause so the right panel is immediately useful
+      if (items.length > 0) {
+        const riskOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+        const topClause = [...items].sort((a, b) => {
+          const ao = riskOrder[a.risk_level ?? "low"] ?? 3;
+          const bo = riskOrder[b.risk_level ?? "low"] ?? 3;
+          if (ao !== bo) return ao - bo;
+          return (b.risk_score ?? 0) - (a.risk_score ?? 0);
+        })[0];
+        // Only auto-select if something notable (high/critical/medium) found
+        if (topClause && (topClause.risk_level === "critical" || topClause.risk_level === "high" || topClause.risk_level === "medium")) {
+          setSelectedClause(topClause);
+          setActiveTab("analysis");
+        }
+      }
     } else {
       console.error("Failed to load clauses:", clauseResult.reason);
     }
@@ -386,12 +414,7 @@ function ReviewHeader({
             <ArrowLeft className="h-4 w-4" />
           </button>
 
-        <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
-          style={{ background: "var(--accent-primary)" }}
-        >
-          <Shield className="h-4 w-4 text-white" />
-        </div>
+        <Logo size="sm" showWordmark={false} />
 
         <span
           className="text-sm font-semibold truncate max-w-sm"
@@ -420,36 +443,41 @@ function ReviewHeader({
         </div>
 
       <div className="flex items-center gap-1">
-        {(["analysis", "chat"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => onTabChange(tab)}
-            className="rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-colors"
-            style={{
-              background:
-                activeTab === tab ? "var(--accent-muted)" : "transparent",
-              color:
-                activeTab === tab
-                  ? "var(--accent-primary)"
-                  : "var(--text-tertiary)",
-            }}
-          >
-            {tab === "analysis" ? "Analysis" : "Chat AI"}
-          </button>
-        ))}
+        {/* Analysis / Chat AI tabs */}
+        <div
+          className="flex items-center rounded-lg p-0.5"
+          style={{ background: "var(--bg-tertiary)" }}
+        >
+          {(["analysis", "chat"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onTabChange(tab)}
+              className="rounded-md px-3 py-1.5 text-xs font-medium transition-all"
+              style={{
+                background: activeTab === tab ? "var(--bg-primary)" : "transparent",
+                color: activeTab === tab ? "var(--text-primary)" : "var(--text-tertiary)",
+                boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
+              }}
+            >
+              {tab === "analysis" ? "Analysis" : "Chat AI"}
+            </button>
+          ))}
+        </div>
+
         <button
           onClick={onReport}
-          className="ml-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+          className="ml-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
           style={{ color: "var(--text-tertiary)" }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.background =
-              "var(--bg-tertiary)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.background = "transparent")
-          }
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
+            (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "var(--text-tertiary)";
+          }}
         >
-          <FileText className="inline mr-1 h-3.5 w-3.5" />
+          <FileText className="h-3.5 w-3.5" />
           Report
         </button>
         <div className="ml-1 border-l pl-2" style={{ borderColor: "var(--border-primary)" }}>
@@ -713,24 +741,27 @@ function DocumentPanel({
 }) {
   if (clauses.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-4" style={{ background: "var(--bg-doc)" }}>
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: "var(--bg-tertiary)" }}>
-          <AlertTriangle className="h-6 w-6" style={{ color: "var(--text-tertiary)" }} />
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center gap-5" style={{ background: "var(--bg-doc)" }}>
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ background: "rgba(59,130,246,0.08)", border: "1.5px solid rgba(59,130,246,0.2)" }}
+        >
+          <span className="text-2xl">⏳</span>
         </div>
         <div>
-          <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>No clauses found</p>
+          <p className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Loading analysis…</p>
           <p className="text-xs leading-relaxed max-w-xs" style={{ color: "var(--text-tertiary)" }}>
-            The contract was analyzed but no clauses could be extracted. This may happen with image-based PDFs or very short documents.
+            The AI is reviewing every clause. This usually takes 15–30 seconds for a new contract.
           </p>
         </div>
         {onRetryAnalysis && (
           <button
             onClick={onRetryAnalysis}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white"
-            style={{ background: "var(--accent-primary)" }}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium"
+            style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}
           >
             <RefreshCw className="h-3.5 w-3.5" />
-            Re-analyze
+            Retry
           </button>
         )}
       </div>
@@ -1712,7 +1743,7 @@ function EmptyChat({ onQuestion }: { onQuestion: (q: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-8">
       <div className="flex items-center gap-2 mb-1">
-        <Shield className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
+        <Logo size="sm" showWordmark={false} />
         <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
           Ask me anything about this contract
         </p>

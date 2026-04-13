@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { GooeyFilter } from "@/components/ui/gooey-filter";
 import { PixelTrail } from "@/components/ui/pixel-trail";
@@ -91,16 +92,8 @@ export default function HeroSection() {
         style={{ borderBottom: "1px solid var(--border-primary)" }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg"
-            style={{ background: "var(--accent-primary)" }}
-          >
-            <Shield className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
-            ClauseGuard
-          </span>
+        <Link href="/">
+          <Logo size="md" />
         </Link>
 
         {/* Desktop nav */}
@@ -172,16 +165,8 @@ export default function HeroSection() {
           style={{ background: "var(--bg-primary)", backdropFilter: "blur(12px)" }}
         >
           <div className="flex items-center justify-between mb-10">
-            <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{ background: "var(--accent-primary)" }}
-              >
-                <Shield className="h-4 w-4 text-white" />
-              </div>
-              <span className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-                ClauseGuard
-              </span>
+            <Link href="/" onClick={() => setMenuOpen(false)}>
+              <Logo size="md" />
             </Link>
             <button
               onClick={() => setMenuOpen(false)}
