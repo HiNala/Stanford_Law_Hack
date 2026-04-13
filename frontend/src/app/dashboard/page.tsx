@@ -645,6 +645,12 @@ function ContractCard({ contract, cardIndex, onClick, onDelete }: { contract: Co
                 style={{ width: `${riskPct}%`, background: `linear-gradient(90deg, ${riskColor}90, ${riskColor})` }}
               />
             </div>
+            <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid var(--border-primary)" }}>
+              <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{formatDate(contract.created_at)}</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: "var(--accent-primary)" }}>
+                Open Review <ArrowRight className="h-3 w-3" />
+              </span>
+            </div>
           </div>
         ) : contract.status === "error" ? (
           <div className="mt-auto pt-4 flex items-center gap-2">
@@ -734,6 +740,12 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const EMPTY_DEMO_RISKS = [
+  { label: "Uncapped Indemnification", pct: 97, color: "#EF4444" },
+  { label: "Change of Control — 5-day exit", pct: 89, color: "#EF4444" },
+  { label: "Auto-Renewal Trap (15 days)", pct: 76, color: "#F97316" },
+];
+
 function EmptyState({
   hasContracts,
   onUpload,
@@ -747,35 +759,74 @@ function EmptyState({
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border py-16"
         style={{ borderColor: "var(--border-primary)", borderStyle: "dashed" }}>
-        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No analyzed contracts match your filter.</p>
-        <button onClick={onClearFilter} className="mt-3 text-sm" style={{ color: "var(--accent-primary)" }}>
-          Clear filters
+        <p className="text-sm" style={{ color: "var(--text-secondary)" }}>No contracts match your current filters.</p>
+        <button onClick={onClearFilter} className="mt-3 text-sm font-semibold" style={{ color: "var(--accent-primary)" }}>
+          Clear filters →
         </button>
       </div>
     );
   }
+
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-2xl border py-20"
-      style={{ borderColor: "var(--border-primary)", borderStyle: "dashed" }}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        <FileText className="h-5 w-5" style={{ color: "var(--text-tertiary)" }} />
-        <h3 className="text-lg font-semibold font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-          No contracts yet
-        </h3>
+    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "var(--border-primary)" }}>
+      <div className="px-8 py-10" style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-primary)" }}>
+        <div className="mx-auto max-w-md">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "var(--accent-primary)" }}>
+            Contract Intelligence
+          </p>
+          <h2 className="text-xl font-bold mb-2 font-display" style={{ color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            Analyze your first contract
+          </h2>
+          <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+            Drop any PDF, DOCX, or TXT — ClauseGuard reads every clause, scores each for risk, and surfaces findings in under 30 seconds.
+          </p>
+
+          {/* Mini risk preview card */}
+          <div className="rounded-xl border p-3 mb-6" style={{ background: "var(--bg-primary)", borderColor: "var(--border-primary)" }}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
+                Example · Vendor MSA · 48 pages
+              </span>
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ background: "rgba(239,68,68,0.12)", color: "#EF4444" }}>
+                3 CRITICAL FINDINGS
+              </span>
+            </div>
+            <div className="space-y-2">
+              {EMPTY_DEMO_RISKS.map((r) => (
+                <div key={r.label} className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: r.color }} />
+                  <span className="text-[10px] flex-1 truncate" style={{ color: "var(--text-secondary)" }}>{r.label}</span>
+                  <span className="text-[10px] font-bold tabular-nums shrink-0" style={{ color: r.color }}>{r.pct}%</span>
+                  <div className="w-14 h-1 rounded-full overflow-hidden shrink-0" style={{ background: "var(--bg-tertiary)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${r.pct}%`, background: r.color }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={onUpload}
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white w-full"
+            style={{ background: "linear-gradient(135deg, #1560FC, #0F4DD6)", boxShadow: "0 4px 16px rgba(21,96,252,0.3)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(21,96,252,0.45)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(21,96,252,0.3)"; }}
+          >
+            <Plus className="h-4 w-4" />
+            Upload Contract to Analyze
+          </button>
+        </div>
       </div>
-      <p className="mt-1 text-sm" style={{ color: "var(--text-tertiary)" }}>
-        Upload your first contract to see AI-powered risk analysis.
-      </p>
-      <button
-        onClick={onUpload}
-        className="mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white"
-        style={{ background: "var(--accent-primary)" }}
-      >
-        <Plus className="h-4 w-4" />
-        Upload Contract
-      </button>
+
+      <div className="px-6 py-3.5 flex items-center justify-center gap-3">
+        {["PDF", "DOCX", "TXT"].map((type) => (
+          <span key={type} className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded" style={{ background: "var(--bg-tertiary)", color: "var(--text-tertiary)" }}>
+            {type}
+          </span>
+        ))}
+        <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>· Max 50 MB</span>
+        <span className="text-[10px] ml-auto" style={{ color: "var(--text-tertiary)" }}>Analysis in ~30 seconds</span>
+      </div>
     </div>
   );
 }

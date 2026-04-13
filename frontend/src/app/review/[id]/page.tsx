@@ -20,6 +20,8 @@ import {
   Copy,
   X,
   ExternalLink,
+  BarChart3,
+  MessageSquare,
 } from "lucide-react";
 import CounterLoader from "@/components/ui/counter-loader";
 import { Logo } from "@/components/ui/logo";
@@ -60,6 +62,12 @@ export default function ReviewPage({
   const analysisScrollRef = useRef<HTMLDivElement>(null);
   const clauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const documentClauseRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Issue count badge for the Analysis tab
+  const criticalHighCount = useMemo(
+    () => clauses.filter((c) => c.risk_level === "critical" || c.risk_level === "high").length,
+    [clauses]
+  );
 
   // ── Clause navigation (risk-first order for step-through) ──────────────────
   // Risk-sorted so critical clauses come first when stepping through
@@ -259,6 +267,7 @@ export default function ReviewPage({
           onTabChange={setActiveTab}
           onBack={() => router.push("/dashboard")}
           onReport={() => setExportModalOpen(true)}
+          criticalHighCount={0}
         />
         <div className="flex flex-1 overflow-hidden">
           {/* Document panel skeleton */}
@@ -321,6 +330,7 @@ export default function ReviewPage({
         onTabChange={setActiveTab}
         onBack={() => router.push("/dashboard")}
         onReport={() => setExportModalOpen(true)}
+        criticalHighCount={criticalHighCount}
       />
       {/* ── Export modal ── */}
       {exportModalOpen && (
@@ -401,12 +411,14 @@ function ReviewHeader({
   onTabChange,
   onBack,
   onReport,
+  criticalHighCount = 0,
 }: {
   contract: Contract | null;
   activeTab: "analysis" | "chat";
   onTabChange: (t: "analysis" | "chat") => void;
   onBack: () => void;
   onReport: () => void;
+  criticalHighCount?: number;
 }) {
   return (
     <header
@@ -470,14 +482,32 @@ function ReviewHeader({
             <button
               key={tab}
               onClick={() => onTabChange(tab)}
-              className="rounded-md px-3 py-1.5 text-xs font-medium transition-all"
+              className="rounded-md px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5"
               style={{
                 background: activeTab === tab ? "var(--bg-primary)" : "transparent",
                 color: activeTab === tab ? "var(--text-primary)" : "var(--text-tertiary)",
                 boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
               }}
             >
-              {tab === "analysis" ? "Analysis" : "Chat AI"}
+              {tab === "analysis" ? (
+                <>
+                  <BarChart3 className="h-3 w-3" />
+                  Analysis
+                  {criticalHighCount > 0 && (
+                    <span
+                      className="inline-flex items-center justify-center rounded-full text-[9px] font-bold text-white"
+                      style={{ background: "#EF4444", minWidth: "16px", height: "16px", padding: "0 3px" }}
+                    >
+                      {criticalHighCount}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="h-3 w-3" />
+                  Chat AI
+                </>
+              )}
             </button>
           ))}
         </div>
@@ -511,7 +541,7 @@ const PROCESSING_STEPS = [
   { label: "Extracting text", detail: "Reading document structure & raw content" },
   { label: "Chunking clauses", detail: "Splitting into individually addressable provisions" },
   { label: "Generating embeddings", detail: "Encoding every clause into vector space" },
-  { label: "Running risk analysis", detail: "GPT-4 scoring each clause for legal risk" },
+  { label: "Running risk analysis", detail: "AI scoring each clause for legal risk" },
   { label: "Extracting metadata", detail: "Identifying parties, dates & governing law" },
 ];
 
@@ -1131,6 +1161,12 @@ function AnalysisPanel({
 function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
   const pct = Math.round((summary.overall_risk_score ?? 0) * 100);
   const level = summary.risk_level ?? "low";
+  const [barWidth, setBarWidth] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setBarWidth(pct), 120);
+    return () => clearTimeout(t);
+  }, [pct]);
 
   return (
     <div
@@ -1144,10 +1180,7 @@ function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
           Overall Risk Score
         </span>
-        <span
-          className="text-3xl font-bold tabular-nums"
-          style={{ color: riskHexColor(level) }}
-        >
+        <span className="text-3xl font-bold tabular-nums" style={{ color: riskHexColor(level) }}>
           {pct}%
         </span>
       </div>
@@ -1155,8 +1188,9 @@ function RiskGauge({ summary }: { summary: ContractAnalysisSummary }) {
         <div
           className="h-full rounded-full"
           style={{
-            width: `${pct}%`,
+            width: `${barWidth}%`,
             background: riskHexColor(level),
+            transition: "width 0.9s cubic-bezier(0.4,0,0.2,1)",
           }}
         />
       </div>
@@ -1495,6 +1529,27 @@ function ClauseList({
 
   return (
     <div>
+      {/* Step-through CTA — most prominent affordance for the demo */}
+      {topRisks.length > 0 && onClauseClick && (
+        <button
+          onClick={() => onClauseClick(topRisks[0])}
+          className="w-full flex items-center justify-between rounded-2xl border px-4 py-3.5 mb-4 text-left transition-all"
+          style={{ background: "var(--accent-subtle)", borderColor: "rgba(21,96,252,0.25)" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(21,96,252,0.12)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(21,96,252,0.4)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--accent-subtle)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(21,96,252,0.25)"; }}
+        >
+          <div>
+            <p className="text-xs font-bold" style={{ color: "var(--accent-primary)" }}>
+              Step through all findings →
+            </p>
+            <p className="text-[10px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+              Use ← → arrow keys or navigation buttons · highest risk first
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "var(--accent-primary)" }} />
+        </button>
+      )}
+
       {/* Deal-breaker alert — only when critical clauses exist */}
       {criticalClauses.length > 0 && (
         <div
@@ -1622,7 +1677,15 @@ function ExportModal({
   onFullReport: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   const buildMarkdown = () => {
     const lines: string[] = [];
@@ -1687,7 +1750,10 @@ function ExportModal({
       await navigator.clipboard.writeText(buildMarkdown());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch { /* clipboard unavailable */ }
+    } catch {
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 3000);
+    }
   };
 
   const printPDF = () => {
@@ -1706,6 +1772,9 @@ function ExportModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-modal-title"
         className="w-full max-w-md rounded-2xl border overflow-hidden"
         style={{ background: "var(--bg-primary)", borderColor: "var(--border-primary)", boxShadow: "0 25px 60px rgba(0,0,0,0.4)" }}
       >
@@ -1713,9 +1782,9 @@ function ExportModal({
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border-primary)" }}>
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4" style={{ color: "var(--accent-primary)" }} />
-            <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Export Report</span>
+            <span id="export-modal-title" className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Export Report</span>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 transition-colors" style={{ color: "var(--text-tertiary)" }}
+          <button type="button" aria-label="Close export modal" onClick={onClose} className="rounded-lg p-1.5 transition-colors" style={{ color: "var(--text-tertiary)" }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)")}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
           >
@@ -1767,18 +1836,22 @@ function ExportModal({
           </button>
 
           <button
+            type="button"
             onClick={copyMarkdown}
             className="w-full flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all"
-            style={{ background: "var(--bg-secondary)", borderColor: copied ? "rgba(34,197,94,0.4)" : "var(--border-primary)" }}
-            onMouseEnter={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)"; }}
-            onMouseLeave={(e) => { if (!copied) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; }}
+            style={{
+              background: "var(--bg-secondary)",
+              borderColor: copied ? "rgba(34,197,94,0.4)" : copyFailed ? "rgba(239,68,68,0.4)" : "var(--border-primary)",
+            }}
+            onMouseEnter={(e) => { if (!copied && !copyFailed) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)"; }}
+            onMouseLeave={(e) => { if (!copied && !copyFailed) (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)"; }}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: copied ? "rgba(34,197,94,0.1)" : "var(--bg-tertiary)" }}>
-              <Copy className="h-4 w-4" style={{ color: copied ? "#16A34A" : "var(--text-secondary)" }} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0" style={{ background: copied ? "rgba(34,197,94,0.1)" : copyFailed ? "rgba(239,68,68,0.08)" : "var(--bg-tertiary)" }}>
+              <Copy className="h-4 w-4" style={{ color: copied ? "#16A34A" : copyFailed ? "var(--risk-critical)" : "var(--text-secondary)" }} />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: copied ? "#16A34A" : "var(--text-primary)" }}>
-                {copied ? "Copied to clipboard!" : "Copy as Markdown"}
+              <p className="text-sm font-semibold" style={{ color: copied ? "#16A34A" : copyFailed ? "var(--risk-critical)" : "var(--text-primary)" }}>
+                {copied ? "Copied to clipboard!" : copyFailed ? "Copy unavailable — use Ctrl+C" : "Copy as Markdown"}
               </p>
               <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>Paste directly into email, docs, or legal systems</p>
             </div>
@@ -1802,13 +1875,27 @@ function ExportModal({
 
           {!summary && (
             <button
-              onClick={async () => { setGenerating(true); try { const { analysisApi: api } = await import("@/lib/api"); await api.report(contractId); onFullReport(); } catch { /* */ } finally { setGenerating(false); } }}
+              type="button"
+              onClick={async () => {
+                setGenerating(true);
+                setGenerateError(false);
+                try {
+                  const { analysisApi: api } = await import("@/lib/api");
+                  await api.report(contractId);
+                  onFullReport();
+                } catch {
+                  setGenerateError(true);
+                  setTimeout(() => setGenerateError(false), 4000);
+                } finally {
+                  setGenerating(false);
+                }
+              }}
               disabled={generating}
               className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: "var(--accent-primary)" }}
+              style={{ background: generateError ? "var(--risk-critical)" : "var(--accent-primary)" }}
             >
               {generating && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
-              {generating ? "Generating…" : "Generate Full AI Report"}
+              {generating ? "Generating…" : generateError ? "Generation failed — try again" : "Generate Full AI Report"}
             </button>
           )}
         </div>
@@ -1819,10 +1906,10 @@ function ExportModal({
 
 // ─── Chat panel ────────────────────────────────────────────────────────────────
 const EXAMPLE_QUESTIONS = [
-  "Is the indemnification mutual or one-sided?",
-  "What are the termination provisions?",
-  "Are there any change-of-control clauses?",
-  "What is the limitation of liability?",
+  { q: "Is the indemnification mutual or one-sided?", label: "Indemnification", icon: "⚖️" },
+  { q: "What are the termination provisions?", label: "Termination", icon: "🔴" },
+  { q: "Are there any change-of-control clauses?", label: "M&A risk", icon: "🏢" },
+  { q: "What is the limitation of liability?", label: "Liability cap", icon: "🛡️" },
 ];
 
 interface ChatMsg {
@@ -2030,41 +2117,56 @@ function ChatPanel({
 
 function EmptyChat({ onQuestion }: { onQuestion: (q: string) => void }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full py-8">
-      <div className="flex items-center gap-2 mb-1">
-        <Logo size="sm" showWordmark={false} />
-        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-          Ask me anything about this contract
+    <div className="flex flex-col h-full py-6 px-1">
+      {/* Header */}
+      <div className="text-center mb-5 px-4">
+        <div className="flex justify-center mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ background: "var(--accent-subtle)", border: "1px solid rgba(21,96,252,0.2)" }}>
+            <MessageSquare className="h-5 w-5" style={{ color: "var(--accent-primary)" }} />
+          </div>
+        </div>
+        <p className="text-sm font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+          Ask about this contract
+        </p>
+        <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)", maxWidth: "240px", margin: "0 auto" }}>
+          I&apos;ve read every clause. Ask in plain English about risk, obligations, or what to negotiate.
         </p>
       </div>
-      <p className="text-xs mb-5 text-center max-w-[240px] leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-        I&apos;ve read every clause. Ask about risk, obligations, or specific provisions.
+
+      {/* Suggested questions */}
+      <p className="text-[10px] font-bold uppercase tracking-widest mb-2 px-1" style={{ color: "var(--text-tertiary)" }}>
+        Try asking
       </p>
-      <div className="w-full space-y-2">
-        {EXAMPLE_QUESTIONS.map((q) => (
+      <div className="space-y-1.5">
+        {EXAMPLE_QUESTIONS.map(({ q, label, icon }) => (
           <button
             key={q}
             onClick={() => onQuestion(q)}
-            className="w-full rounded-xl border px-4 py-2.5 text-left text-xs transition-colors flex items-center justify-between group"
-            style={{
-              background: "var(--bg-secondary)",
-              borderColor: "var(--border-primary)",
-              color: "var(--text-secondary)",
-            }}
+            className="w-full rounded-xl border px-3.5 py-2.5 text-left transition-all flex items-center gap-3"
+            style={{ background: "var(--bg-secondary)", borderColor: "var(--border-primary)" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-primary)";
+              (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-primary)";
+              (e.currentTarget as HTMLElement).style.background = "var(--accent-subtle)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = "var(--border-primary)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)";
+              (e.currentTarget as HTMLElement).style.background = "var(--bg-secondary)";
             }}
           >
-            {q}
-            <ChevronRight className="h-3 w-3 shrink-0 ml-2 opacity-50" />
-        </button>
+            <span className="text-base shrink-0">{icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-tertiary)" }}>{label}</p>
+              <p className="text-xs leading-snug" style={{ color: "var(--text-secondary)" }}>{q}</p>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+          </button>
         ))}
       </div>
+
+      {/* Hint */}
+      <p className="text-[10px] text-center mt-4" style={{ color: "var(--text-tertiary)" }}>
+        Relevant clauses are highlighted in the document as you chat
+      </p>
     </div>
   );
 }

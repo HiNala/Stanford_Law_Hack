@@ -165,17 +165,25 @@ export default function HeroSection() {
 
         {/* Left — copy */}
         <div className="flex flex-col items-start">
-          <a
-            href="#features"
-            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-colors"
-            style={{ borderColor: "var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)")}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--accent-primary)" }} />
-            Verified legal citations via TrustFoundry
-            <span style={{ color: "var(--accent-primary)" }}>→</span>
-          </a>
+          {/* Hackathon badge + TrustFoundry row */}
+          <div className="mb-8 flex items-center gap-2 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
+              style={{ borderColor: "rgba(21,96,252,0.35)", background: "rgba(21,96,252,0.08)", color: "var(--accent-primary)" }}
+            >
+              🏆 LLM × Law Hackathon #6
+            </span>
+            <a
+              href="#features"
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors"
+              style={{ borderColor: "var(--border-secondary)", background: "var(--bg-secondary)", color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-hover)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = "var(--border-secondary)")}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--risk-low)" }} />
+              Verified via TrustFoundry
+            </a>
+          </div>
 
           <h1 className="font-display text-5xl leading-tight md:text-6xl" style={{ color: "var(--text-primary)", letterSpacing: "-0.025em" }}>
             See risk before<br />
@@ -189,8 +197,10 @@ export default function HeroSection() {
           <div className="mt-9 flex flex-col sm:flex-row items-start gap-3.5">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-85"
-              style={{ background: "var(--accent-primary)" }}
+              className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-all"
+              style={{ background: "linear-gradient(135deg, #1560FC, #0F4DD6)", boxShadow: "0 4px 16px rgba(21,96,252,0.35)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(21,96,252,0.5)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(21,96,252,0.35)"; }}
             >
               <Zap className="h-4 w-4" />
               Try Demo — Free
